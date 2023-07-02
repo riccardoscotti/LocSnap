@@ -23,14 +23,20 @@ class MainActivity : AppCompatActivity() {
 
         buttonConnect.setOnClickListener {
             val queue = Volley.newRequestQueue(this)
-            val url = "https://www.google.com"
+            val url = getString(R.string.base_url) + "/upload"
 
             val stringRequest = StringRequest(
-                Request.Method.GET, url,
+                Request.Method.GET,
+                url,
                 { response ->
-                    textView.text = "Response is: ${response.substring(0, 500)}"
+                    // Handle the response
+                    textView.text = response
                 },
-                { textView.text = "That didn't work!" })
+                { error ->
+                    // Handle the error
+                    textView.text = error.message
+                }
+            )
 
             queue.add(stringRequest)
         }

@@ -17,7 +17,14 @@ const upload = multer({
 const port = 8080;
 
 app.post('/upload', upload.single('picture'), (req, res) => {
+    res.send("Richiesta POST effettuata.")
     console.log(req.file);
+
+    res.sendStatus(200);
+})
+
+app.get('/upload', (req, res) => {
+    res.send("Richiesta GET effettuata.")
 
     res.sendStatus(200);
 })
