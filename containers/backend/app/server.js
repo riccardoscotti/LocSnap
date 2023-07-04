@@ -34,7 +34,7 @@ app.post('/imageupload', upload.single('image'), (req, res) => {
   const image = req.body.image
 
   console.log("Uploaded photo with: ")
-  console.log(name, image)
+  console.log("Name: ", name)
 
   // if (typeof req.body === "undefined") {
   //   console.log("Undefined request!")
