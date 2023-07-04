@@ -20,8 +20,6 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var jsonObjectRequest: JsonObjectRequest
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -56,34 +54,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun uploadImage(bitmap: Bitmap?, queue: RequestQueue) {
+        /*val byteArrayOutputStream = ByteArrayOutputStream()
+        val textView = findViewById<TextView>(R.id.textView)
+        bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+        val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)*/
+        //Toast.makeText(this@MainActivity, image.length.toString(), Toast.LENGTH_SHORT).show()
         val byteArrayOutputStream = ByteArrayOutputStream()
         bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
+        val url = getString(R.string.base_url) + "/imageupload"
         val name: String = java.lang.String.valueOf(Calendar.getInstance().getTimeInMillis())
-        try {
-            val url = getString(R.string.base_url) + "/imageupload"
-            val jsonObject = JSONObject()
-            jsonObject.put("name", name)
-            jsonObject.put("image", image)
-            jsonObjectRequest = JsonObjectRequest(
-                Request.Method.POST, url, jsonObject,
-                { response ->
-                    try {
-                        val message = response.getString("message")
-                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
-                        Toast.makeText(this@MainActivity, "ERRORE", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            ) {
+
+        val jsonObject = JSONObject()
+        jsonObject.put("name", name)
+        jsonObject.put("image", image)
+
+        val jsonObjectRequest = object : JsonObjectRequest(
+            Request.Method.POST, url, jsonObject,
+            { response ->
+                val message = response.getString("message")
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+            },
+            {
                 Toast.makeText(this@MainActivity, "Image upload failed.", Toast.LENGTH_SHORT).show()
                 val textView = findViewById<TextView>(R.id.textView)
                 textView.text = it.message
             }
-        } catch (e: JSONException) {
-            e.printStackTrace()
+        ) {
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
         }
+
         queue.add(jsonObjectRequest)
     }
 
