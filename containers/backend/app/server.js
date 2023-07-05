@@ -36,35 +36,41 @@ app.post('/imageupload', upload.single('image'), (req, res) => {
   console.log("Uploaded photo with: ")
   console.log(name, image)
 
-  // if (typeof req.body === "undefined") {
-  //   console.log("Undefined request!")
-  // } else {
-  //   console.log("Successo!")
-  //   console.log(req.body);
-  //   const { name, image } = req.body;
-  //   const binaryString = atob(image);
-  //   const len = binaryString.length;
-  //   const bytes = new Uint8Array(len);
-  //   for (let i = 0; i < len; ++i) {
-  //     bytes[i] = binaryString.charCodeAt(i);
-  //   }
-  //   const blob = new Blob([bytes], { type: 'image/png' });
-  //   createImageBitmap(blob).then(bitmap => {
-  //     // fai qualcosa con l'oggetto Bitmap qui...
-  //     res.sendStatus(200);
-  //   }).catch(err => {
-  //     console.error(err);
-  //     res.sendStatus(500);
-  //   });
-  // }
-
+  const data = { status: '200' }
+  res.json(data)
     
-  });
+});
 
 app.get('/test', (req, res) => {
     res.send("Richiesta GET effettuata.")
 
     res.sendStatus(200);
+})
+
+app.post('/login', (req, res) => {
+
+    console.log("Received data: ")
+    console.log(req.body.username, req.body.password)
+
+    // const { Client } = require('pg');
+
+    // const client = new Client({
+    //     user: 'postgres',
+    //     host: '0.0.0.0',
+    //     database: 'login',
+    //     password: 'contextawarerc',
+    //     port: 5432,
+    // });
+
+    // client.connect();
+
+    // client.query('SELECT * from users', (err, res) => {
+    //     console.log(err, res);
+    //     client.end();
+    // });
+
+    const data = { status: '200' }
+    res.json(data)
 })
 
 app.listen(port, () => {
