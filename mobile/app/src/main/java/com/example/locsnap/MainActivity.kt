@@ -1,4 +1,6 @@
 package com.example.locsnap
+
+import android.R.attr.value
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -14,12 +16,10 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.lang.Integer.toHexString
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
+import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,23 +47,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun encrypt(pass: String, key: String): String {
-        val iv = "1234567890123456".toByteArray(charset("utf-8"))
-        val skeySpec = SecretKeySpec(key.toByteArray(charset("utf-8")), "AES")
-        val cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING")
-        cipher.init(Cipher.ENCRYPT_MODE, skeySpec, IvParameterSpec(iv))
-        val encrypted = cipher.doFinal(pass.toByteArray())
-        return Base64.encodeToString(encrypted, Base64.DEFAULT)
+    fun hashPassword(password: String): String {
+        val bytes = password.toByteArray()
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(bytes)
+        return digest.fold("", { str, it -> str + "%02x".format(it) })
     }
 
+    /*fun encryptPassword(password: String): String {
+        val salt = ByteArray(16) // Random salt
+        SecureRandom().nextBytes(salt)
+        val keySpec = PBEKeySpec(password.toCharArray(), salt, 65536, 256)
+        val keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val key = keyFactory.generateSecret(keySpec)
+        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, IvParameterSpec(salt))
+        val encryptedPassword = cipher.doFinal(password.toByteArray())
+        return Base64.encodeToString(encryptedPassword, Base64.DEFAULT)
+    }*/
+
     private fun userLogin(username: String, password: String, queue: RequestQueue) {
-        //val enc_key = "locsnap-project-enckey2023"
-        //val enc_pwd = encrypt(password, enc_key)
+        val enc_pwd = hashPassword(password)
 
         val jsonObject = JSONObject()
         jsonObject.put("username", username)
-        //jsonObject.put("password", enc_pwd)
-        jsonObject.put("password", password)
+        jsonObject.put("password", enc_pwd)
+        //jsonObject.put("password", password)
 
         val jsonRequest = JsonObjectRequest(
             Request.Method.POST,
