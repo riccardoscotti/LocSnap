@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const bodyParser = require('body-parser');
+const { Client } = require('pg');
 
 const app = express();
 
@@ -33,8 +34,7 @@ app.post('/imageupload', upload.single('image'), (req, res) => {
   const name = req.body.name
   const image = req.body.image
 
-  console.log("Uploaded photo with: ")
-  console.log(name, image)
+  console.log("Uploaded photo: ", name)
 
   const data = { status: '200' }
   res.json(data)
@@ -49,25 +49,24 @@ app.get('/test', (req, res) => {
 
 app.post('/login', (req, res) => {
 
-    console.log("Received data: ")
-    console.log(req.body.username, req.body.password)
+    console.log("User login request with: ", req.body.username, req.body.password)
 
-    // const { Client } = require('pg');
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'user_login',
+        //password: 'contextawarerc',
+        port: 5432,
+    });
 
-    // const client = new Client({
-    //     user: 'postgres',
-    //     host: '0.0.0.0',
-    //     database: 'login',
-    //     password: 'contextawarerc',
-    //     port: 5432,
-    // });
+    client.connect();
 
-    // client.connect();
+    query = `INSERT INTO users (nome, cognome, username, password) VALUES (\'---\', \'---\', \'${req.body.username}\', \'${req.body.password}\');`
 
-    // client.query('SELECT * from users', (err, res) => {
-    //     console.log(err, res);
-    //     client.end();
-    // });
+    client.query(query, (err, res) => {
+        console.log(err, res);
+        client.end();
+    });
 
     const data = { status: '200' }
     res.json(data)

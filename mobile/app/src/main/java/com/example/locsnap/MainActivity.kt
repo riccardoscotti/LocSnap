@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         val queue = Volley.newRequestQueue(this@MainActivity)
         
         val chooseFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            userLogin("ChristianP01", "christian123", queue)
+            userLogin("ChristianP01", "passwordiprova", queue)
 
             val inputStream = uri?.let { contentResolver.openInputStream(it) }
             val bitmap = BitmapFactory.decodeStream(inputStream)
@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     fun hashPassword(password: String): String {
         val bytes = password.toByteArray()
         val md = MessageDigest.getInstance("SHA-256")
@@ -54,25 +55,10 @@ class MainActivity : AppCompatActivity() {
         return digest.fold("", { str, it -> str + "%02x".format(it) })
     }
 
-    /*fun encryptPassword(password: String): String {
-        val salt = ByteArray(16) // Random salt
-        SecureRandom().nextBytes(salt)
-        val keySpec = PBEKeySpec(password.toCharArray(), salt, 65536, 256)
-        val keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val key = keyFactory.generateSecret(keySpec)
-        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-        cipher.init(Cipher.ENCRYPT_MODE, key, IvParameterSpec(salt))
-        val encryptedPassword = cipher.doFinal(password.toByteArray())
-        return Base64.encodeToString(encryptedPassword, Base64.DEFAULT)
-    }*/
-
     private fun userLogin(username: String, password: String, queue: RequestQueue) {
-        val enc_pwd = hashPassword(password)
-
         val jsonObject = JSONObject()
         jsonObject.put("username", username)
-        jsonObject.put("password", enc_pwd)
-        //jsonObject.put("password", password)
+        jsonObject.put("password", hashPassword(password))
 
         val jsonRequest = JsonObjectRequest(
             Request.Method.POST,
