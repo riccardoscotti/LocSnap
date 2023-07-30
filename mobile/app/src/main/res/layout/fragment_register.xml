@@ -14,7 +14,7 @@
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.100000024"
             app:layout_constraintHorizontal_bias="0.0" android:backgroundTint="#257DE1"/>
     <TextView
-            android:text="Sign in"
+            android:text="Sign up"
             android:layout_width="153dp"
             android:textSize="40dp"
             android:layout_height="54dp" android:id="@+id/textView"
@@ -75,4 +75,12 @@
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/imageView"
             app:layout_constraintEnd_toEndOf="@+id/imageView" app:layout_constraintVertical_bias="0.0"
             android:fontFamily="@font/roboto_medium"/>
+    <com.google.android.material.switchmaterial.SwitchMaterial
+            android:text="Already registered?"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:id="@+id/switchScreen"
+            app:layout_constraintStart_toStartOf="@+id/loginButton"
+            app:layout_constraintEnd_toEndOf="@+id/loginButton" app:layout_constraintTop_toBottomOf="@+id/loginButton"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.050000012"
+            android:textColor="#198BEB" android:checked="false"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
