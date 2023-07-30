@@ -1,12 +1,12 @@
 package com.example.locsnap
 
-import android.R.attr.value
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -16,7 +16,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import java.lang.Integer.toHexString
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.security.MessageDigest
@@ -26,27 +25,28 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Contenuto del file layout/activity_main.xml
-        setContentView(R.layout.my_main)
+        // Contenuto del file layout/login_scren.xml
+        setContentView(R.layout.login_screen)
 
-        val buttonConnect = findViewById<Button>(R.id.connectButton)
+        val loginButton = findViewById<Button>(R.id.loginButton)
+        val username = findViewById<EditText>(R.id.usernameText)
+        val password = findViewById<EditText>(R.id.passwordText)
         val queue = Volley.newRequestQueue(this@MainActivity)
         
         val chooseFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            userLogin("ChristianP01", "passwordiprova", queue)
-
             val inputStream = uri?.let { contentResolver.openInputStream(it) }
             val bitmap = BitmapFactory.decodeStream(inputStream)
-
             uploadImage(bitmap, queue)
         }
 
-        buttonConnect.setOnClickListener {
-            // Let user choose photo to be uploaded
-            chooseFile.launch("image/*")
+        loginButton.setOnClickListener {
+            userLogin(username.text.toString(), password.text.toString(), queue)
+            // TODO Move chooseFile... to another ClickListener, getting it activated by another button.
+            //chooseFile.launch("image/*") // Open file chooser
         }
-    }
 
+
+    }
 
     fun hashPassword(password: String): String {
         val bytes = password.toByteArray()
