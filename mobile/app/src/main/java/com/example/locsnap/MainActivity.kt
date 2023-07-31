@@ -1,30 +1,34 @@
 package com.example.locsnap
+
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.android.volley.Request
+import androidx.navigation.findNavController
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupActionBarWithNavController
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Contenuto del file layout/activity_main.xml
+        setContentView(R.layout.my_activity_main)
+
+        setSupportActionBar(findViewById(R.id.my_toolbar))
+
+        val navController = findNavController(R.id.my_content_main)
+        val appBarConfiguration = AppBarConfiguration(navController.graph)
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        
         // Content of layout/activity_main.xml
         setContentView(R.layout.my_main)
 
@@ -53,6 +57,7 @@ class MainActivity : AppCompatActivity() {
      * @param queue, the requests queue containing them
      */
     private fun uploadImage(bitmap: Bitmap?, queue: RequestQueue) {
+      
         // Create a ByteArrayOutputStream object to write the bitmap image data to a byte array
         val byteArrayOutputStream = ByteArrayOutputStream()
 
@@ -72,21 +77,24 @@ class MainActivity : AppCompatActivity() {
         jsonObject.put("name", name)
         jsonObject.put("image", image)
 
-        val jsonObjectRequest = object : JsonObjectRequest(
+        val sendImageRequest = object : JsonObjectRequest(
+
             Method.POST, url, jsonObject,
             { response ->
-                val message = response.getString("message")
-                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                if (response.getString("status").equals("200"))
+                    Toast.makeText(this@MainActivity, "Image successfully sent.", Toast.LENGTH_SHORT).show()
+                else
+                    Toast.makeText(this@MainActivity, "[IMAGE] Communication error.", Toast.LENGTH_SHORT).show()
             },
             {
-                Toast.makeText(this@MainActivity, it.message, Toast.LENGTH_SHORT).show()
+
+                Toast.makeText(this@MainActivity, "Image upload failed.", Toast.LENGTH_SHORT).show()
             }
         ) {
             override fun getBodyContentType(): String {
                 return "application/json; charset=utf-8"
             }
         }
-
-        queue.add(jsonObjectRequest)
+        queue.add(sendImageRequest)
     }
 }
