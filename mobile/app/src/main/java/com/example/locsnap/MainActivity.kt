@@ -28,6 +28,25 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.my_content_main)
         val appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
+        
+        // Content of layout/activity_main.xml
+        setContentView(R.layout.my_main)
+
+        // Button to allow user to send photo to backend
+        val buttonConnect = findViewById<Button>(R.id.connectButton)
+
+        // Manages execution flow after have completed the activity started by pressing the button
+        val chooseFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            val queue = Volley.newRequestQueue(this@MainActivity)
+            val inputStream = uri?.let { contentResolver.openInputStream(it) }
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            uploadImage(bitmap, queue)
+        }
+
+        buttonConnect.setOnClickListener {
+            // Allows user to choose the image(s) to upload
+            chooseFile.launch("image/*")
+        }
     }
 
     /**
@@ -38,9 +57,16 @@ class MainActivity : AppCompatActivity() {
      * @param queue, the requests queue containing them
      */
     private fun uploadImage(bitmap: Bitmap?, queue: RequestQueue) {
+      
+        // Create a ByteArrayOutputStream object to write the bitmap image data to a byte array
         val byteArrayOutputStream = ByteArrayOutputStream()
+
+        // Compress the bitmap image to JPEG format and write the compressed data to the ByteArrayOutputStream object
         bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+
+        // Encode the byte array to a Base64 string
         val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
+
         val url = getString(R.string.base_url) + "/imageupload"
         val currentDateTime = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
@@ -52,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         jsonObject.put("image", image)
 
         val sendImageRequest = object : JsonObjectRequest(
+
             Method.POST, url, jsonObject,
             { response ->
                 if (response.getString("status").equals("200"))
@@ -60,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "[IMAGE] Communication error.", Toast.LENGTH_SHORT).show()
             },
             {
+
                 Toast.makeText(this@MainActivity, "Image upload failed.", Toast.LENGTH_SHORT).show()
             }
         ) {

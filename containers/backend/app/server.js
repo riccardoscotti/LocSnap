@@ -35,9 +35,9 @@ app.post('/imageupload', upload.single('image'), (req, res) => {
   const image = req.body.image
 
   console.log("Uploaded photo: ", name)
+  console.log("Name: ", name)
 
-  const data = { status: '200' }
-  res.json(data)
+  res.json({ status: '200' })
     
 });
 
