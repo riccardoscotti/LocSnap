@@ -91,5 +91,4 @@ class LoginFragment : Fragment() {
         )
         queue.add(loginRequest)
     }
-
 }

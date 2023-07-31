@@ -1,15 +1,20 @@
 package com.example.locsnap
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
+import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.time.LocalDateTime
@@ -28,25 +33,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.my_content_main)
         val appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
-        
-        // Content of layout/activity_main.xml
-        setContentView(R.layout.my_main)
-
-        // Button to allow user to send photo to backend
-        val buttonConnect = findViewById<Button>(R.id.connectButton)
-
-        // Manages execution flow after have completed the activity started by pressing the button
-        val chooseFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            val queue = Volley.newRequestQueue(this@MainActivity)
-            val inputStream = uri?.let { contentResolver.openInputStream(it) }
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            uploadImage(bitmap, queue)
-        }
-
-        buttonConnect.setOnClickListener {
-            // Allows user to choose the image(s) to upload
-            chooseFile.launch("image/*")
-        }
     }
 
     /**
