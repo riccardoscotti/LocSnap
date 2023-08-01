@@ -13,6 +13,10 @@
         <action
                 android:id="@+id/action_login_to_register"
                 app:destination="@id/RegisterFragment"/>
+
+        <action
+                android:id="@+id/action_login_to_choose"
+                app:destination="@id/ChooseFragment"/>
     </fragment>
 
     <fragment
@@ -23,6 +27,20 @@
         <action
                 android:id="@+id/action_register_to_login"
                 app:destination="@id/LoginFragment"/>
+    </fragment>
+
+    <fragment
+            android:id="@+id/UploadImagesFragment"
+            android:name="com.example.locsnap.UploadImagesFragment"
+            android:label="Upload Images Fragment"
+            tools:layout="@layout/fragment_upload">
+    </fragment>
+
+    <fragment
+            android:id="@+id/ChooseFragment"
+            android:name="com.example.locsnap.ChooseFragment"
+            android:label="Choose Fragment"
+            tools:layout="@layout/fragment_choose">
     </fragment>
 
 </navigation>

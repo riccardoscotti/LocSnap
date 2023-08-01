@@ -14,35 +14,28 @@ import androidx.navigation.fragment.findNavController
 import com.example.locsnap.databinding.FragmentFirstBinding
 import com.google.android.material.switchmaterial.SwitchMaterial
 
-class RegisterFragment : Fragment() {
+class UploadImagesFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_register, container, false)
+        return inflater.inflate(R.layout.fragment_upload, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val switchScreen = view.findViewById<SwitchMaterial>(R.id.switchScreen)
         //val uploadButton = view.findViewById<Button>(R.id.uploadButton)
-
-        // Continue on login mode
-        switchScreen.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                findNavController().navigate(R.id.action_register_to_login)
-            }
-        }
 
         val chooseFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             val inputStream = uri?.let { activity?.contentResolver?.openInputStream(it) }
             val bitmap = BitmapFactory.decodeStream(inputStream)
             //uploadImage(bitmap, queue)
         }
-    }
+
         //uploadButton.setOnClickListener {
-          //  chooseFile.launch("image/*") // Open file chooser
+        //    chooseFile.launch("image/*") // Open file chooser
         //}
+    }
 }

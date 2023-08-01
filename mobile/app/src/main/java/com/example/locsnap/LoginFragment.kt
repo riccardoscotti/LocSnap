@@ -1,17 +1,14 @@
 package com.example.locsnap
 
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.fragment.findNavController
 import com.android.volley.Request
 import com.android.volley.RequestQueue
@@ -32,17 +29,12 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val loginButton = view.findViewById<Button>(R.id.loginButton)
         val switchScreen = view.findViewById<SwitchMaterial>(R.id.switchScreen) // Allows to switch between register/login mode.
         val username = view.findViewById<EditText>(R.id.usernameText)
         val password = view.findViewById<EditText>(R.id.passwordText)
         val queue = Volley.newRequestQueue(this.context)
-
-        val chooseFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            val inputStream = uri?.let { activity?.contentResolver?.openInputStream(it) }
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            //uploadImage(bitmap, queue)
-        }
 
         // Continue on register mode
         switchScreen.setOnCheckedChangeListener { _, isChecked ->
@@ -53,8 +45,6 @@ class LoginFragment : Fragment() {
 
         loginButton.setOnClickListener {
             userLogin(username.text.toString(), password.text.toString(), queue)
-            // TODO Move chooseFile... to another ClickListener, getting it activated by another button.
-            //chooseFile.launch("image/*") // Open file chooser
         }
     }
 
@@ -80,10 +70,25 @@ class LoginFragment : Fragment() {
             getString(R.string.base_url) + "/login",
             jsonObject,
             { response ->
-                if (response.getString("status").equals("200"))
-                    Toast.makeText(this.context, "Login successful", Toast.LENGTH_SHORT).show()
-                else if (response.getString("status").equals("401"))
+                if (response.getString("status").equals("200")) {
+
+                    val bundle = Bundle()
+                    bundle.putString("loggedUsername", username)
+                    val fragment = ChooseFragment()
+                    fragment.arguments = bundle
+
+                    //val actualFragment = activity?.supportFragmentManager?.findFragmentById(this.id)
+
+                    val fragmentTransaction: FragmentTransaction? = activity?.supportFragmentManager?.beginTransaction()
+                    //fragmentTransaction?.addToBackStack(null) // It allows to go back to previous screen
+                    fragmentTransaction?.replace(R.id.app_container, fragment)
+                    fragmentTransaction?.commit()
+
+                    // If login's successful, go to chooseMenu
+                    //findNavController().navigate(R.id.action_login_to_choose)
+                } else if (response.getString("status").equals("401")) {
                     Toast.makeText(this.context, "Login error.", Toast.LENGTH_SHORT).show()
+                }
             },
             {
                 Toast.makeText(this.context, "[LOGIN] Communication error.", Toast.LENGTH_SHORT).show()
