@@ -3,6 +3,10 @@
                                                    xmlns:app="http://schemas.android.com/apk/res-auto"
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent">
+
+
+
+    <!--
     <fragment
             android:id="@+id/my_content_main"
             android:name="androidx.navigation.fragment.NavHostFragment"
@@ -12,5 +16,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:defaultNavHost="true"
             app:navGraph="@navigation/my_nav_graph"/>
+    -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

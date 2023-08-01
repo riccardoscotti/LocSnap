@@ -80,8 +80,8 @@ class LoginFragment : Fragment() {
                     //val actualFragment = activity?.supportFragmentManager?.findFragmentById(this.id)
 
                     val fragmentTransaction: FragmentTransaction? = activity?.supportFragmentManager?.beginTransaction()
-                    //fragmentTransaction?.addToBackStack(null) // It allows to go back to previous screen
-                    fragmentTransaction?.replace(R.id.app_container, fragment)
+                    fragmentTransaction?.addToBackStack("LocSnap") // It allows to go back to previous screen
+                    fragmentTransaction?.remove(this)?.replace(R.id.app_container, fragment)
                     fragmentTransaction?.commit()
 
                     // If login's successful, go to chooseMenu

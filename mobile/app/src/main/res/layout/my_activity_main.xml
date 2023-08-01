@@ -6,17 +6,13 @@
              android:layout_height="match_parent"
              android:id="@+id/app_container">
 
-        <androidx.appcompat.widget.Toolbar
-                android:id="@+id/my_toolbar"
-                android:layout_width="0dp"
-                android:background="?attr/colorPrimary"
-                android:popupTheme="@style/Theme.LocSnap.PopupOverlay"
-                android:layout_height="?attr/actionBarSize" app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"/>
-
-        <include
-                layout="@layout/my_content_main"
-                android:id="@+id/include"/>
+    <androidx.appcompat.widget.Toolbar
+            android:id="@+id/my_toolbar"
+            android:layout_width="0dp"
+            android:background="?attr/colorPrimary"
+            android:popupTheme="@style/Theme.LocSnap.PopupOverlay"
+            android:layout_height="?attr/actionBarSize" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"/>
 
 </FrameLayout>
 

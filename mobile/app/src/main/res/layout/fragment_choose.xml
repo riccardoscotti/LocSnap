@@ -6,7 +6,7 @@
                                                    android:layout_height="match_parent"
                                                    android:id="@+id/fragment_choose"
                                                    android:name="com.example.ChooseFragment"
-                                                   android:background="#FFFFFF">
+>
     <ImageView
             android:layout_width="105dp"
             android:layout_height="98dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/imageView"
