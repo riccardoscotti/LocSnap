@@ -1,8 +1,6 @@
 package com.example.locsnap
 
-import android.content.DialogInterface
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -10,14 +8,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import java.io.FileOutputStream
-import java.io.IOException
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import java.io.File
 
 class ChooseFragment : Fragment() {
 
@@ -37,30 +32,10 @@ class ChooseFragment : Fragment() {
         pickMultipleMedia =
         registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxPhotos)) { uris ->
             if (uris.isNotEmpty()) {
-                val file = File(this
-                    .requireContext()
-                    .getExternalFilesDir(null),
-                    "collection_${this.requireContext().getExternalFilesDir(null)?.listFiles()?.size}.bin")
-
-                val urisArray = mutableListOf<Uri>()
-                for (uri in uris) {
-                    urisArray.add(uri)
-                }
-
-                try {
-                    val outputStream = FileOutputStream(file)
-                    for (uri in uris) {
-                        val uriBytes = requireActivity().contentResolver.openInputStream(uri)?.readBytes()
-                        outputStream.write(uriBytes)
-                    }
-
-                    outputStream.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-
-                Log.d("localStorage", "You now have ${this.requireContext().getExternalFilesDir(null)?.listFiles()?.size} elements.")
-
+                FileManagerUtils.saveNewCollection(this, uris)
+                Log.d("localStorage", "You now have " +
+                        "${this.requireContext().getExternalFilesDir(null)?.listFiles()?.size} " +
+                        "elements.")
             } else {
                 Log.d("PhotoPicker", "No media selected")
             }
@@ -104,7 +79,7 @@ class ChooseFragment : Fragment() {
                             }
 
                             1 -> { // Existing collection
-                                // How to retrieve existing collections?
+                                FileManagerUtils.showExistingCollections(this)
                             }
                         }
                     })

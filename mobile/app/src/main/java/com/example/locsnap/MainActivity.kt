@@ -1,24 +1,8 @@
 package com.example.locsnap
 
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Base64
-import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import org.json.JSONObject
-import java.io.ByteArrayOutputStream
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 

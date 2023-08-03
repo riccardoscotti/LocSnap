@@ -2,14 +2,19 @@ package com.example.locsnap
 
 import android.graphics.Bitmap
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
+import java.io.*
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
+
 
 class UploadUtils {
     companion object {
@@ -18,8 +23,8 @@ class UploadUtils {
          * Allows the image uploading to backend.
          * It sends, using Volley, a JSONRequest having the structure {name: IMG_yyyyMMdd_HHmmss, image: byteArray}
          *
-         * @param bitmap, the bitmap that needs to be sent to backend.
-         * @param queue, the requests queue containing them
+         * @param bitmap The bitmap that needs to be sent to backend.
+         * @param queue The requests queue containing them
          */
         fun uploadImage(bitmap: Bitmap?, fragment : Fragment) {
 
@@ -64,6 +69,44 @@ class UploadUtils {
                 }
             }
             queue.add(sendImageRequest)
+        }
+
+        fun uploadCollection(file: File, fragment: Fragment) {
+
+            val url = "http://10.0.2.2:8080/collectionupload"
+            val queue = Volley.newRequestQueue(fragment.context)
+            val json = JSONObject()
+            val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
+
+            var bitmaps = JSONArray()
+            for ((index, bitmap) in file.readText().split(",").withIndex()) {
+                bitmaps.put(index, bitmap)
+            }
+
+            json.put("name", file.name)
+            json.put("date", date)
+            json.put("bitmaps", bitmaps)
+
+            Log.d("collection", json.toString())
+
+            val sendCollectionRequest = object : JsonObjectRequest(
+                Method.POST,
+                url,
+                json,
+                { response ->
+                    if (response.getString("status").equals("200"))
+                        Toast.makeText(fragment.activity, "Collection successfully sent.", Toast.LENGTH_SHORT).show()
+                    else
+                        Toast.makeText(fragment.activity, "[IMAGE] Problem occurred during collection sending process.", Toast.LENGTH_SHORT).show()
+                }, {
+                    Toast.makeText(fragment.activity, "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(sendCollectionRequest)
         }
     }
 }
