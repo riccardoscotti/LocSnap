@@ -9,6 +9,7 @@ import androidx.fragment.app.FragmentTransaction
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import org.json.JSONObject
 import java.security.MessageDigest
 
@@ -35,7 +36,7 @@ class UserAuthenticate {
             return digest.fold("", { str, it -> str + "%02x".format(it) })
         }
 
-        fun userLogin(username: String, password: String, queue: RequestQueue, sourceFragment: LoginFragment) {
+        fun userLogin(username: String, password: String, sourceFragment: LoginFragment) {
 
             val jsonObject = JSONObject()
             jsonObject.put("username", username)
@@ -62,6 +63,7 @@ class UserAuthenticate {
                 Toast.makeText(sourceFragment.requireActivity().baseContext, "[LOGIN] Communication error.", Toast.LENGTH_SHORT).show()
             })
 
+            val queue = Volley.newRequestQueue(sourceFragment.context)
             queue.add(loginRequest)
             Log.d("Auth", "[RETURN] actualCode: $actualStatusCode")
         }

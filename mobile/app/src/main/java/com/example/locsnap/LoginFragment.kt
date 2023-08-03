@@ -29,7 +29,6 @@ class LoginFragment : Fragment() {
         val switchScreen = view.findViewById<SwitchMaterial>(R.id.switchScreen) // Allows to switch between register/login mode.
         val username = view.findViewById<EditText>(R.id.usernameText)
         val password = view.findViewById<EditText>(R.id.passwordText)
-        val queue = Volley.newRequestQueue(this.context)
 
         // Continue on register mode
         switchScreen.setOnCheckedChangeListener { _, isChecked ->
@@ -39,7 +38,7 @@ class LoginFragment : Fragment() {
         }
 
         loginButton.setOnClickListener {
-            UserAuthenticate.userLogin(username.text.toString(), password.text.toString(), queue, this)
+            UserAuthenticate.userLogin(username.text.toString(), password.text.toString(), this)
         }
     }
 }
