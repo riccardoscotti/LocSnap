@@ -4,8 +4,9 @@
                                                    xmlns:tools="http://schemas.android.com/tools"
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent"
-                                                   android:id="@+id/fragment_login"
-                                                   android:name="com.example.LoginFragment">
+                                                   android:id="@+id/friend_selection_fragment"
+                                                   android:name="com.example.FriendSelectionFragment"
+>
     <ImageView
             android:layout_width="105dp"
             android:layout_height="98dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/locsnap_icon"
@@ -15,9 +16,9 @@
             app:layout_constraintVertical_bias="0.029999971"/>
     <TextView
             android:text="LocSnap"
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:id="@+id/textView4"
+            android:layout_height="wrap_content" android:id="@+id/textView7"
             app:layout_constraintTop_toBottomOf="@+id/locsnap_icon"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/locsnap_icon"
             app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"

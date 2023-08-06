@@ -8,18 +8,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import java.util.HashMap
 
 class ChooseFragment : Fragment() {
 
-    private lateinit var input : String
+    private lateinit var loggedUser : String
     private lateinit var pickMultipleMedia: ActivityResultLauncher<PickVisualMediaRequest>
     private lateinit var pickSingleMedia: ActivityResultLauncher<PickVisualMediaRequest>
     private var maxPhotos : Int = 10
+    private var buttonsUp : Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,7 +30,7 @@ class ChooseFragment : Fragment() {
     ): View? {
 
         val args = this.arguments
-        input = args?.getString("loggedUsername").toString()
+        loggedUser = args?.getString("loggedUsername").toString()
 
         pickMultipleMedia =
         registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxPhotos)) { uris ->
@@ -53,6 +56,7 @@ class ChooseFragment : Fragment() {
                     Log.d("PhotoPicker", "No media selected")
                 }
             }
+
         return inflater.inflate(R.layout.fragment_choose, container, false)
     }
 
@@ -62,8 +66,29 @@ class ChooseFragment : Fragment() {
         val welcomeText = view.findViewById<TextView>(R.id.welcomeText)
         val uploadButton = view.findViewById<Button>(R.id.uploadButton)
         val newCollectionButton = view.findViewById<Button>(R.id.collectionButton)
+        val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
+        val camIcon = view.findViewById<ImageView>(R.id.camIcon)
+        val picIcon = view.findViewById<ImageView>(R.id.picIcon)
 
-        welcomeText.text = "${welcomeText.text} $input!"
+        welcomeText.text = "${welcomeText.text} $loggedUser!"
+
+        plusIcon.setOnClickListener {
+
+            var elementsToAnimate = HashMap<View, Float>()
+            elementsToAnimate.put(camIcon, -250f)
+            elementsToAnimate.put(picIcon, -500f)
+
+            buttonsUp = FragmentUtils.animateElements(elementsToAnimate, buttonsUp)
+
+            camIcon.setOnClickListener {
+                FragmentUtils.openCamera(this.requireActivity())
+            }
+
+            picIcon.setOnClickListener {
+                // Launch the photo picker allowing the user to select more images.
+                pickMultipleMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        }
 
         uploadButton.setOnClickListener {
 
@@ -91,7 +116,5 @@ class ChooseFragment : Fragment() {
             // Launch the photo picker allowing the user to select more images.
             pickMultipleMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
-
-
     }
 }
