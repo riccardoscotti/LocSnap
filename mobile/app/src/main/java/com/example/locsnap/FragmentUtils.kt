@@ -31,11 +31,5 @@ class FragmentUtils {
             }
             return !flag
         }
-
-        fun openCamera(activity: Activity) {
-            val intent = Intent("android.media.action.IMAGE_CAPTURE")
-            var statusCode = 0
-            activity.startActivityForResult(intent, statusCode)
-        }
     }
 }

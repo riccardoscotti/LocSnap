@@ -1,20 +1,26 @@
 package com.example.locsnap
 
+import android.R.attr
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import java.util.HashMap
+import androidx.fragment.app.Fragment
+
 
 class ChooseFragment : Fragment() {
 
@@ -81,7 +87,7 @@ class ChooseFragment : Fragment() {
             buttonsUp = FragmentUtils.animateElements(elementsToAnimate, buttonsUp)
 
             camIcon.setOnClickListener {
-                FragmentUtils.openCamera(this.requireActivity())
+                startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
             }
 
             picIcon.setOnClickListener {
@@ -115,6 +121,17 @@ class ChooseFragment : Fragment() {
         newCollectionButton.setOnClickListener {
             // Launch the photo picker allowing the user to select more images.
             pickMultipleMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Retrieves captured photo
+        if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
+            val capturedImage: Bitmap = data!!.getExtras()!!.get("data") as Bitmap
+            UploadUtils.uploadImage(capturedImage, this)
+            Log.d("photo", "Captured image has been sent")
         }
     }
 }
