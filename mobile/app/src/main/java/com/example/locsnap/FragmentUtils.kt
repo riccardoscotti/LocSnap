@@ -56,6 +56,13 @@ class FragmentUtils {
         }
 
         /**
+         * Allows to share photo with selected friend from the dialog
+         */
+        fun shareWith(friend: String) {
+            // ...
+        }
+
+        /**
          * Returns user's friends
          */
         fun getFriends(user: String, fragment: Fragment) {
