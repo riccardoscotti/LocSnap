@@ -9,7 +9,7 @@
 >
     <ImageView
             android:layout_width="105dp"
-            android:layout_height="98dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/imageView"
+            android:layout_height="98dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/locsnap_icon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintHorizontal_bias="0.92"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
@@ -19,33 +19,65 @@
             android:textSize="20sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:id="@+id/textView7"
-            app:layout_constraintTop_toBottomOf="@+id/imageView"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/imageView"
-            app:layout_constraintEnd_toEndOf="@+id/imageView" app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintTop_toBottomOf="@+id/locsnap_icon"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/locsnap_icon"
+            app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"
             android:fontFamily="@font/roboto_medium"/>
     <TextView
             android:text="Welcome, "
-            android:textSize="35sp"
+            android:textSize="20sp"
             android:layout_width="283dp"
             android:layout_height="114dp" android:id="@+id/welcomeText"
             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.3" android:textAlignment="center"/>
-    <Button
-            android:layout_width="200dp"
-            android:layout_height="60dp" android:id="@+id/collectionButton"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintHorizontal_bias="0.5" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/welcomeText" app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.16000003" android:backgroundTint="#288BED"
-            android:text="Create new collection"/>
+            app:layout_constraintVertical_bias="0.25" android:textAlignment="center"/>
+
     <Button
             android:text="Upload"
             android:layout_width="207dp"
             android:layout_height="60dp" android:id="@+id/uploadButton"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintHorizontal_bias="0.5" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/collectionButton"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.18"
-            android:backgroundTint="#288BED"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:backgroundTint="#288BED" android:layout_marginBottom="140dp"/>
+    <Button
+            android:text="See nearby pictures"
+            android:layout_width="207dp"
+            android:layout_height="60dp" android:id="@+id/nearbyButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:backgroundTint="#288BED" android:layout_marginBottom="388dp"
+            app:layout_constraintHorizontal_bias="0.313" app:layout_constraintTop_toBottomOf="@+id/welcomeText"
+    />
+    <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp" app:srcCompat="@drawable/camera" android:id="@+id/camIcon"
+            android:priority="5"
+            app:layout_constraintStart_toStartOf="@+id/plusIcon" app:layout_constraintEnd_toEndOf="@+id/plusIcon"
+            app:layout_constraintHorizontal_bias="0.0" app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.98"/>
+    <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp" app:srcCompat="@drawable/picture"
+            android:id="@+id/picIcon"
+            android:priority="5" android:layout_marginEnd="24dp" app:layout_constraintEnd_toEndOf="@+id/plusIcon"
+            app:layout_constraintStart_toStartOf="@+id/plusIcon" app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.98"/>
+    <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp" app:srcCompat="@drawable/plus"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" android:id="@+id/plusIcon"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintHorizontal_bias="0.955"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.979"
+            android:priority="10"/>
+    <ImageView
+            android:layout_width="41dp"
+            android:layout_height="37dp" app:srcCompat="@drawable/share" android:id="@+id/shareButton"
+            app:layout_constraintStart_toEndOf="@+id/nearbyButton"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="@+id/nearbyButton"
+            app:layout_constraintBottom_toBottomOf="@+id/nearbyButton" app:layout_constraintHorizontal_bias="0.353"
+    />
 </androidx.constraintlayout.widget.ConstraintLayout>

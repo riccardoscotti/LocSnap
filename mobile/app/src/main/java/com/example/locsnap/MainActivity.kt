@@ -1,7 +1,15 @@
 package com.example.locsnap
 
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentTransaction
 
 class MainActivity : AppCompatActivity() {
@@ -12,16 +20,17 @@ class MainActivity : AppCompatActivity() {
         // Contenuto del file layout/activity_main.xml
         setContentView(R.layout.my_activity_main)
 
-        val fragmentTransaction: FragmentTransaction? = this.supportFragmentManager?.beginTransaction()
-        fragmentTransaction?.addToBackStack("LocSnap") // It allows to go back to previous screen
-        //fragmentTransaction?.addToBackStack(null) // It allows to go back to previous screen
-        fragmentTransaction?.replace(R.id.app_container, LoginFragment())?.commit()
+        // Asks for camera permission
+        if(ContextCompat.checkSelfPermission(this.baseContext, android.Manifest.permission.CAMERA) !=
+            PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 1);
+        }
+
+        val fragmentTransaction: FragmentTransaction = this.supportFragmentManager.beginTransaction()
+        fragmentTransaction.addToBackStack("LocSnap") // It allows to go back to previous screen
+        fragmentTransaction.replace(R.id.app_container, LoginFragment()).commit()
 
         setSupportActionBar(findViewById(R.id.my_toolbar))
-
-        /*val navController = findNavController(R.id.my_content_main)
-        val appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)*/
     }
 
 

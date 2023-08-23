@@ -61,7 +61,7 @@
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.0"/>
     <ImageView
             android:layout_width="105dp"
-            android:layout_height="98dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/imageView"
+            android:layout_height="98dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/locsnap_icon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintHorizontal_bias="0.92"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
@@ -71,9 +71,9 @@
             android:textSize="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:id="@+id/textView4"
-            app:layout_constraintTop_toBottomOf="@+id/imageView"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/imageView"
-            app:layout_constraintEnd_toEndOf="@+id/imageView" app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintTop_toBottomOf="@+id/locsnap_icon"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/locsnap_icon"
+            app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"
             android:fontFamily="@font/roboto_medium"/>
     <com.google.android.material.switchmaterial.SwitchMaterial
             android:text="Already registered?"

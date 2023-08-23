@@ -1,10 +1,13 @@
 package com.example.locsnap
 
+import android.app.Activity
+import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONArray
@@ -14,7 +17,6 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-
 
 class UploadUtils {
     companion object {
@@ -26,10 +28,10 @@ class UploadUtils {
          * @param bitmap The bitmap that needs to be sent to backend.
          * @param queue The requests queue containing them
          */
-        fun uploadImage(bitmap: Bitmap?, fragment : Fragment) {
+        fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, activity: Activity) {
 
             // Creates queue based on fragment's context
-            val queue = Volley.newRequestQueue(fragment.context)
+            val queue = Volley.newRequestQueue(activity.applicationContext)
 
             // Create a ByteArrayOutputStream object to write the bitmap image data to a byte array
             val byteArrayOutputStream = ByteArrayOutputStream()
@@ -49,19 +51,20 @@ class UploadUtils {
             val jsonObject = JSONObject()
             jsonObject.put("name", name)
             jsonObject.put("image", image)
+            jsonObject.put("username", logged_user)
+            jsonObject.put("shared_by", shared_by)
 
             val sendImageRequest = object : JsonObjectRequest(
 
                 Method.POST, url, jsonObject,
                 { response ->
                     if (response.getString("status").equals("200"))
-                        Toast.makeText(fragment.activity, "Image successfully sent.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, "Image successfully sent.", Toast.LENGTH_SHORT).show()
                     else
-                        Toast.makeText(fragment.activity, "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
                 },
                 {
-
-                    Toast.makeText(fragment.activity, "Communication error.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, "Communication error.", Toast.LENGTH_SHORT).show()
                 }
             ) {
                 override fun getBodyContentType(): String {
