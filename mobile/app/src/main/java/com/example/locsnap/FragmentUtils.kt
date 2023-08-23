@@ -1,31 +1,19 @@
 package com.example.locsnap
 
-import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.view.View
-import android.widget.Toast
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat.startActivity
 import androidx.appcompat.app.AlertDialog.Builder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import org.json.JSONArray
 import org.json.JSONObject
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.HashMap
-
 
 class FragmentUtils {
     companion object {
@@ -33,11 +21,11 @@ class FragmentUtils {
         var friends: MutableList<String> = mutableListOf()
 
         fun TransactFragment(sourceFragment: LoginFragment, destinationFragment: Fragment) {
-            val fragmentTransaction: FragmentTransaction? =
+            val fragmentTransaction: FragmentTransaction =
                 sourceFragment.requireActivity().supportFragmentManager.beginTransaction()
-            fragmentTransaction?.addToBackStack("LocSnap") // It allows to go back to previous screen
-            fragmentTransaction?.remove(sourceFragment)?.replace(R.id.app_container, destinationFragment)
-            fragmentTransaction?.commit()
+            fragmentTransaction.addToBackStack("LocSnap") // It allows to go back to previous screen
+            fragmentTransaction.remove(sourceFragment).replace(R.id.app_container, destinationFragment)
+            fragmentTransaction.commit()
         }
 
         /**
@@ -56,19 +44,12 @@ class FragmentUtils {
         }
 
         /**
-         * Allows to share photo with selected friend from the dialog
-         */
-        fun shareWith(friend: String) {
-            // ...
-        }
-
-        /**
          * Returns user's friends
          */
         fun getFriends(user: String, fragment: Fragment) {
             Log.d("friends", "getFriends() called.")
             val url = "http://10.0.2.2:8080/get_friends"
-            val queue = Volley.newRequestQueue(fragment.context)
+            val queue = Volley.newRequestQueue(fragment.requireContext())
             friends.clear()
 
             val json = JSONObject()
@@ -87,12 +68,16 @@ class FragmentUtils {
 
                         val dialog = Builder(fragment.requireContext())
                         dialog.setTitle("Who do you want to send your images to?")
-                            .setItems(friends.toTypedArray(), { dialog, which ->
+                            .setItems(friends.toTypedArray()
+                            ) { _, which ->
                                 Log.d("friends", "Friend selected: ${friends.get(which)}")
 
-                                shareWith(friends.get(which))
-                            }
-                        ).create().show()
+                                val intent = Intent(fragment.requireContext(), PickMediaActivity::class.java)
+                                intent.putExtra("receiver", friends.get(which))
+                                intent.putExtra("shared_by", user) // Actual user is sharing
+
+                                fragment.requireContext().startActivity(intent)
+                            }.create().show()
                     }
                 }, {}
             )

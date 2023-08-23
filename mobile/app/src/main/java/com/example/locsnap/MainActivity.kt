@@ -26,9 +26,9 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 1);
         }
 
-        val fragmentTransaction: FragmentTransaction? = this.supportFragmentManager?.beginTransaction()
-        fragmentTransaction?.addToBackStack("LocSnap") // It allows to go back to previous screen
-        fragmentTransaction?.replace(R.id.app_container, LoginFragment())?.commit()
+        val fragmentTransaction: FragmentTransaction = this.supportFragmentManager.beginTransaction()
+        fragmentTransaction.addToBackStack("LocSnap") // It allows to go back to previous screen
+        fragmentTransaction.replace(R.id.app_container, LoginFragment()).commit()
 
         setSupportActionBar(findViewById(R.id.my_toolbar))
     }

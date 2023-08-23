@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,16 +17,11 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-
 
 class ChooseFragment : Fragment() {
 
     private lateinit var loggedUser : String
     private lateinit var pickMultipleMedia: ActivityResultLauncher<PickVisualMediaRequest>
-    private lateinit var pickSingleMedia: ActivityResultLauncher<PickVisualMediaRequest>
     private var maxPhotos : Int = 10
     private var buttonsUp : Boolean = false
 
@@ -40,21 +34,9 @@ class ChooseFragment : Fragment() {
         loggedUser = args?.getString("loggedUsername").toString()
 
         pickMultipleMedia =
-        registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxPhotos)) { uris ->
-            if (uris.isNotEmpty()) {
-                FileManagerUtils.saveNewCollection(this, uris)
-//                Log.d("localStorage", "You now have " +
-//                        "${this.requireContext().getExternalFilesDir(null)?.listFiles()?.size} " +
-//                        "elements.")
-            }
-        }
-
-        pickSingleMedia =
-            registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                if (uri != null) {
-                    val bytes = requireActivity().contentResolver.openInputStream(uri)?.readBytes()
-                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes!!.size)
-                    UploadUtils.uploadImage(bitmap, this)
+            registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxPhotos)) { uris ->
+                if (uris.isNotEmpty()) {
+                    FileManagerUtils.saveNewCollection(this, uris)
                 }
             }
 
@@ -75,7 +57,7 @@ class ChooseFragment : Fragment() {
 
         plusIcon.setOnClickListener {
 
-            var elementsToAnimate = HashMap<View, Float>()
+            val elementsToAnimate = HashMap<View, Float>()
             elementsToAnimate.put(camIcon, -250f)
             elementsToAnimate.put(picIcon, -500f)
 
@@ -93,7 +75,6 @@ class ChooseFragment : Fragment() {
 
         shareButton.setOnClickListener {
             // Opens dialog with user's friends
-//            FragmentUtils.showFriends(loggedUser, this).create().show()
             FragmentUtils.getFriends(loggedUser, this)
         }
 
@@ -102,19 +83,23 @@ class ChooseFragment : Fragment() {
             // User needs to choose to upload either a single image or an already-created collection.
             AlertDialog.Builder(requireContext())
                 .setTitle("Choose an option")
-                .setItems(arrayOf("Single photo", "Existing collection"),
-                    { dialog, which ->
-                        when(which) {
-                            0 -> { // Single photo
-                                // Launch the photo picker allowing user to select only one image.
-                                pickSingleMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            }
+                .setItems(arrayOf("Single photo", "Existing collection")
+                ) { _, which ->
+                    when (which) {
+                        0 -> { // Single photo
+                            // Launch the photo picker allowing user to select only one image.
+                            val intent = Intent(this.requireContext(), PickMediaActivity::class.java)
+                            intent.putExtra("receiver", loggedUser)
+                            intent.putExtra("shared_by", "/") // Actual user is sharing
 
-                            1 -> { // Existing collection
-                                FileManagerUtils.showExistingCollections(this)
-                            }
+                            this.requireContext().startActivity(intent)
                         }
-                    }).create().show()
+
+                        1 -> { // Existing collection
+                            FileManagerUtils.showExistingCollections(this)
+                        }
+                    }
+                }.create().show()
         }
     }
 
@@ -124,7 +109,7 @@ class ChooseFragment : Fragment() {
         // Retrieves captured photo
         if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data!!.getExtras()!!.get("data") as Bitmap
-            UploadUtils.uploadImage(capturedImage, this)
+            UploadUtils.uploadImage(capturedImage, loggedUser, "/", this.requireActivity())
         }
     }
 }
