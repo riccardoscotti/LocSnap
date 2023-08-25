@@ -1,6 +1,7 @@
 package com.example.locsnap
 
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
@@ -14,7 +15,6 @@ class PickMediaActivity : AppCompatActivity() {
     private lateinit var pickSingleMediaShared: ActivityResultLauncher<PickVisualMediaRequest>
     private lateinit var shared_by: String
     private lateinit var receiver: String
-    private lateinit var fragmentReceived : Fragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +30,7 @@ class PickMediaActivity : AppCompatActivity() {
             registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
                 if (uri != null) {
                     Log.d("friends", "Starting...")
+                    Log.d("exif", "Uri.path: ${uri.path}")
                     val isr = contentResolver.openInputStream(uri)!!.readBytes()
                     val bitmap = BitmapFactory.decodeByteArray(isr, 0, isr.size)
                     UploadUtils.uploadImage(bitmap, receiver, shared_by, this)

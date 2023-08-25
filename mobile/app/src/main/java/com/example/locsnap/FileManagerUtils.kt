@@ -8,35 +8,36 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import java.io.*
 import android.util.Base64
+import android.widget.Toast
 
 class FileManagerUtils {
     companion object {
-        fun saveNewCollection(fragment: Fragment, uris: List<Uri>) {
-            val file = File(fragment
+        fun createNewCollection(capturedPhoto: Bitmap, fragment: Fragment) {
+            val collection = File(fragment
                 .requireContext()
                 .getExternalFilesDir(null),
                 "collection_${fragment.requireContext().getExternalFilesDir(null)?.listFiles()?.size}.bin")
 
+            this.addToCollection(collection, capturedPhoto, fragment)
+        }
+
+        fun addToCollection(collection: File, capturedPhoto: Bitmap, fragment: Fragment) {
             try {
-                val fileWriter = FileWriter(file, true)
-                var images = mutableListOf<String>()
-                for (uri in uris) {
-                    val inputStream = uri.let { fragment.requireActivity().contentResolver.openInputStream(it) }
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    val byteArrayOutputStream = ByteArrayOutputStream()
-                    bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-                    images.add(Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT))
-                }
-                fileWriter.write(images.joinToString(","))
+                val fileWriter = FileWriter(collection, true)
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                capturedPhoto.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                fileWriter.write(Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT))
                 fileWriter.close()
+                Toast.makeText(fragment.requireContext(), "Foto aggiunta alla collezione!", Toast.LENGTH_SHORT).show()
             } catch (e: IOException) {
+                Toast.makeText(fragment.requireContext(), "Errore...", Toast.LENGTH_SHORT)
                 e.printStackTrace()
             }
         }
 
         fun showExistingCollections(fragment: Fragment) {
-            val storedCollections = fragment.requireContext().getExternalFilesDir(null)?.listFiles()
 
+            val storedCollections = fragment.requireContext().getExternalFilesDir(null)?.listFiles()
             val fileNames = mutableListOf<String>()
             val filePaths = mutableListOf<String>()
             storedCollections?.forEach { file ->
@@ -48,7 +49,7 @@ class FileManagerUtils {
             builder.setTitle("Select the collection you want to upload")
                 .setItems(fileNames.toTypedArray(),
                     { dialog, which ->
-                        UploadUtils.uploadCollection(File(filePaths[which]), fragment)
+//                        UploadUtils.uploadCollection(File(filePaths[which]), fragment)
                     })
 
             builder.create().show()
