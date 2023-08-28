@@ -3,6 +3,7 @@ package com.example.locsnap
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
+import android.location.Location
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
@@ -28,10 +29,10 @@ class UploadUtils {
          * @param bitmap The bitmap that needs to be sent to backend.
          * @param queue The requests queue containing them
          */
-        fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, activity: Activity) {
+        fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, fragment: ChooseFragment) {
 
             // Creates queue based on fragment's context
-            val queue = Volley.newRequestQueue(activity.applicationContext)
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
             // Create a ByteArrayOutputStream object to write the bitmap image data to a byte array
             val byteArrayOutputStream = ByteArrayOutputStream()
@@ -47,24 +48,27 @@ class UploadUtils {
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             val formattedDateTime = currentDateTime.format(formatter)
             val name: String = "IMG_" + formattedDateTime
+            val location = fragment.getLastKnownLocation()
 
             val jsonObject = JSONObject()
             jsonObject.put("name", name)
             jsonObject.put("image", image)
             jsonObject.put("username", logged_user)
             jsonObject.put("shared_by", shared_by)
+            jsonObject.put("lat", location?.latitude)
+            jsonObject.put("lon", location?.longitude)
 
             val sendImageRequest = object : JsonObjectRequest(
 
                 Method.POST, url, jsonObject,
                 { response ->
                     if (response.getString("status").equals("200"))
-                        Toast.makeText(activity, "Image successfully sent.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT).show()
                     else
-                        Toast.makeText(activity, "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
                 },
                 {
-                    Toast.makeText(activity, "Communication error.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
                 }
             ) {
                 override fun getBodyContentType(): String {
@@ -81,6 +85,8 @@ class UploadUtils {
             val json = JSONObject()
             val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
 
+            val location = FileManagerUtils.getCollections().get(file.absolutePath)
+
             var bitmaps = JSONArray()
             for ((index, bitmap) in file.readText().split(",").withIndex()) {
                 bitmaps.put(index, bitmap)
@@ -89,6 +95,8 @@ class UploadUtils {
             json.put("name", file.name)
             json.put("date", date)
             json.put("bitmaps", bitmaps)
+            json.put("lat", location?.latitude)
+            json.put("lon", location?.longitude)
 
             Log.d("collection", json.toString())
 

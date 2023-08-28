@@ -23,7 +23,10 @@ class MainActivity : AppCompatActivity() {
         // Asks for camera permission
         if(ContextCompat.checkSelfPermission(this.baseContext, android.Manifest.permission.CAMERA) !=
             PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 1);
+            ActivityCompat.requestPermissions(this, arrayOf(
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.ACCESS_FINE_LOCATION),
+                1);
         }
 
         val fragmentTransaction: FragmentTransaction = this.supportFragmentManager.beginTransaction()

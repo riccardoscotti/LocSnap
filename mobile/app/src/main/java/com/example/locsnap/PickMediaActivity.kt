@@ -26,19 +26,19 @@ class PickMediaActivity : AppCompatActivity() {
             Log.d("friends", "received ${shared_by} and ${receiver}")
         }
 
-        pickSingleMediaShared =
-            registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                if (uri != null) {
-                    Log.d("friends", "Starting...")
-                    Log.d("exif", "Uri.path: ${uri.path}")
-                    val isr = contentResolver.openInputStream(uri)!!.readBytes()
-                    val bitmap = BitmapFactory.decodeByteArray(isr, 0, isr.size)
-                    UploadUtils.uploadImage(bitmap, receiver, shared_by, this)
-                    Log.d("friends", "Started successfully.")
-
-                    this.finish()
-                }
-            }
+//        pickSingleMediaShared =
+//            registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+//                if (uri != null) {
+//                    Log.d("friends", "Starting...")
+//                    Log.d("exif", "Uri.path: ${uri.path}")
+//                    val isr = contentResolver.openInputStream(uri)!!.readBytes()
+//                    val bitmap = BitmapFactory.decodeByteArray(isr, 0, isr.size)
+//                    UploadUtils.uploadImage(bitmap, receiver, shared_by, this)
+//                    Log.d("friends", "Started successfully.")
+//
+//                    this.finish()
+//                }
+//            }
     }
 
     override fun onStart() {
