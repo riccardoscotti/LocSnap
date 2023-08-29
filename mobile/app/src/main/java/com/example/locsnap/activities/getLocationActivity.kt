@@ -4,14 +4,9 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
-import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -43,10 +38,6 @@ class getLocationActivity : AppCompatActivity() {
                 if (location == null)
                     Toast.makeText(this, "Cannot get location.", Toast.LENGTH_SHORT).show()
                 else {
-                    val lat = location.latitude
-                    val lon = location.longitude
-                    Toast.makeText(this, "Lat: ${lat}, Lon: ${lon}", Toast.LENGTH_SHORT).show()
-
                     val resultCode = RESULT_OK
                     val intent = Intent()
                     intent.putExtra("gps_location", location)

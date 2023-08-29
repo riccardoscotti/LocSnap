@@ -4,9 +4,11 @@ import android.graphics.Bitmap
 import android.location.Location
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import java.io.*
 import android.util.Base64
 import android.widget.Toast
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileWriter
 
 class FileManagerUtils {
     companion object {
@@ -33,26 +35,30 @@ class FileManagerUtils {
                 val fileWriter = FileWriter(collection, true)
                 val byteArrayOutputStream = ByteArrayOutputStream()
                 capturedPhoto.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+
+                if (collection.length() > 0)
+                    fileWriter.write(",") // Separazione di un file dall'altro, se il file NON è vuoto.
+
                 fileWriter.write(Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT))
                 fileWriter.close()
                 Toast.makeText(fragment.requireContext(), "Foto aggiunta alla collezione!", Toast.LENGTH_SHORT).show()
-            } catch (e: IOException) {
-                Toast.makeText(fragment.requireContext(), "Errore...", Toast.LENGTH_SHORT).show()
-                e.printStackTrace()
+            } catch (e: Exception) {
+                Toast.makeText(fragment.requireContext(), e.toString(), Toast.LENGTH_SHORT).show()
             }
         }
 
         fun showExistingCollections(fragment: Fragment) {
 
+            var savedFileNames = mutableListOf<String>()
+            for(key in this.saved_collections.keys) {
+                savedFileNames.add(File(key).name)
+            }
+
             val builder = AlertDialog.Builder(fragment.requireContext())
             builder.setTitle("Select the collection you want to upload")
-                .setItems(this.saved_collections.keys.toTypedArray(),
+                .setItems(savedFileNames.toTypedArray(),
                     { dialog, which ->
-                        repeat(which+1) {
-                            this.selected_collection_path = this.saved_collections.keys.iterator().next()
-                        }
-
-                        UploadUtils.uploadCollection(File(this.selected_collection_path), fragment)
+                        UploadUtils.uploadCollection(File(this.saved_collections.keys.toTypedArray().get(which)), fragment)
                     })
 
             builder.create().show()

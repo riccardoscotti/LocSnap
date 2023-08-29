@@ -12,9 +12,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import java.io.File
@@ -22,9 +19,7 @@ import java.io.File
 class ChooseFragment : Fragment() {
 
     private lateinit var loggedUser : String
-    private lateinit var pickMultipleMedia: ActivityResultLauncher<PickVisualMediaRequest>
     private lateinit var selected_collection: File
-    private var maxPhotos : Int = 10
     private var last_known_location : Location? = null
 
     override fun onCreateView(
@@ -34,13 +29,6 @@ class ChooseFragment : Fragment() {
 
         val args = this.arguments
         loggedUser = args?.getString("loggedUsername").toString()
-
-        pickMultipleMedia =
-            registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxPhotos)) { uris ->
-//                if (uris.isNotEmpty()) {
-//                    FileManagerUtils.createNewCollection(this, uris)
-//                }
-            }
 
         return inflater.inflate(R.layout.fragment_choose, container, false)
     }
@@ -73,8 +61,11 @@ class ChooseFragment : Fragment() {
 
         plusIcon.setOnClickListener {
             val collections = mutableListOf<String>()
+            val filepaths = FileManagerUtils.getCollections().keys
             collections.add("Create new collection")
-            collections.addAll(FileManagerUtils.getCollections().keys)
+            for(key in filepaths) {
+                collections.add(File(key).name)
+            }
 
             val builder = AlertDialog.Builder(requireContext())
             builder.setTitle("Select the collection you are interested in")
@@ -86,12 +77,11 @@ class ChooseFragment : Fragment() {
                             startActivityForResult(intent, 444)
                         }
                         else -> {
-                            this.selected_collection = File(collections[which])
+                            this.selected_collection = File(filepaths.toTypedArray().get(which-1))
                             startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 333)
                         }
                     }
-                }
-            builder.create().show()
+                }.create().show()
         }
     }
 
@@ -119,7 +109,7 @@ class ChooseFragment : Fragment() {
             FileManagerUtils.createNewCollection(capturedImage, this, this.last_known_location)
         } else if(requestCode == 333 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
-            FileManagerUtils.addImageToCollection(selected_collection, capturedImage, this)
+            FileManagerUtils.addImageToCollection(this.selected_collection, capturedImage, this)
         } else if(requestCode == 444 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
             startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)

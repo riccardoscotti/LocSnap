@@ -1,23 +1,20 @@
 package com.example.locsnap
 
-import android.app.Activity
-import android.content.Context
 import android.graphics.Bitmap
-import android.location.Location
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Date
 
 class UploadUtils {
     companion object {
@@ -31,16 +28,16 @@ class UploadUtils {
          */
         fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, fragment: ChooseFragment) {
 
-            // Creates queue based on fragment's context
+            // Creazione coda per le richieste Volley
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
-            // Create a ByteArrayOutputStream object to write the bitmap image data to a byte array
+            // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
             val byteArrayOutputStream = ByteArrayOutputStream()
 
-            // Compress the bitmap image to JPEG format and write the compressed data to the ByteArrayOutputStream object
+            // Compressione bitmap
             bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
 
-            // Encode the byte array to a Base64 string
+            // Conversione in un formato Base64
             val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
 
             val url = "http://10.0.2.2:8080/imageupload"
@@ -105,8 +102,9 @@ class UploadUtils {
                 url,
                 json,
                 { response ->
-                    if (response.getString("status").equals("200"))
+                    if (response.getString("status").equals("200")) {
                         Toast.makeText(fragment.activity, "Collection successfully sent.", Toast.LENGTH_SHORT).show()
+                    }
                     else
                         Toast.makeText(fragment.activity, "[IMAGE] Problem occurred during collection sending process.", Toast.LENGTH_SHORT).show()
                 }, {

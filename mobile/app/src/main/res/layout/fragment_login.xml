@@ -21,9 +21,9 @@
             android:textSize="40dp"
             android:layout_height="54dp" android:id="@+id/textView"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintHorizontal_bias="0.15" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.166" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.25" android:textColor="#198BEB"/>
+            app:layout_constraintVertical_bias="0.251" android:textColor="#198BEB"/>
     <TextView
             android:text="Enter your username:"
             android:layout_width="wrap_content"
