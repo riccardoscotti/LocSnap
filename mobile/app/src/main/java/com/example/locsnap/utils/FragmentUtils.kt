@@ -1,10 +1,7 @@
 package com.example.locsnap
 
-import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.view.View
-import androidx.core.content.ContextCompat.startActivity
 import androidx.appcompat.app.AlertDialog.Builder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
@@ -12,35 +9,16 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
-import java.util.*
-import kotlin.collections.HashMap
 
 class FragmentUtils {
     companion object {
+        private var friends: MutableList<String> = mutableListOf()
 
-        var friends: MutableList<String> = mutableListOf()
-
-        fun TransactFragment(sourceFragment: LoginFragment, destinationFragment: Fragment) {
-            val fragmentTransaction: FragmentTransaction =
-                sourceFragment.requireActivity().supportFragmentManager.beginTransaction()
+        fun TransactFragment(sourceFragment: Fragment, destinationFragment: Fragment) {
+            val fragmentTransaction: FragmentTransaction = sourceFragment.requireActivity().supportFragmentManager.beginTransaction()
             fragmentTransaction.addToBackStack("LocSnap") // It allows to go back to previous screen
-            fragmentTransaction.remove(sourceFragment).replace(R.id.app_container, destinationFragment)
+            fragmentTransaction.replace(R.id.app_container, destinationFragment)
             fragmentTransaction.commit()
-        }
-
-        /**
-         * Allows to animate a set of elements, given as a hashmap.
-         * @param flag Represent if the elements should be drawn up or down.
-         * @return Returns a boolean, the opposite of the given one. If an element has gone up, it should come back down.
-         */
-        fun animateElements(elements: HashMap<View, Float>, flag: Boolean): Boolean {
-            for ((key, value) in elements) {
-                if (!flag)
-                    key.animate().translationY(value).setDuration(400).start()
-                else
-                    key.animate().translationY(0f).setDuration(400).start()
-            }
-            return !flag
         }
 
         /**
@@ -61,21 +39,19 @@ class FragmentUtils {
                 json,
                 { response ->
                     if (response.getString("status").equals("200")) {
-                        val friends_json = JSONObject(response.getString("friends"))
+                        val friendsJson = JSONObject(response.getString("friends"))
 
-                        for (key in friends_json.keys())
-                            friends.add(friends_json.get(key).toString())
+                        for (key in friendsJson.keys())
+                            friends.add(friendsJson.get(key).toString())
 
                         val dialog = Builder(fragment.requireContext())
                         dialog.setTitle("Who do you want to send your images to?")
                             .setItems(friends.toTypedArray()
                             ) { _, which ->
-                                Log.d("friends", "Friend selected: ${friends.get(which)}")
 
                                 val intent = Intent(fragment.requireContext(), PickMediaActivity::class.java)
                                 intent.putExtra("receiver", friends.get(which))
                                 intent.putExtra("shared_by", user) // Actual user is sharing
-
                                 fragment.requireContext().startActivity(intent)
                             }.create().show()
                     }

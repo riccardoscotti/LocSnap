@@ -6,11 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
-import androidx.navigation.fragment.findNavController
-import com.android.volley.toolbox.Volley
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class LoginFragment : Fragment() {
@@ -30,10 +26,10 @@ class LoginFragment : Fragment() {
         val username = view.findViewById<EditText>(R.id.usernameText)
         val password = view.findViewById<EditText>(R.id.passwordText)
 
-        // Continue on register mode
+        // Go to register mode
         switchScreen.setOnCheckedChangeListener { _, isChecked ->
-            if(!isChecked) {
-                findNavController().navigate(R.id.action_login_to_register)
+            if(!isChecked) { // User wants to register
+                FragmentUtils.TransactFragment(this, RegisterFragment())
             }
         }
 

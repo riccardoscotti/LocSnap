@@ -1,22 +1,20 @@
 package com.example.locsnap
 
-import android.app.Activity
-import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Date
 
 class UploadUtils {
     companion object {
@@ -28,18 +26,18 @@ class UploadUtils {
          * @param bitmap The bitmap that needs to be sent to backend.
          * @param queue The requests queue containing them
          */
-        fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, activity: Activity) {
+        fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, fragment: ChooseFragment) {
 
-            // Creates queue based on fragment's context
-            val queue = Volley.newRequestQueue(activity.applicationContext)
+            // Creazione coda per le richieste Volley
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
-            // Create a ByteArrayOutputStream object to write the bitmap image data to a byte array
+            // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
             val byteArrayOutputStream = ByteArrayOutputStream()
 
-            // Compress the bitmap image to JPEG format and write the compressed data to the ByteArrayOutputStream object
+            // Compressione bitmap
             bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
 
-            // Encode the byte array to a Base64 string
+            // Conversione in un formato Base64
             val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
 
             val url = "http://10.0.2.2:8080/imageupload"
@@ -47,24 +45,27 @@ class UploadUtils {
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             val formattedDateTime = currentDateTime.format(formatter)
             val name: String = "IMG_" + formattedDateTime
+            val location = fragment.getLastKnownLocation()
 
             val jsonObject = JSONObject()
             jsonObject.put("name", name)
             jsonObject.put("image", image)
             jsonObject.put("username", logged_user)
             jsonObject.put("shared_by", shared_by)
+            jsonObject.put("lat", location?.latitude)
+            jsonObject.put("lon", location?.longitude)
 
             val sendImageRequest = object : JsonObjectRequest(
 
                 Method.POST, url, jsonObject,
                 { response ->
                     if (response.getString("status").equals("200"))
-                        Toast.makeText(activity, "Image successfully sent.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT).show()
                     else
-                        Toast.makeText(activity, "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
                 },
                 {
-                    Toast.makeText(activity, "Communication error.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
                 }
             ) {
                 override fun getBodyContentType(): String {
@@ -81,6 +82,8 @@ class UploadUtils {
             val json = JSONObject()
             val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
 
+            val location = FileManagerUtils.getCollections().get(file.absolutePath)
+
             var bitmaps = JSONArray()
             for ((index, bitmap) in file.readText().split(",").withIndex()) {
                 bitmaps.put(index, bitmap)
@@ -89,6 +92,8 @@ class UploadUtils {
             json.put("name", file.name)
             json.put("date", date)
             json.put("bitmaps", bitmaps)
+            json.put("lat", location?.latitude)
+            json.put("lon", location?.longitude)
 
             Log.d("collection", json.toString())
 
@@ -97,8 +102,9 @@ class UploadUtils {
                 url,
                 json,
                 { response ->
-                    if (response.getString("status").equals("200"))
+                    if (response.getString("status").equals("200")) {
                         Toast.makeText(fragment.activity, "Collection successfully sent.", Toast.LENGTH_SHORT).show()
+                    }
                     else
                         Toast.makeText(fragment.activity, "[IMAGE] Problem occurred during collection sending process.", Toast.LENGTH_SHORT).show()
                 }, {

@@ -1,12 +1,7 @@
 package com.example.locsnap
 
-import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -17,13 +12,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Contenuto del file layout/activity_main.xml
         setContentView(R.layout.my_activity_main)
 
-        // Asks for camera permission
+        // Popup per autorizzare l'uso della camera
         if(ContextCompat.checkSelfPermission(this.baseContext, android.Manifest.permission.CAMERA) !=
             PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 1);
+            ActivityCompat.requestPermissions(this, arrayOf(
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.ACCESS_FINE_LOCATION),
+                1);
         }
 
         val fragmentTransaction: FragmentTransaction = this.supportFragmentManager.beginTransaction()
@@ -38,7 +35,7 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         super.onBackPressed()
 
-        // If it's the last fragment and user goes back, then finish
+        // Se si tratta dell'unico fragment sullo stack, esci dall'app.
         if(supportFragmentManager.backStackEntryCount.equals(0)) {
             finish()
         } else {
