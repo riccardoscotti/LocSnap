@@ -14,7 +14,6 @@ class FileManagerUtils {
     companion object {
 
         private var saved_collections: HashMap<String, Location?> = HashMap()
-        private var selected_collection_path: String? = null
 
         fun getCollections() : HashMap<String, Location?> {
             return this.saved_collections

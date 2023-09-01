@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.example.locsnap.fragments.ChooseFragment
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -40,7 +41,7 @@ class UploadUtils {
             // Conversione in un formato Base64
             val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
 
-            val url = "http://10.0.2.2:8080/imageupload"
+            val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
             val currentDateTime = LocalDateTime.now()
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             val formattedDateTime = currentDateTime.format(formatter)
@@ -77,7 +78,7 @@ class UploadUtils {
 
         fun uploadCollection(file: File, fragment: Fragment) {
 
-            val url = "http://10.0.2.2:8080/collectionupload"
+            val url = "${fragment.resources.getString(R.string.base_url)}/collectionupload"
             val queue = Volley.newRequestQueue(fragment.context)
             val json = JSONObject()
             val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
