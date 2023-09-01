@@ -1,6 +1,7 @@
-package com.example.locsnap
+package com.example.locsnap.fragments
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
@@ -10,17 +11,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.example.locsnap.*
 import java.io.File
+
 
 class ChooseFragment : Fragment() {
 
     private lateinit var loggedUser : String
     private lateinit var selected_collection: File
     private var last_known_location : Location? = null
+
+    fun getLoggedUser() : String {
+        return this.loggedUser
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,6 +49,7 @@ class ChooseFragment : Fragment() {
         val camIcon = view.findViewById<ImageView>(R.id.camIcon)
         val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
         val shareButton = view.findViewById<ImageView>(R.id.shareButton)
+        val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
 
         welcomeText.text = "${welcomeText.text} $loggedUser!"
 
@@ -59,13 +68,27 @@ class ChooseFragment : Fragment() {
             FileManagerUtils.showExistingCollections(this)
         }
 
+        addUserIcon.setOnClickListener {
+            val dialog = Dialog(this.requireContext())
+            dialog.setContentView(R.layout.add_friend_dialog)
+            val proceed = dialog.findViewById<Button>(R.id.confirmButton)
+
+            proceed.setOnClickListener {
+                val friendText = dialog.findViewById<EditText>(R.id.friendText)
+                FragmentUtils.addFriend(this.loggedUser, friendText.text.toString(), this)
+                dialog.dismiss()
+            }
+
+            dialog.show()
+        }
+
         plusIcon.setOnClickListener {
             val collections = mutableListOf<String>()
             val filepaths = FileManagerUtils.getCollections().keys
             collections.add("Create new collection")
-            for(key in filepaths) {
+
+            for(key in filepaths)
                 collections.add(File(key).name)
-            }
 
             val builder = AlertDialog.Builder(requireContext())
             builder.setTitle("Select the collection you are interested in")
