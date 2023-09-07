@@ -7,10 +7,12 @@ services:
     container_name: backend
 
   database:
-    image: christianp01/cas_db_login:latest
+    image: postgis/postgis
     environment:
       - PGDATA=/var/lib/pgsql/data
       - POSTGRES_PASSWORD=contextawarerc
+    volumes:
+      - ./postgres_data:/var/lib/pgsql/data
     network_mode: host
     container_name: db_login
 

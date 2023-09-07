@@ -1,5 +1,6 @@
 package com.example.locsnap
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.util.Base64
 import android.util.Log
@@ -23,14 +24,12 @@ class UploadUtils {
         /**
          * Allows the image uploading to backend.
          * It sends, using Volley, a JSONRequest having the structure {name: IMG_yyyyMMdd_HHmmss, image: byteArray}
+         * It is called when users uploads a single photo just taken with the camera.
          *
          * @param bitmap The bitmap that needs to be sent to backend.
          * @param queue The requests queue containing them
          */
-        fun uploadImage(bitmap: Bitmap?, logged_user: String, shared_by: String, fragment: ChooseFragment) {
-
-            // Creazione coda per le richieste Volley
-            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+        fun uploadImage(bitmap: Bitmap?, logged_user: String, fragment: ChooseFragment) {
 
             // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
             val byteArrayOutputStream = ByteArrayOutputStream()
@@ -39,7 +38,7 @@ class UploadUtils {
             bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
 
             // Conversione in un formato Base64
-            val image: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
+            val bitmap: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
 
             val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
             val currentDateTime = LocalDateTime.now()
@@ -49,12 +48,50 @@ class UploadUtils {
             val location = fragment.getLastKnownLocation()
 
             val jsonObject = JSONObject()
+            var bitmaps = JSONArray()
+            bitmaps.put(0, bitmap) // Foto singola
+
             jsonObject.put("name", name)
-            jsonObject.put("image", image)
+            jsonObject.put("bitmaps", bitmaps)
             jsonObject.put("username", logged_user)
-            jsonObject.put("shared_by", shared_by)
             jsonObject.put("lat", location?.latitude)
             jsonObject.put("lon", location?.longitude)
+            jsonObject.put("tagged_people", JSONArray()) // Inizializzo sempre vuoto
+            jsonObject.put("lenght", 1) // Foto singola
+
+            upload(url, jsonObject, fragment)
+        }
+
+        /*
+        * Allows the upload of a collection of photos.
+        * N.B. A single photo, uploaded from the photo picker, will be treated as a collection with one photo.
+        * */
+        fun uploadCollection(file: File, fragment: ChooseFragment) {
+
+            val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
+            val location = FileManagerUtils.getCollections().get(file.absolutePath)
+            var bitmaps = JSONArray()
+            val json = JSONObject()
+
+            for ((index, bitmap) in file.readText().split(",").withIndex()) {
+                bitmaps.put(index, bitmap)
+            }
+
+            json.put("name", file.name)
+            json.put("bitmaps", bitmaps)
+            json.put("username", fragment.getLoggedUser())
+            json.put("lat", location?.latitude)
+            json.put("lon", location?.longitude)
+            json.put("tagged_people", JSONArray()) // Inizializzo sempre vuoto
+            json.put("lenght", bitmaps.length())
+
+            upload(url, json, fragment)
+        }
+
+        fun upload(url: String, jsonObject: JSONObject, fragment: Fragment) {
+
+            // Creazione coda per le richieste Volley
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
             val sendImageRequest = object : JsonObjectRequest(
 
@@ -76,47 +113,11 @@ class UploadUtils {
             queue.add(sendImageRequest)
         }
 
-        fun uploadCollection(file: File, fragment: Fragment) {
+        fun showNearestPhotos(n: Int, fragment: ChooseFragment) {
 
-            val url = "${fragment.resources.getString(R.string.base_url)}/collectionupload"
-            val queue = Volley.newRequestQueue(fragment.context)
-            val json = JSONObject()
-            val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
+            fragment.startActivityForResult(Intent(fragment.requireContext(), getLocationActivity::class.java), 777)
+            fragment.getLastKnownLocation()
 
-            val location = FileManagerUtils.getCollections().get(file.absolutePath)
-
-            var bitmaps = JSONArray()
-            for ((index, bitmap) in file.readText().split(",").withIndex()) {
-                bitmaps.put(index, bitmap)
-            }
-
-            json.put("name", file.name)
-            json.put("date", date)
-            json.put("bitmaps", bitmaps)
-            json.put("lat", location?.latitude)
-            json.put("lon", location?.longitude)
-
-            Log.d("collection", json.toString())
-
-            val sendCollectionRequest = object : JsonObjectRequest(
-                Method.POST,
-                url,
-                json,
-                { response ->
-                    if (response.getString("status").equals("200")) {
-                        Toast.makeText(fragment.activity, "Collection successfully sent.", Toast.LENGTH_SHORT).show()
-                    }
-                    else
-                        Toast.makeText(fragment.activity, "[IMAGE] Problem occurred during collection sending process.", Toast.LENGTH_SHORT).show()
-                }, {
-                    Toast.makeText(fragment.activity, "Communication error.", Toast.LENGTH_SHORT).show()
-                }
-            ) {
-                override fun getBodyContentType(): String {
-                    return "application/json; charset=utf-8"
-                }
-            }
-            queue.add(sendCollectionRequest)
         }
     }
 }

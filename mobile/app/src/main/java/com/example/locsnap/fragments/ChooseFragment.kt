@@ -126,7 +126,7 @@ class ChooseFragment : Fragment() {
         // Retrieves captured photo
         if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
-            UploadUtils.uploadImage(capturedImage, loggedUser, "/", this)
+            UploadUtils.uploadImage(capturedImage, loggedUser, this)
         } else if (requestCode == 222 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
             FileManagerUtils.createNewCollection(capturedImage, this, this.last_known_location)
@@ -139,6 +139,8 @@ class ChooseFragment : Fragment() {
         } else if(requestCode == 555 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
             startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
+        } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
+            this.last_known_location = data?.extras!!.get("gps_location") as Location
         }
     }
 }

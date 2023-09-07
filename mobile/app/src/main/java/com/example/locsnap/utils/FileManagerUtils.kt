@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import android.util.Base64
 import android.widget.Toast
+import com.example.locsnap.fragments.ChooseFragment
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileWriter
@@ -46,7 +47,7 @@ class FileManagerUtils {
             }
         }
 
-        fun showExistingCollections(fragment: Fragment) {
+        fun showExistingCollections(fragment: ChooseFragment) {
 
             var savedFileNames = mutableListOf<String>()
             for(key in this.saved_collections.keys) {
