@@ -1,6 +1,7 @@
 import './login.css'
 import { useState } from 'react';
-import locsnapLogo from './locsnap_icon.png'
+import { Navigate } from 'react-router-dom'
+import locsnapLogo from '../locsnap_icon.png'
 import axios from "axios";
 import sha256 from 'js-sha256';
 
@@ -13,6 +14,7 @@ function handleLogin(usr, psw) {
     .then((response) => {
         if(response.status === 200) {
             alert("Successful login!")
+            return <Navigate to='/dashboard' />
         }
     })
     .catch((error) => {
