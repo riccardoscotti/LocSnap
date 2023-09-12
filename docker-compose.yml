@@ -14,7 +14,7 @@ services:
     volumes:
       - ./postgres_data:/var/lib/pgsql/data
     network_mode: host
-    container_name: db_login
+    container_name: database
 
   frontend:
     image: christianp01/cas_frontend:latest

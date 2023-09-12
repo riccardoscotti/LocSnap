@@ -24,7 +24,7 @@ class FileManagerUtils {
             val collection = File(fragment
                 .requireContext()
                 .getExternalFilesDir(null),
-                "collection_${fragment.requireContext().getExternalFilesDir(null)?.listFiles()?.size}.bin")
+                "collection_${fragment.requireContext().getExternalFilesDir(null)?.listFiles()?.size}.jpg")
 
             this.saved_collections.put(collection.absolutePath, location)
             this.addImageToCollection(collection, capturedPhoto, fragment)

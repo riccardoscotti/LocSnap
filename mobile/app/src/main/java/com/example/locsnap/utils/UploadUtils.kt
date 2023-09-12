@@ -1,9 +1,14 @@
 package com.example.locsnap
 
-import android.content.Intent
+import android.app.AlertDialog
+import android.app.Dialog
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.location.Location
+import android.net.Uri
 import android.util.Base64
 import android.util.Log
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.android.volley.toolbox.JsonObjectRequest
@@ -13,10 +18,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Date
+import java.util.*
 
 class UploadUtils {
     companion object {
@@ -29,16 +33,18 @@ class UploadUtils {
          * @param bitmap The bitmap that needs to be sent to backend.
          * @param queue The requests queue containing them
          */
-        fun uploadImage(bitmap: Bitmap?, logged_user: String, fragment: ChooseFragment) {
+        fun uploadImage(capturedImage: Bitmap, logged_user: String, fragment: ChooseFragment) {
 
             // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
-            val byteArrayOutputStream = ByteArrayOutputStream()
+            val bitmapBA = ByteArrayOutputStream()
 
             // Compressione bitmap
-            bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+            capturedImage.compress(Bitmap.CompressFormat.JPEG, 100, bitmapBA)
 
-            // Conversione in un formato Base64
-            val bitmap: String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
+            // Leggi i dati dall'InputStream e convertili in una stringa codificata in base64
+            val bitmapEncoded = Base64.encodeToString(bitmapBA.toByteArray(), Base64.DEFAULT)
+
+            Log.d("image", "size: ${bitmapEncoded.length}")
 
             val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
             val currentDateTime = LocalDateTime.now()
@@ -48,11 +54,9 @@ class UploadUtils {
             val location = fragment.getLastKnownLocation()
 
             val jsonObject = JSONObject()
-            var bitmaps = JSONArray()
-            bitmaps.put(0, bitmap) // Foto singola
 
             jsonObject.put("name", name)
-            jsonObject.put("bitmaps", bitmaps)
+            jsonObject.put("image", bitmapEncoded)
             jsonObject.put("username", logged_user)
             jsonObject.put("lat", location?.latitude)
             jsonObject.put("lon", location?.longitude)
@@ -113,11 +117,47 @@ class UploadUtils {
             queue.add(sendImageRequest)
         }
 
-        fun showNearestPhotos(n: Int, fragment: ChooseFragment) {
+        fun showNearestPhotos(num_photos: Int, actualPos: Location, fragment: ChooseFragment) {
 
-            fragment.startActivityForResult(Intent(fragment.requireContext(), getLocationActivity::class.java), 777)
-            fragment.getLastKnownLocation()
+            val url : String = fragment.resources.getString(R.string.base_url)+"/nearest"
+            val jsonObject = JSONObject()
+            jsonObject.put("actual_lat", actualPos.latitude)
+            jsonObject.put("actual_lon", actualPos.longitude)
+            jsonObject.put("num_photos", num_photos)
 
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+            val sendImageRequest = object : JsonObjectRequest(
+
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        var receivedImagesString = response.getString("images")
+                        Log.d("image", "size: ${receivedImagesString.length}")
+//                        receivedImagesString=receivedImagesString.subSequence(1, receivedImagesString.length-1).toString()
+
+                        Log.d("image", receivedImagesString)
+                        val imageBytes = Base64.decode(receivedImagesString, Base64.DEFAULT)
+                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+//                        Log.d("image", bitmap.toString())
+                        fragment.setBitmap(bitmap)
+                    } else {
+                        Toast.makeText(
+                            fragment.requireActivity(),
+                            "Error during location retrieval...",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(sendImageRequest)
         }
     }
 }

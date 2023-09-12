@@ -5,8 +5,11 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
+import android.media.Image
+import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +28,7 @@ class ChooseFragment : Fragment() {
     private lateinit var loggedUser : String
     private lateinit var selected_collection: File
     private var last_known_location : Location? = null
+    private lateinit var imageView: ImageView
 
     fun getLoggedUser() : String {
         return this.loggedUser
@@ -50,6 +54,7 @@ class ChooseFragment : Fragment() {
         val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
         val shareButton = view.findViewById<ImageView>(R.id.shareButton)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
+        imageView = view.findViewById(R.id.imageReceived)
 
         welcomeText.text = "${welcomeText.text} $loggedUser!"
 
@@ -60,7 +65,10 @@ class ChooseFragment : Fragment() {
 
         // Opens dialog with user's friends
         shareButton.setOnClickListener {
-            FragmentUtils.getFriends(loggedUser, this)
+//            FragmentUtils.getFriends(loggedUser, this)
+            val intent = Intent(requireContext(), getLocationActivity::class.java)
+            startActivityForResult(intent, 777)
+
         }
 
         // Uploads a collection
@@ -112,6 +120,10 @@ class ChooseFragment : Fragment() {
         return this.last_known_location
     }
 
+    fun setBitmap(bitmap: Bitmap) {
+        this.imageView.setImageBitmap(bitmap)
+    }
+
     /*
     * 111 -> Requested capture from camIcon
     * 222 -> Requested capture for the creation of a new collection
@@ -141,6 +153,7 @@ class ChooseFragment : Fragment() {
             startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
         } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
+            UploadUtils.showNearestPhotos(1, this.last_known_location!!, this)
         }
     }
 }
