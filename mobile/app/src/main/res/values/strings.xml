@@ -14,4 +14,5 @@
     <string name="PickMediaActivity">PickMediaActivity</string>
     <string name="GetLocationActivity"/>
     <string name="switchLoginRegister"/>
+    <string name="ShowImagesActivity"/>
 </resources>

@@ -9,6 +9,8 @@ import androidx.fragment.app.FragmentTransaction
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.example.locsnap.fragments.ChooseFragment
+import org.json.JSONArray
 import org.json.JSONObject
 
 class FragmentUtils {
@@ -25,7 +27,7 @@ class FragmentUtils {
         /**
          * Returns user's friends
          */
-        fun getFriends(loggedUser: String, fragment: Fragment) {
+        fun getFriends(loggedUser: String, fragment: ChooseFragment) {
             val url = "${fragment.resources.getString(R.string.base_url)}/get_friends"
             val queue = Volley.newRequestQueue(fragment.requireContext())
             friends.clear()
@@ -39,20 +41,15 @@ class FragmentUtils {
                 json,
                 { response ->
                     if (response.getString("status").equals("200")) {
-                        val friendsJson = JSONObject(response.getString("friends"))
-
-                        for (key in friendsJson.keys())
-                            friends.add(friendsJson.get(key).toString())
-
+                        val friendsJson = JSONArray(response.getString("friends"))
+                        for (i in 0 until friendsJson.length()) {
+                            friends.add(friendsJson.getString(i))
+                        }
                         val dialog = Builder(fragment.requireContext())
                         dialog.setTitle("Who do you want to send your images to?")
                             .setItems(friends.toTypedArray()
                             ) { _, which ->
-
-                                val intent = Intent(fragment.requireContext(), PickMediaActivity::class.java)
-                                intent.putExtra("receiver", friends.get(which))
-                                intent.putExtra("shared_by", loggedUser) // Actual user is sharing
-                                fragment.requireContext().startActivity(intent)
+                                FileManagerUtils.showExistingCollections(fragment, "tag", friends[which])
                             }.create().show()
                     }
                 }, {}

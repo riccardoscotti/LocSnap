@@ -54,6 +54,7 @@ class ChooseFragment : Fragment() {
         val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
         val shareButton = view.findViewById<ImageView>(R.id.shareButton)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
+        val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
         imageView = view.findViewById(R.id.imageReceived)
 
         welcomeText.text = "${welcomeText.text} $loggedUser!"
@@ -65,15 +66,18 @@ class ChooseFragment : Fragment() {
 
         // Opens dialog with user's friends
         shareButton.setOnClickListener {
-//            FragmentUtils.getFriends(loggedUser, this)
+            FragmentUtils.getFriends(loggedUser, this)
+        }
+
+        // Opens dialog with user's friends
+        nearbyButton.setOnClickListener {
             val intent = Intent(requireContext(), getLocationActivity::class.java)
             startActivityForResult(intent, 777)
-
         }
 
         // Uploads a collection
         uploadButton.setOnClickListener {
-            FileManagerUtils.showExistingCollections(this)
+            FileManagerUtils.showExistingCollections(this, "upload")
         }
 
         addUserIcon.setOnClickListener {
@@ -153,7 +157,7 @@ class ChooseFragment : Fragment() {
             startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
         } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
-            UploadUtils.showNearestPhotos(1, this.last_known_location!!, this)
+            UploadUtils.showNearestPhotos(2, this.last_known_location!!, this)
         }
     }
 }

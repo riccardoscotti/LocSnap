@@ -24,7 +24,7 @@ class FileManagerUtils {
             val collection = File(fragment
                 .requireContext()
                 .getExternalFilesDir(null),
-                "collection_${fragment.requireContext().getExternalFilesDir(null)?.listFiles()?.size}.jpg")
+                "collection_${fragment.requireContext().getExternalFilesDir(null)?.listFiles()?.size}.bin")
 
             this.saved_collections.put(collection.absolutePath, location)
             this.addImageToCollection(collection, capturedPhoto, fragment)
@@ -47,7 +47,13 @@ class FileManagerUtils {
             }
         }
 
-        fun showExistingCollections(fragment: ChooseFragment) {
+        /**
+        * Popups a dialog showing existing collections previously created by user.
+        * @param indicates what actions the method will do after user clicks an item on the dialog.
+         * "tag" adds the selected friend to the collection's tags.
+         * "upload" uploads the collection to the database
+        * */
+        fun showExistingCollections(fragment: ChooseFragment, action: String, friend: String = "") {
 
             var savedFileNames = mutableListOf<String>()
             for(key in this.saved_collections.keys) {
@@ -58,9 +64,15 @@ class FileManagerUtils {
             builder.setTitle("Select the collection you want to upload")
                 .setItems(savedFileNames.toTypedArray(),
                     { dialog, which ->
-                        UploadUtils.uploadCollection(File(this.saved_collections.keys.toTypedArray().get(which)), fragment)
-                    })
-
+                        if (action.equals("tag")) {
+                            UploadUtils.tagFriend(fragment.getLoggedUser(), friend,
+                                File(this.saved_collections.keys.elementAt(which)).name, fragment)
+                        } else if (action.equals("upload")) {
+                            UploadUtils.uploadCollection(
+                                File(this.saved_collections.keys.elementAt(which)), fragment)
+                        }
+                    }
+                )
             builder.create().show()
         }
     }

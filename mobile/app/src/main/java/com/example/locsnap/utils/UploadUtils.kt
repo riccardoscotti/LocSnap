@@ -1,14 +1,10 @@
 package com.example.locsnap
 
-import android.app.AlertDialog
-import android.app.Dialog
+import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.location.Location
-import android.net.Uri
 import android.util.Base64
 import android.util.Log
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.android.volley.toolbox.JsonObjectRequest
@@ -82,7 +78,7 @@ class UploadUtils {
             }
 
             json.put("name", file.name)
-            json.put("bitmaps", bitmaps)
+            json.put("image", bitmaps)
             json.put("username", fragment.getLoggedUser())
             json.put("lat", location?.latitude)
             json.put("lon", location?.longitude)
@@ -132,15 +128,15 @@ class UploadUtils {
                 { response ->
                     if (response.getString("status").equals("200")) {
                         var receivedImagesString = response.getString("images")
-                        Log.d("image", "size: ${receivedImagesString.length}")
-//                        receivedImagesString=receivedImagesString.subSequence(1, receivedImagesString.length-1).toString()
+                        var jsonParsed = JSONArray(receivedImagesString)
+                        var bitmapsReceived = mutableListOf<String>()
+                        for (i in 0 until num_photos) {
+                            bitmapsReceived.add(jsonParsed.getString(i))
+                        }
+                        val intent = Intent(fragment.requireContext(), showImagesActivity::class.java)
+                        intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
+                        fragment.startActivity(intent)
 
-                        Log.d("image", receivedImagesString)
-                        val imageBytes = Base64.decode(receivedImagesString, Base64.DEFAULT)
-                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-
-//                        Log.d("image", bitmap.toString())
-                        fragment.setBitmap(bitmap)
                     } else {
                         Toast.makeText(
                             fragment.requireActivity(),
@@ -158,6 +154,36 @@ class UploadUtils {
                 }
             }
             queue.add(sendImageRequest)
+        }
+
+        fun tagFriend(logged_user: String, friend: String, collection_name: String, fragment: ChooseFragment) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/tag_friend"
+            val jsonObject = JSONObject()
+            jsonObject.put("logged_user", logged_user)
+            jsonObject.put("friend", friend)
+            jsonObject.put("collection_name", collection_name)
+
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+            val tagFriendRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        Toast.makeText(fragment.requireActivity(), "${friend} tagged successfully!", Toast.LENGTH_SHORT).show()
+                    } else if (response.getString("status").equals("304")) {
+                        Toast.makeText(fragment.requireActivity(), "You must upload the collection first!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(fragment.requireActivity(),"Error during tag process...",Toast.LENGTH_SHORT).show()
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(tagFriendRequest)
         }
     }
 }
