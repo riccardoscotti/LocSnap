@@ -133,11 +133,19 @@ class UploadUtils {
                 Method.POST, url, jsonObject,
                 { response ->
                     if (response.getString("status").equals("200")) {
-                        var receivedImagesString = response.getString("images")
-                        var jsonParsed = JSONArray(receivedImagesString)
+                        val receivedImagesString = response.getString("images")
+                        val realNumPhotos = response.getInt("length")
+                        val jsonParsed = JSONArray(receivedImagesString)
                         var bitmapsReceived = mutableListOf<String>()
-                        for (i in 0 until num_photos) {
+                        for (i in 0 until realNumPhotos) {
                             bitmapsReceived.add(jsonParsed.getString(i))
+                        }
+                        if (num_photos > realNumPhotos) {
+                            Toast.makeText(
+                                fragment.requireContext(),
+                                "Insufficient number of photos uploaded! Only ${realNumPhotos} will be shown.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                         val intent = Intent(fragment.requireContext(), showImagesActivity::class.java)
                         intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
@@ -146,7 +154,7 @@ class UploadUtils {
                     } else {
                         Toast.makeText(
                             fragment.requireActivity(),
-                            "Error during location retrieval...",
+                            "Unable to locate nearby photos!",
                             Toast.LENGTH_SHORT
                         ).show()
                     }

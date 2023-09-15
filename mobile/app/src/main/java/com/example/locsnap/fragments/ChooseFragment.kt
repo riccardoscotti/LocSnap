@@ -181,7 +181,7 @@ class ChooseFragment : Fragment() {
             startActivityForResult(intent, 111)
         } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
-            UploadUtils.showNearestPhotos(3, this.last_known_location!!, this)
+            UploadUtils.showNearestPhotos(8, this.last_known_location!!, this)
         }
     }
 }
