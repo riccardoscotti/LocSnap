@@ -29,10 +29,12 @@ class UploadUtils {
          * @param bitmap The bitmap that needs to be sent to backend.
          * @param queue The requests queue containing them
          */
-        fun uploadImage(capturedImage: Bitmap, logged_user: String, fragment: ChooseFragment) {
+        fun uploadImage(capturedImage: Bitmap, logged_user: String, fragment: ChooseFragment, taggedFriend: String? = "") {
 
             // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
             val bitmapBA = ByteArrayOutputStream()
+
+            Toast.makeText(fragment.requireActivity(), "Amico: ${taggedFriend}", Toast.LENGTH_SHORT)
 
             // Compressione bitmap
             capturedImage.compress(Bitmap.CompressFormat.JPEG, 100, bitmapBA)
@@ -48,16 +50,24 @@ class UploadUtils {
             val formattedDateTime = currentDateTime.format(formatter)
             val name: String = "IMG_" + formattedDateTime
             val location = fragment.getLastKnownLocation()
+            var bitmaps = JSONArray()
+            bitmaps.put(bitmapEncoded)
 
             val jsonObject = JSONObject()
 
             jsonObject.put("name", name)
-            jsonObject.put("image", bitmapEncoded)
+            jsonObject.put("image", bitmaps)
             jsonObject.put("username", logged_user)
             jsonObject.put("lat", location?.latitude)
             jsonObject.put("lon", location?.longitude)
-            jsonObject.put("tagged_people", JSONArray()) // Inizializzo sempre vuoto
             jsonObject.put("lenght", 1) // Foto singola
+
+            if (taggedFriend != "") {
+                jsonObject.put("tagged_people", JSONArray().put(taggedFriend))
+            }
+
+            else
+                jsonObject.put("tagged_people", JSONArray())
 
             upload(url, jsonObject, fragment)
         }
@@ -82,7 +92,7 @@ class UploadUtils {
             json.put("username", fragment.getLoggedUser())
             json.put("lat", location?.latitude)
             json.put("lon", location?.longitude)
-            json.put("tagged_people", JSONArray()) // Inizializzo sempre vuoto
+            json.put("tagged_people", JSONArray())
             json.put("lenght", bitmaps.length())
 
             upload(url, json, fragment)

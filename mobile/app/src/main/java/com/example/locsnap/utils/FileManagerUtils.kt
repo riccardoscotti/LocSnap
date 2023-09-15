@@ -13,7 +13,6 @@ import java.io.FileWriter
 
 class FileManagerUtils {
     companion object {
-
         private var saved_collections: HashMap<String, Location?> = HashMap()
 
         fun getCollections() : HashMap<String, Location?> {
@@ -53,9 +52,12 @@ class FileManagerUtils {
          * "tag" adds the selected friend to the collection's tags.
          * "upload" uploads the collection to the database
         * */
-        fun showExistingCollections(fragment: ChooseFragment, action: String, friend: String = "") {
-
+        fun showExistingCollections(fragment: ChooseFragment, action: String, friend: String = "", instantPhoto: Boolean = false) {
             var savedFileNames = mutableListOf<String>()
+
+            if (instantPhoto)
+                savedFileNames.add("Capture a photo right now")
+
             for(key in this.saved_collections.keys) {
                 savedFileNames.add(File(key).name)
             }
@@ -65,8 +67,12 @@ class FileManagerUtils {
                 .setItems(savedFileNames.toTypedArray(),
                     { dialog, which ->
                         if (action.equals("tag")) {
-                            UploadUtils.tagFriend(fragment.getLoggedUser(), friend,
-                                File(this.saved_collections.keys.elementAt(which)).name, fragment)
+                            if (which.equals(0)) {
+                                fragment.openCamera(friend)
+                            } else {
+                                UploadUtils.tagFriend(fragment.getLoggedUser(), friend,
+                                    File(this.saved_collections.keys.elementAt(which-1)).name, fragment)
+                            }
                         } else if (action.equals("upload")) {
                             UploadUtils.uploadCollection(
                                 File(this.saved_collections.keys.elementAt(which)), fragment)

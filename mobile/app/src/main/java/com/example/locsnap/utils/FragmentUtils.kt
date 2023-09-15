@@ -49,7 +49,7 @@ class FragmentUtils {
                         dialog.setTitle("Who do you want to send your images to?")
                             .setItems(friends.toTypedArray()
                             ) { _, which ->
-                                FileManagerUtils.showExistingCollections(fragment, "tag", friends[which])
+                                FileManagerUtils.showExistingCollections(fragment, "tag", friends[which], true)
                             }.create().show()
                     }
                 }, {}

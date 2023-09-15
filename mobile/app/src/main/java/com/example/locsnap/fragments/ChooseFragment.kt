@@ -5,8 +5,6 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
-import android.media.Image
-import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -19,7 +17,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.locsnap.*
+import com.example.locsnap.utils.ImagesAdapter
+import com.example.locsnap.utils.SingleCollectionInListAdapter
 import java.io.File
 
 
@@ -55,13 +57,20 @@ class ChooseFragment : Fragment() {
         val shareButton = view.findViewById<ImageView>(R.id.shareButton)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
         val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
-        imageView = view.findViewById(R.id.imageReceived)
+
+        val names = mutableListOf<String>()
+        names.add("Collezione1.bin")
+        names.add("Collezione2.bin")
+        names.add("Collezione3.bin")
+
+//        val recyclerView = view.findViewById<RecyclerView>(R.id.listPhotosRecycler)
+//        recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
+//        recyclerView.adapter = SingleCollectionInListAdapter(names)
 
         welcomeText.text = "${welcomeText.text} $loggedUser!"
 
         camIcon.setOnClickListener {
-            val intent = Intent(requireContext(), getLocationActivity::class.java)
-            startActivityForResult(intent, 555)
+            this.openCamera()
         }
 
         // Opens dialog with user's friends
@@ -120,12 +129,17 @@ class ChooseFragment : Fragment() {
         }
     }
 
-    fun getLastKnownLocation() : Location? {
-        return this.last_known_location
+    fun openCamera(taggedFriend: String = "") {
+        val intent = Intent(requireContext(), getLocationActivity::class.java)
+
+        if (taggedFriend != "") {
+            intent.putExtra("tagged_friend", taggedFriend)
+        }
+        startActivityForResult(intent, 555)
     }
 
-    fun setBitmap(bitmap: Bitmap) {
-        this.imageView.setImageBitmap(bitmap)
+    fun getLastKnownLocation() : Location? {
+        return this.last_known_location
     }
 
     /*
@@ -142,6 +156,10 @@ class ChooseFragment : Fragment() {
         // Retrieves captured photo
         if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
+            val taggedFriend = data.extras!!.get("tagged_friend") as String?
+            if (taggedFriend != null) {
+                UploadUtils.uploadImage(capturedImage, loggedUser, this, taggedFriend.toString())
+            }
             UploadUtils.uploadImage(capturedImage, loggedUser, this)
         } else if (requestCode == 222 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
@@ -154,10 +172,16 @@ class ChooseFragment : Fragment() {
             startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
         } else if(requestCode == 555 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
-            startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
+            val taggedFriend = data.extras!!.get("tagged_friend") as String?
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
+            if (taggedFriend != null)
+                intent.putExtra("tagged_friend", taggedFriend)
+
+            startActivityForResult(intent, 111)
         } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
-            UploadUtils.showNearestPhotos(2, this.last_known_location!!, this)
+            UploadUtils.showNearestPhotos(3, this.last_known_location!!, this)
         }
     }
 }
