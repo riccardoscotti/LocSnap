@@ -63,9 +63,9 @@ class ChooseFragment : Fragment() {
         names.add("Collezione2.bin")
         names.add("Collezione3.bin")
 
-//        val recyclerView = view.findViewById<RecyclerView>(R.id.listPhotosRecycler)
-//        recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
-//        recyclerView.adapter = SingleCollectionInListAdapter(names)
+        val recyclerView = view.findViewById<RecyclerView>(R.id.listPhotosRecycler)
+        recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
+        recyclerView.adapter = SingleCollectionInListAdapter(names)
 
         welcomeText.text = "${welcomeText.text} $loggedUser!"
 

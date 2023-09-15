@@ -1,12 +1,17 @@
-<LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent"
-              xmlns:android="http://schemas.android.com/apk/res/android">
-    <TextView
-            android:text=""
-            android:layout_width="298dp"
-            android:layout_height="40dp" android:id="@+id/singleCollectionName" android:layout_weight="0"/>
+<LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content" android:paddingVertical="4dp">
 
+    <TextView
+            android:text="tmp"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp" android:id="@+id/singleCollectionName"
+            android:paddingVertical="5dp" android:textSize="20dp"/>
     <ImageView
-            android:layout_width="57dp"
-            android:layout_height="40dp" app:srcCompat="@drawable/share" android:id="@+id/shareButton2"
-            android:layout_weight="0"/>
+            android:layout_width="30dp"
+            android:layout_marginStart="10dp"
+            android:layout_height="40dp" tools:srcCompat="@drawable/share" android:id="@+id/singleShare"
+            />
+
 </LinearLayout>

@@ -34,8 +34,6 @@ class UploadUtils {
             // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
             val bitmapBA = ByteArrayOutputStream()
 
-            Toast.makeText(fragment.requireActivity(), "Amico: ${taggedFriend}", Toast.LENGTH_SHORT)
-
             // Compressione bitmap
             capturedImage.compress(Bitmap.CompressFormat.JPEG, 100, bitmapBA)
 
@@ -60,13 +58,11 @@ class UploadUtils {
             jsonObject.put("username", logged_user)
             jsonObject.put("lat", location?.latitude)
             jsonObject.put("lon", location?.longitude)
-            jsonObject.put("lenght", 1) // Foto singola
+            jsonObject.put("lenght", 1)
 
             if (taggedFriend != "") {
                 jsonObject.put("tagged_people", JSONArray().put(taggedFriend))
-            }
-
-            else
+            } else
                 jsonObject.put("tagged_people", JSONArray())
 
             upload(url, jsonObject, fragment)
