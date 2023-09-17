@@ -15,4 +15,5 @@
     <string name="GetLocationActivity"/>
     <string name="switchLoginRegister"/>
     <string name="ShowImagesActivity"/>
+    <string name="LoadingActivity"/>
 </resources>

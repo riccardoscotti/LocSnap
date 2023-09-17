@@ -33,17 +33,12 @@
         </activity>
 
         <activity
-                android:name="com.example.locsnap.PickMediaActivity"
-                android:label="@string/PickMediaActivity" />
-
-        <activity
                 android:name="com.example.locsnap.showImagesActivity"
                 android:label="@string/ShowImagesActivity" />
         <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts"/>
 
-        <activity
-                android:name="com.example.locsnap.getLocationActivity"
-                android:label="@string/GetLocationActivity" />
+        <service android:name="com.example.locsnap.activities.getLocationService"/>
+
         <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts"/>
     </application>
 

@@ -2,35 +2,43 @@ package com.example.locsnap.fragments
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.locsnap.*
-import com.example.locsnap.utils.ImagesAdapter
+import com.example.locsnap.activities.getLocationService
 import com.example.locsnap.utils.SingleCollectionInListAdapter
 import java.io.File
 
-
 class ChooseFragment : Fragment() {
-
     private lateinit var loggedUser : String
     private lateinit var selected_collection: File
     private var last_known_location : Location? = null
-    private lateinit var imageView: ImageView
+    private val thisInstance = this
+    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            last_known_location = intent.extras!!.get("location") as Location
+
+            if (intent.extras!!.getString("action").equals("nearby"))
+                UploadUtils.showNearestPhotos(8, last_known_location!!, thisInstance)
+
+            else if (intent.extras!!.getString("action").equals("camera"))
+                startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
+        }
+    }
 
     fun getLoggedUser() : String {
         return this.loggedUser
@@ -80,8 +88,9 @@ class ChooseFragment : Fragment() {
 
         // Opens dialog with user's friends
         nearbyButton.setOnClickListener {
-            val intent = Intent(requireContext(), getLocationActivity::class.java)
-            startActivityForResult(intent, 777)
+            val getloc = Intent(this.requireActivity(), getLocationService::class.java)
+            getloc.putExtra("action", "nearby")
+            this.requireActivity().startService(getloc)
         }
 
         // Uploads a collection
@@ -99,7 +108,6 @@ class ChooseFragment : Fragment() {
                 FragmentUtils.addFriend(this.loggedUser, friendText.text.toString(), this)
                 dialog.dismiss()
             }
-
             dialog.show()
         }
 
@@ -117,8 +125,7 @@ class ChooseFragment : Fragment() {
                 ) { dialog, which ->
                     when (which) {
                         0 -> {
-                            val intent = Intent(requireContext(), getLocationActivity::class.java)
-                            startActivityForResult(intent, 444)
+                            this.openCamera()
                         }
                         else -> {
                             this.selected_collection = File(filepaths.toTypedArray().get(which-1))
@@ -130,16 +137,23 @@ class ChooseFragment : Fragment() {
     }
 
     fun openCamera(taggedFriend: String = "") {
-        val intent = Intent(requireContext(), getLocationActivity::class.java)
+        val cameraIntent = Intent(this.requireActivity(), getLocationService::class.java)
+        cameraIntent.putExtra("action", "camera")
 
         if (taggedFriend != "") {
-            intent.putExtra("tagged_friend", taggedFriend)
+            cameraIntent.putExtra("tagged_friend", taggedFriend)
         }
-        startActivityForResult(intent, 555)
+
+        this.requireActivity().startService(cameraIntent)
     }
 
     fun getLastKnownLocation() : Location? {
         return this.last_known_location
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requireActivity().registerReceiver(receiver, IntentFilter("locationFilter"))
     }
 
     /*
@@ -169,19 +183,17 @@ class ChooseFragment : Fragment() {
             FileManagerUtils.addImageToCollection(this.selected_collection, capturedImage, this)
         } else if(requestCode == 444 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
-            startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
+//            startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
         } else if(requestCode == 555 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
             val taggedFriend = data.extras!!.get("tagged_friend") as String?
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-
             if (taggedFriend != null)
                 intent.putExtra("tagged_friend", taggedFriend)
-
             startActivityForResult(intent, 111)
         } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
-            this.last_known_location = data?.extras!!.get("gps_location") as Location
-            UploadUtils.showNearestPhotos(8, this.last_known_location!!, this)
+//            this.last_known_location = data?.extras!!.get("gps_location") as Location
+//            UploadUtils.showNearestPhotos(8, this.last_known_location!!, this)
         }
     }
 }

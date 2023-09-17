@@ -134,22 +134,25 @@ class UploadUtils {
                 { response ->
                     if (response.getString("status").equals("200")) {
                         val receivedImagesString = response.getString("images")
-                        val realNumPhotos = response.getInt("length")
                         val jsonParsed = JSONArray(receivedImagesString)
+                        val jsonLength = jsonParsed.length()
                         var bitmapsReceived = mutableListOf<String>()
-                        for (i in 0 until realNumPhotos) {
+                        for (i in 0 until jsonLength) {
                             bitmapsReceived.add(jsonParsed.getString(i))
                         }
-                        if (num_photos > realNumPhotos) {
+                        if (num_photos > jsonLength) {
                             Toast.makeText(
                                 fragment.requireContext(),
-                                "Insufficient number of photos uploaded! Only ${realNumPhotos} will be shown.",
+                                "Insufficient number of photos uploaded! Only ${jsonLength} will be shown.",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
                         val intent = Intent(fragment.requireContext(), showImagesActivity::class.java)
                         intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
                         fragment.startActivity(intent)
+//                        val intent = Intent(fragment.requireContext(), LoadingActivity::class.java)
+//                        intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
+//                        fragment.startActivity(intent)
 
                     } else {
                         Toast.makeText(

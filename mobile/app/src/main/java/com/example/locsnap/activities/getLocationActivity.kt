@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Bundle
+import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -16,6 +18,11 @@ import com.google.android.gms.tasks.OnTokenCanceledListener
 
 class getLocationActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onCreate(savedInstanceState, persistentState)
+        moveTaskToBack(true)
+    }
 
     override fun onStart() {
         super.onStart()

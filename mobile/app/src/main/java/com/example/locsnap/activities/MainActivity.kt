@@ -1,7 +1,9 @@
 package com.example.locsnap
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -14,14 +16,12 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.my_activity_main)
 
-        // Popup per autorizzare l'uso della camera
-        if(ContextCompat.checkSelfPermission(this.baseContext, android.Manifest.permission.CAMERA) !=
-            PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.ACCESS_FINE_LOCATION),
-                1);
-        }
+        val permissions = arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION)
+
+        ActivityCompat.requestPermissions(this, permissions, 1);
 
         val fragmentTransaction: FragmentTransaction = this.supportFragmentManager.beginTransaction()
         fragmentTransaction.addToBackStack("LocSnap") // It allows to go back to previous screen
