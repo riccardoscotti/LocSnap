@@ -6,7 +6,7 @@
                                                    android:layout_height="match_parent"
                                                    android:id="@+id/fragment_choose"
                                                    android:name="com.example.ChooseFragment"
->
+                                                   android:background="#012E53">
     <ImageView
             android:layout_width="110dp"
             android:layout_height="110dp" app:srcCompat="@drawable/locsnap_icon" android:id="@+id/locsnap_icon"
@@ -22,7 +22,7 @@
             app:layout_constraintTop_toBottomOf="@+id/locsnap_icon"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/locsnap_icon"
             app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"
-            android:fontFamily="@font/roboto_medium"/>
+            android:fontFamily="@font/roboto_medium" android:textColor="#FFFFFF"/>
 
     <TextView
             android:text="Signed in as  "
@@ -32,7 +32,7 @@
             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.022" android:textAlignment="viewStart"
-            app:layout_constraintHorizontal_bias="0.157"/>
+            app:layout_constraintHorizontal_bias="0.157" android:textColor="#FFFFFF"/>
     <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp" app:srcCompat="@drawable/plus"

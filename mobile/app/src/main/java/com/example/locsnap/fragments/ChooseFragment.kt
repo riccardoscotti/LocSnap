@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,12 +22,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.locsnap.*
 import com.example.locsnap.activities.getLocationService
 import com.example.locsnap.utils.SingleCollectionInListAdapter
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 class ChooseFragment : Fragment() {
     private lateinit var loggedUser : String
     private lateinit var selected_collection: File
+    private var retrievedCollections = mutableListOf<String>()
     private var last_known_location : Location? = null
+    private lateinit var recyclerView: RecyclerView
     private val thisInstance = this
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -40,18 +45,37 @@ class ChooseFragment : Fragment() {
         }
     }
 
+    fun setCollections(retrievedCollections: MutableList<String>) {
+        this.retrievedCollections = retrievedCollections
+
+        recyclerView = requireView().findViewById<RecyclerView>(R.id.listPhotosRecycler)
+        recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
+        recyclerView.adapter = SingleCollectionInListAdapter(this.retrievedCollections.toTypedArray())
+    }
+
     fun getLoggedUser() : String {
         return this.loggedUser
+    }
+
+    fun refresh() {
+        this.requireActivity().getSupportFragmentManager().beginTransaction().detach(this).commitNow()
+        this.requireActivity().getSupportFragmentManager().beginTransaction().attach(this).commitNow()
+        UploadUtils.reloadUpdatedCollections(this.loggedUser, this)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val args = this.arguments
+        loggedUser = args?.getString("loggedUsername").toString()
+
+        UploadUtils.reloadUpdatedCollections(this.loggedUser, this)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-        val args = this.arguments
-        loggedUser = args?.getString("loggedUsername").toString()
-
         return inflater.inflate(R.layout.fragment_choose, container, false)
     }
 
@@ -65,15 +89,6 @@ class ChooseFragment : Fragment() {
         val shareButton = view.findViewById<ImageView>(R.id.shareButton)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
         val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
-
-        val names = mutableListOf<String>()
-        names.add("Collezione1.bin")
-        names.add("Collezione2.bin")
-        names.add("Collezione3.bin")
-
-        val recyclerView = view.findViewById<RecyclerView>(R.id.listPhotosRecycler)
-        recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
-        recyclerView.adapter = SingleCollectionInListAdapter(names)
 
         welcomeText.text = "${welcomeText.text} $loggedUser!"
 
@@ -167,7 +182,6 @@ class ChooseFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        // Retrieves captured photo
         if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
             val taggedFriend = data.extras!!.get("tagged_friend") as String?
@@ -191,9 +205,6 @@ class ChooseFragment : Fragment() {
             if (taggedFriend != null)
                 intent.putExtra("tagged_friend", taggedFriend)
             startActivityForResult(intent, 111)
-        } else if(requestCode == 777 && resultCode == Activity.RESULT_OK) {
-//            this.last_known_location = data?.extras!!.get("gps_location") as Location
-//            UploadUtils.showNearestPhotos(8, this.last_known_location!!, this)
         }
     }
 }

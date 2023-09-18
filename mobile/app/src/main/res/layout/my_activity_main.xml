@@ -8,10 +8,10 @@
 
     <androidx.appcompat.widget.Toolbar
             android:id="@+id/my_toolbar"
-            android:layout_width="0dp"
+            android:layout_width="6dp"
             android:background="?attr/colorPrimary"
             android:popupTheme="@style/Theme.LocSnap.PopupOverlay"
-            android:layout_height="?attr/actionBarSize" app:layout_constraintEnd_toEndOf="parent"
+            android:layout_height="wrap_content" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"/>
 
 </FrameLayout>

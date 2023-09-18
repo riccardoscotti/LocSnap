@@ -42,7 +42,6 @@ class UserAuthenticate {
                     bundle.putString("loggedUsername", username)
                     val chooseFragment = ChooseFragment()
                     chooseFragment.arguments = bundle
-
                     FragmentUtils.TransactFragment(fragment, chooseFragment)
 
                 } else if (response.getString("status").equals("401")) {

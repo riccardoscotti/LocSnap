@@ -5,7 +5,8 @@
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent"
                                                    android:id="@+id/fragment_login"
-                                                   android:name="com.example.LoginFragment">
+                                                   android:name="com.example.LoginFragment"
+                                                   android:background="#012E53">
     <Button
             android:text="Sign in"
             android:layout_width="210dp"
@@ -23,7 +24,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintHorizontal_bias="0.166" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.251" android:textColor="#198BEB"/>
+            app:layout_constraintVertical_bias="0.251" android:textColor="#50AEFD"/>
     <TextView
             android:text="Enter your username:"
             android:layout_width="wrap_content"
@@ -31,7 +32,7 @@
             app:layout_constraintStart_toStartOf="@+id/textView" android:layout_marginStart="4dp"
             app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.38"
-            app:layout_constraintHorizontal_bias="0.0" android:textColor="#23ABE6"/>
+            app:layout_constraintHorizontal_bias="0.0" android:textColor="#3DC1FA"/>
     <TextView
             android:text="Enter your password:"
             android:layout_width="wrap_content"
@@ -39,7 +40,7 @@
             app:layout_constraintStart_toStartOf="@+id/textView"
             android:layout_marginStart="4dp" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintHorizontal_bias="0.0" android:textColor="#23ABE6"/>
+            app:layout_constraintHorizontal_bias="0.0" android:textColor="#FF3DC1FA"/>
     <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -76,7 +77,7 @@
             app:layout_constraintTop_toBottomOf="@+id/locsnap_icon"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/locsnap_icon"
             app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"
-            android:fontFamily="@font/roboto_medium"/>
+            android:fontFamily="@font/roboto_medium" android:textColor="#FFFFFF"/>
     <com.google.android.material.switchmaterial.SwitchMaterial
             android:text="Already registered?"
             android:layout_width="wrap_content"
@@ -84,5 +85,5 @@
             app:layout_constraintStart_toStartOf="@+id/loginButton"
             app:layout_constraintEnd_toEndOf="@+id/loginButton" app:layout_constraintTop_toBottomOf="@+id/loginButton"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.050000012"
-            android:textColor="#198BEB" android:checked="true"/>
+            android:textColor="#FF3DC1FA" android:checked="true"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

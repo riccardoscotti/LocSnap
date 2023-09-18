@@ -1,6 +1,7 @@
 package com.example.locsnap.utils
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -9,8 +10,9 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.example.locsnap.R
+import okhttp3.internal.toHexString
 
-class SingleCollectionInListAdapter(private val collection_names: MutableList<String>) :
+class SingleCollectionInListAdapter(private val collection_names: Array<String>) :
     RecyclerView.Adapter<SingleCollectionInListAdapter.MyViewHolder>() {
 
     class MyViewHolder(val ll: LinearLayout) : RecyclerView.ViewHolder(ll)
@@ -27,8 +29,8 @@ class SingleCollectionInListAdapter(private val collection_names: MutableList<St
         collName.text = "${collection_names.get(position)}"
 
         val shareView = holder.ll.findViewById<ImageView>(R.id.singleShare)
+        collName.setTextColor(Color.parseColor("#FFFFFF"))
         shareView.setImageResource(R.drawable.share)
     }
-
     override fun getItemCount() = collection_names.size
 }

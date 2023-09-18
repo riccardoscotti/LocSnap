@@ -3,7 +3,7 @@
                                                    xmlns:app="http://schemas.android.com/apk/res-auto"
                                                    xmlns:tools="http://schemas.android.com/tools"
                                                    android:layout_width="match_parent"
-                                                   android:layout_height="match_parent">
+                                                   android:layout_height="match_parent" android:background="#012E53">
     <TextView
             android:text="Sign up"
             android:layout_width="153dp"
@@ -123,5 +123,5 @@
             app:layout_constraintTop_toBottomOf="@+id/locsnap_icon"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="@+id/locsnap_icon"
             app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"
-            android:fontFamily="@font/roboto_medium"/>
+            android:fontFamily="@font/roboto_medium" android:textColor="#FFFFFF"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

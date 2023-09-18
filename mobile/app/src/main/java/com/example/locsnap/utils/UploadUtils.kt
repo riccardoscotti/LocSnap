@@ -94,7 +94,7 @@ class UploadUtils {
             upload(url, json, fragment)
         }
 
-        fun upload(url: String, jsonObject: JSONObject, fragment: Fragment) {
+        fun upload(url: String, jsonObject: JSONObject, fragment: ChooseFragment) {
 
             // Creazione coda per le richieste Volley
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
@@ -103,8 +103,12 @@ class UploadUtils {
 
                 Method.POST, url, jsonObject,
                 { response ->
-                    if (response.getString("status").equals("200"))
-                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT).show()
+                    if (response.getString("status").equals("200")) {
+                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT)
+                            .show()
+                        fragment.refresh()
+
+                    }
                     else
                         Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
                 },
@@ -150,9 +154,6 @@ class UploadUtils {
                         val intent = Intent(fragment.requireContext(), showImagesActivity::class.java)
                         intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
                         fragment.startActivity(intent)
-//                        val intent = Intent(fragment.requireContext(), LoadingActivity::class.java)
-//                        intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
-//                        fragment.startActivity(intent)
 
                     } else {
                         Toast.makeText(
@@ -201,6 +202,37 @@ class UploadUtils {
                 }
             }
             queue.add(tagFriendRequest)
+        }
+
+        fun reloadUpdatedCollections(logged_user: String, fragment: ChooseFragment) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/retrievecollections"
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            val jsonObject = JSONObject()
+            jsonObject.put("logged_user", logged_user)
+
+            val retrieveRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        val jsonColl = response.getJSONArray("retrievedCollections")
+                        val retrievedCollections = mutableListOf<String>()
+
+                        for (i in 0 until jsonColl.length())
+                            retrievedCollections.add(jsonColl.getString(i))
+
+                        fragment.setCollections(retrievedCollections)
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(retrieveRequest)
         }
     }
 }
