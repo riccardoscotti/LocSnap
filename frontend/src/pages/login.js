@@ -8,22 +8,25 @@ import sha256 from 'js-sha256';
 const base_url = "http://localhost:8080"
 
 
-function handleLogin(usr, psw) {
+// function handleLogin(usr, psw) {
 
-    axios.post(`${base_url}/login`, {username: usr, password: sha256(psw)})
-    .then((response) => {
-        if(response.status === 200) {
-            alert("Successful login!")
-            return <Navigate to='/dashboard' />
-        }
-    })
-    .catch((error) => {
-        if(error.response.status === 401) {
-            alert("Error during login phase!")
-        }
-    });
+//     axios.post(`${base_url}/login`, {username: usr, password: sha256(psw)})
+//     .then((response) => {
+//         if(response.status === 200) {
+//             alert("Successful login!")
+//             return <Navigate to='/dashboard' />
+//         }
+//     })
+//     .catch((error) => {
+//         if(error.response.status === 401) {
+//             alert("Error during login phase!")
+//         }
+//     });
+// }
+
+const handleLogin = (usr, psw) => {
+    
 }
-
 
 const Logo = () => {
     return (
