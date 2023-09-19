@@ -19,7 +19,7 @@
 .collection-prevs {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: start;
     margin-left: 30px;
 }
 
@@ -29,4 +29,5 @@
     width: 100px;
     height: 100px;
     object-fit: cover;
+    margin-right: 20px;
 }
