@@ -17,12 +17,10 @@ function Dashboard() {
         <h1 className='title'>My collections</h1>
         <input type='text' className='search-collection'/>
         <CollectionCard title={'Gita in montagna'} place={'Madonna di Campiglio'} prevs={collections} />
-      </div>
-      <div className="map">
-        <MapContainer center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        </MapContainer>
-      </div>
+      </div> 
+      <MapContainer id='map-container' center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      </MapContainer>
     </div>
   );
 }
