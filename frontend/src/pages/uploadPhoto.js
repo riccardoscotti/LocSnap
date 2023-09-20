@@ -21,7 +21,7 @@ function UploadPhoto() {
         </div>
 
         <div id="LeafletMap">
-            <MapContainer center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
+            <MapContainer id="mapContainer" center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             </MapContainer>
       </div>
