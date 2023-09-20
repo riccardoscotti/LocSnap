@@ -16,10 +16,9 @@ export default function App() {
     <React.StrictMode>
       <BrowserRouter>
         <Routes>
-          {/* <Route path='/' element={<HomeScreen />} />
-          <Route path='/login' element={<Login />} /> */}
-          <Route path='/' element={<Layout />}>
+          <Route path='/' element={<Layout />} >
             <Route path='/dashboard' element={<Dashboard />} />
+            <Route path='/login' element={<Login/>} />
           </Route>
         </Routes>
       </BrowserRouter>
