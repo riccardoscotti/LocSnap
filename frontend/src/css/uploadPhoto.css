@@ -17,38 +17,50 @@
     border: 1px solid #000;
     background: #D9D9D9;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-    width: 40vw;
+    width: 35vw;
     height: 60vh;
 }
 
  #inner-rectangle {
+    overflow: hidden;
+    width: 28vw;
+    height: 45vh;
+    margin-left: 3.5vw;
+    margin-top: 3.5vw;
     border-radius: 10px;
     background: rgba(0, 0, 0, 0.10);
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
 #inner-text {
-    color: rgba(86, 81, 81, 0.60);
+    margin-top: 12vh;
+    color: rgba(0, 0, 0, 0.292);
     text-align: center;
     font-family: Inter;
-    font-size: 24px;
+    font-size: 2.5vh;
     font-style: normal;
     font-weight: 500;
     line-height: normal;
 }
 
-/* #chooseFileBtn {
-    border-radius: 10px;
-    border: 2px solid #4F4F4F;
+#chooseFileBtn {
+    margin-left: 8vw;
+    margin-top: 4vh;
+    border-radius: 2vh;
+    border: .3vh solid #4F4F4F;
     background: #A9A9A9;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
+#chooseFileBtn:hover {
+    background-color: rgba(255,255,255,0);
+    cursor: pointer;
+}
+
 #chooseFileText {
-    color: #FFF;
+    color: #ffffffb7;
     font-family: Inter;
-    font-size: 27px;
+    font-size: 3vh;
     font-style: normal;
-    font-weight: 700;
     line-height: normal;
-} */
+}

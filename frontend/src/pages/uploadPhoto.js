@@ -7,8 +7,8 @@ function UploadPhoto() {
   return (
 
     <div id='uploadContent'>
-        <div id ="outer-rectangle">
-            <div id ="inner-rectangle">
+        <div id="outer-rectangle">
+            <div id="inner-rectangle">
                 <h1 id="inner-text">
                     Drag here your media or click the button below to select from your files...
                 </h1>
