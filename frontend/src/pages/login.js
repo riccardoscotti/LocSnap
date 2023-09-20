@@ -1,4 +1,4 @@
-import './login.css'
+import '../css/login.css'
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom'
 import locsnapLogo from '../locsnap_icon.png'

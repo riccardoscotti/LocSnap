@@ -1,0 +1,76 @@
+#uploadContent {
+    position: relative;
+    height: 500px;
+    width: 500px;
+}
+
+#LeafletMap {
+    position: absolute;
+    left: 220%;
+    top: 30%;
+}
+
+#outer-rectangle {
+    position: relative;
+    left: 25%;
+    top: 40%;
+    width: 500px;
+    height: 550px;
+    flex-shrink: 0;
+    border-radius: 20px;
+    border: 1px solid #000;
+    background: #D9D9D9;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+#inner-rectangle {
+    position: relative;
+    left: 10%;
+    top: 8%;
+    width: 400px;
+    height: 430px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.10);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+#inner-text {
+    position: absolute;
+    left: 11%;
+    top: 15%;
+    width: 300px;
+    height: 150px;
+    color: rgba(86, 81, 81, 0.60);
+    text-align: center;
+    font-family: Inter;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+#chooseFileBtn {
+    position: relative;
+    left: 11%;
+    top: 65%;
+    width: 270px;
+    height: 65px;
+    border-radius: 10px;
+    border: 2px solid #4F4F4F;
+    background: #A9A9A9;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+#chooseFileText {
+    position: absolute;
+    left: 10%;
+    top: -15%;
+    width: 214px;
+    height: 43px;
+    color: #FFF;
+    font-family: Inter;
+    font-size: 27px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+}
