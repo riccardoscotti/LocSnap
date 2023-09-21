@@ -27,6 +27,7 @@ function UploadPhoto() {
                         style={{display: 'none'}}
                         ref={inputRef}
                         type="file"
+                        accept=".png, .jpg, .zip"
                         onChange={handleFileChange}
                     />
                     <button id="chooseFileBtn" onClick={() => {inputRef.current.click()}}>
