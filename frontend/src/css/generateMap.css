@@ -1,0 +1,27 @@
+#dropdown-basic-button {
+    border-radius: .75vh;
+    width: 12vw;
+    height: 8vh;
+    margin-left: 5vw;
+    margin-top: 3vh;
+    background: #FFF;
+    font-size: 2.25vh;
+    font-weight: bold;
+}
+
+#backgroundItems {
+    background-color: #FFF;
+    width: 16vw;
+    height: 30vh;
+    border-radius: 1.5vh;
+    margin-left: 3vw;
+    margin-top: 8vh;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.dropdown-item {
+    margin-top: 4.5vh;
+    font-size: 2.75vh;
+}
