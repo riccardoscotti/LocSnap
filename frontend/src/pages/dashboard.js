@@ -1,15 +1,64 @@
 import '../css/dashboard.css';
 import CollectionCard from '../components/collectionCard';
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, useMapEvents, TileLayer } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect } from 'react';
+import markerIcon from '../marker-icon.png'
+import * as L from "leaflet";
 
 function Dashboard() {
+  
+  // const [initialPosition, setInitialPosition] = useState([0, 0]);
+  // const [selectedPosition, setSelectedPosition] = useState([0, 0]);
+
+  // useEffect(() => {
+  //   navigator.geolocation.getCurrentPosition(position => {
+  //       const { latitude, longitude } = position.coords;
+  //       setInitialPosition([latitude, longitude]);
+
+  //   });
+  //   }, []
+  // );
+
+  // const Markers = () => {
+
+  //   const map = useMapEvents({
+  //       click(e) {                                
+  //           setSelectedPosition([
+  //               e.latlng.lat,
+  //               e.latlng.lng
+  //           ]);                
+  //       },            
+  //   })
+  //   return (
+  //       selectedPosition ? 
+  //           <Marker           
+  //           key={selectedPosition[0]}
+  //           position={selectedPosition}
+  //           interactive={false} 
+  //           >
+  //             <Popup>My Location</Popup>
+  //           </Marker>
+  //       : null
+  //   )   
+  // }
+  
   const bolognaCoords = [44.494887, 11.3426163]
   const collections = [
-  'https://tourismmedia.italia.it/is/image/mitur/20210305163928-shutterstock-172796825?wid=1080&hei=660&fit=constrain,1&fmt=webp',
-  'https://www.offerte-vacanza.com/informazioni/wp-content/uploads/2021/09/lago-di-braies-800x445.jpg', 
-  'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
-]
+    'https://tourismmedia.italia.it/is/image/mitur/20210305163928-shutterstock-172796825?wid=1080&hei=660&fit=constrain,1&fmt=webp',
+    'https://www.offerte-vacanza.com/informazioni/wp-content/uploads/2021/09/lago-di-braies-800x445.jpg', 
+    'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
+  ];
+
+  const mIcon = new L.Icon({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIcon,
+    iconSize: [45, 48],
+    shadowSize: [50, 64],
+    iconAnchor: [22, 94],
+    shadowAnchor: [4, 62],
+    popupAnchor: [-3, -76],
+  })
 
   return (
     <div className='main-content'>
@@ -20,9 +69,12 @@ function Dashboard() {
       </div> 
       <MapContainer id='map-container' center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {/* <Markers/> */}
+        <Marker position={[44.494887, 11.3426163]} icon={mIcon}>
+          
+        </Marker>
       </MapContainer>
     </div>
   );
 }
-
 export default Dashboard;
