@@ -234,5 +234,29 @@ class UploadUtils {
             }
             queue.add(retrieveRequest)
         }
+
+        fun deleteCollection(logged_user: String, collection_name: String, fragment: ChooseFragment) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/deletecollection"
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            val jsonObject = JSONObject()
+            jsonObject.put("logged_user", logged_user)
+            jsonObject.put("collection_name", collection_name)
+
+            val deleteRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                {
+                    fragment.refresh()
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(deleteRequest)
+        }
     }
 }

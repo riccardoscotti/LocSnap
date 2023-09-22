@@ -24,15 +24,6 @@
             app:layout_constraintEnd_toEndOf="@+id/locsnap_icon" app:layout_constraintVertical_bias="0.0"
             android:fontFamily="@font/roboto_medium" android:textColor="#FFFFFF"/>
 
-    <TextView
-            android:text="Signed in as  "
-            android:textSize="20sp"
-            android:layout_width="290dp"
-            android:layout_height="26dp" android:id="@+id/welcomeText"
-            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.022" android:textAlignment="viewStart"
-            app:layout_constraintHorizontal_bias="0.157" android:textColor="#FFFFFF"/>
     <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp" app:srcCompat="@drawable/plus"
@@ -78,12 +69,6 @@
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.864"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.951"/>
-    <ImageView
-            android:layout_width="60dp"
-            android:layout_height="60dp" app:srcCompat="@drawable/share" android:id="@+id/shareButton"
-            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintHorizontal_bias="0.951" app:layout_constraintVertical_bias="0.74"/>
     <androidx.recyclerview.widget.RecyclerView
             android:layout_width="298dp"
             android:layout_height="250dp"
@@ -91,4 +76,19 @@
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_bias="0.163" app:layout_constraintVertical_bias="0.828"
             android:id="@+id/listPhotosRecycler"/>
+    <ImageView
+            android:layout_width="61dp"
+            android:layout_height="54dp" app:srcCompat="@drawable/circle"
+            app:layout_constraintStart_toStartOf="parent" android:id="@+id/circleView"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_bias="0.028" app:layout_constraintHorizontal_bias="0.045"/>
+    <TextView
+            android:layout_width="30dp"
+            android:layout_height="50dp" android:id="@+id/initialUserLetter"
+            app:layout_constraintEnd_toEndOf="@+id/circleView" app:layout_constraintStart_toStartOf="@+id/circleView"
+            app:layout_constraintTop_toTopOf="@+id/circleView"
+            app:layout_constraintBottom_toBottomOf="@+id/circleView" android:textFontWeight="600"
+            android:textSize="34sp" android:textAlignment="center" app:layout_constraintVertical_bias="1.0"
+            app:layout_constraintHorizontal_bias="0.483"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

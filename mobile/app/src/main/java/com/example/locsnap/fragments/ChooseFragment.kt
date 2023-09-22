@@ -50,7 +50,7 @@ class ChooseFragment : Fragment() {
 
         recyclerView = requireView().findViewById<RecyclerView>(R.id.listPhotosRecycler)
         recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
-        recyclerView.adapter = SingleCollectionInListAdapter(this.retrievedCollections.toTypedArray())
+        recyclerView.adapter = SingleCollectionInListAdapter(this.retrievedCollections.toTypedArray(), this)
     }
 
     fun getLoggedUser() : String {
@@ -82,23 +82,17 @@ class ChooseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val welcomeText = view.findViewById<TextView>(R.id.welcomeText)
+        val initialUserLetter = view.findViewById<TextView>(R.id.initialUserLetter)
         val uploadButton = view.findViewById<Button>(R.id.uploadButton)
         val camIcon = view.findViewById<ImageView>(R.id.camIcon)
         val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
-        val shareButton = view.findViewById<ImageView>(R.id.shareButton)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
         val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
 
-        welcomeText.text = "${welcomeText.text} $loggedUser!"
+        initialUserLetter.text = this.loggedUser.get(0).uppercase()
 
         camIcon.setOnClickListener {
             this.openCamera()
-        }
-
-        // Opens dialog with user's friends
-        shareButton.setOnClickListener {
-            FragmentUtils.getFriends(loggedUser, this)
         }
 
         // Opens dialog with user's friends

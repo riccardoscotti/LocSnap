@@ -27,7 +27,7 @@ class FragmentUtils {
         /**
          * Returns user's friends
          */
-        fun getFriends(loggedUser: String, fragment: ChooseFragment) {
+        fun getFriends(loggedUser: String, fragment: ChooseFragment, command: String="", collection_name: String="") {
             val url = "${fragment.resources.getString(R.string.base_url)}/get_friends"
             val queue = Volley.newRequestQueue(fragment.requireContext())
             friends.clear()
@@ -45,13 +45,18 @@ class FragmentUtils {
                         for (i in 0 until friendsJson.length()) {
                             friends.add(friendsJson.getString(i))
                         }
-                        val dialog = Builder(fragment.requireContext())
-                        dialog.setTitle("Who do you want to send your images to?")
-                            .setItems(friends.toTypedArray()
-                            ) { _, which ->
-                                FileManagerUtils.showExistingCollections(fragment, "tag", friends[which], true)
-                            }.create().show()
-                    }
+                            val dialog = Builder(fragment.requireContext())
+                            dialog.setTitle("Who do you want to send your images to?")
+                                .setItems(friends.toTypedArray()
+                                ) { _, which ->
+                                    if (command.equals("tag")) {
+                                        UploadUtils.tagFriend(loggedUser, friends[which], collection_name, fragment)
+                                    } else {
+                                        FileManagerUtils.showExistingCollections(fragment, "tag", friends[which], true)
+                                    }
+                                }
+                            .create().show()
+                        }
                 }, {}
             )
 
