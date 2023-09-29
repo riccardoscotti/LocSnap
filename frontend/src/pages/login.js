@@ -1,32 +1,28 @@
 import '../css/login.css'
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import locsnapLogo from '../locsnap_icon.png'
 import axios from "axios";
 import sha256 from 'js-sha256';
 
 const base_url = "http://localhost:8080"
 
+const handleLogin = (usr, psw, navigate) => {
 
-// function handleLogin(usr, psw) {
-
-//     axios.post(`${base_url}/login`, {username: usr, password: sha256(psw)})
-//     .then((response) => {
-//         if(response.status === 200) {
-//             alert("Successful login!")
-//             return <Navigate to='/dashboard' />
-//         }
-//     })
-//     .catch((error) => {
-//         if(error.response.status === 401) {
-//             alert("Error during login phase!")
-//         }
-//     });
-// }
-
-const handleLogin = (usr, psw) => {
-    
+    axios.post(`${base_url}/login`, {username: usr, password: sha256(psw)})
+    .then((response) => {
+        if(response.status === 200) {
+            navigate('/dashboard')
+        }
+    })
+    .catch((error) => {
+        if(error.response.status === 401) {
+            alert("Error during login phase!")
+        }
+    });
 }
+
+
 
 const Logo = () => {
     return (
@@ -42,10 +38,11 @@ const Logo = () => {
 const LoginForm = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+    const navigate = useNavigate();
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        handleLogin(username, password)
+        handleLogin(username, password, navigate)
     }
     
     return (
@@ -70,11 +67,11 @@ const LoginForm = () => {
 }
 
 const Login = () => {
+
     return (
         <div className="login">
             <Logo />
             <LoginForm />
-            {/* Chiamata a loginForm() */}
             <p id='footer'>New to LocSnap? <span>Sign up</span></p>
         </div>
     )

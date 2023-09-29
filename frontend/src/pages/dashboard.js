@@ -8,41 +8,6 @@ import * as L from "leaflet";
 
 function Dashboard() {
   
-  // const [initialPosition, setInitialPosition] = useState([0, 0]);
-  // const [selectedPosition, setSelectedPosition] = useState([0, 0]);
-
-  // useEffect(() => {
-  //   navigator.geolocation.getCurrentPosition(position => {
-  //       const { latitude, longitude } = position.coords;
-  //       setInitialPosition([latitude, longitude]);
-
-  //   });
-  //   }, []
-  // );
-
-  // const Markers = () => {
-
-  //   const map = useMapEvents({
-  //       click(e) {                                
-  //           setSelectedPosition([
-  //               e.latlng.lat,
-  //               e.latlng.lng
-  //           ]);                
-  //       },            
-  //   })
-  //   return (
-  //       selectedPosition ? 
-  //           <Marker           
-  //           key={selectedPosition[0]}
-  //           position={selectedPosition}
-  //           interactive={false} 
-  //           >
-  //             <Popup>My Location</Popup>
-  //           </Marker>
-  //       : null
-  //   )   
-  // }
-  
   const bolognaCoords = [44.494887, 11.3426163]
   const collections = [
     'https://tourismmedia.italia.it/is/image/mitur/20210305163928-shutterstock-172796825?wid=1080&hei=660&fit=constrain,1&fmt=webp',
