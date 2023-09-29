@@ -7,16 +7,16 @@ services:
     container_name: backend
 
   database:
-    image: postgis/postgis
+    image: christianp01/cas_db_login:latest
     environment:
       - PGDATA=/var/lib/pgsql/data
-    volumes:
-      - ./postgres_data:/var/lib/pgsql/data
+      - POSTGRES_PASSWORD=contextawarerc
     network_mode: host
-    container_name: postgis
+    container_name: db_login
 
   frontend:
     image: christianp01/cas_frontend:latest
     network_mode: host
     working_dir: /frontend
+    command: npm start
     container_name: frontend
