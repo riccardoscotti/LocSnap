@@ -2,11 +2,13 @@ import './navbar.css'
 import logo_path from '../locsnap_icon.png'
 import { useNavigate } from 'react-router-dom'
 import {useRef} from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 const Navbar = () => {
 
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null);
+    const [user, setUser] = useLocalStorage("user", null)
 
     const uploadFilter = event => {
         const fileObj = event.target.files && event.target.files[0];
@@ -14,6 +16,11 @@ const Navbar = () => {
             return;
         
         event.target.value = null;
+    }
+
+    const logout = () => {
+        setUser(null);
+        navigate('/login')
     }
 
     return (
@@ -33,6 +40,7 @@ const Navbar = () => {
                 <div className='nav-button' onClick={() => navigate('/upload')}>Upload photo</div>
                 <div className='nav-button' onClick={() => uploadFilterRef.current.click()}>Upload geo filter</div>
                 <div className='nav-button' onClick={() => navigate('/generate')}>Generate map</div>
+                <div className='nav-button' onClick={() => logout()} id='logout'>Logout</div>
             </div>
         </nav>
     )

@@ -5,14 +5,16 @@ import locsnapLogo from '../locsnap_icon.png'
 import axios from "axios";
 import sha256 from 'js-sha256';
 
+import { useLocalStorage } from '../hooks/useLocalStorage';
+
 const base_url = "http://localhost:8080"
 
-const handleLogin = (usr, psw, navigate) => {
-
+const handleLogin = (usr, psw, navigate, setUser) => {
     axios.post(`${base_url}/login`, {username: usr, password: sha256(psw)})
     .then((response) => {
         if(response.status === 200) {
-            navigate('/dashboard')
+            setUser(usr)
+            navigate('/dashboard', {state: {loggedUser: usr}})
         }
     })
     .catch((error) => {
@@ -33,14 +35,14 @@ const Logo = () => {
     )
 }
 
-const LoginForm = () => {
+const LoginForm = ({ setUser }) => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const navigate = useNavigate();
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        handleLogin(username, password, navigate)
+        handleLogin(username, password, navigate, setUser)
     }
     
     return (
@@ -65,11 +67,15 @@ const LoginForm = () => {
 }
 
 const Login = () => {
+    const [user, setUser] = useLocalStorage("user", null)
+    if(user) {
+        return <Navigate to='/dashboard' />
+    }
 
     return (
         <div className="login">
             <Logo />
-            <LoginForm />
+            <LoginForm setUser={setUser} />
             <p id='footer'>New to LocSnap? <span>Sign up</span></p>
         </div>
     )

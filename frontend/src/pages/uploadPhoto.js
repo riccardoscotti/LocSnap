@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import {useRef, useState} from 'react';
 import markerIcon from '../marker-icon.png'
 import * as L from "leaflet";
+import EXIF from 'exif-js'
 
 function UploadPhoto() {
 
@@ -16,7 +17,23 @@ function UploadPhoto() {
         if (!fileObj)
             return;
 
-        // Exif...
+        var fileLat;
+        var fileLon;
+
+        EXIF.getData(fileObj, function(){
+            fileLat = EXIF.getTag(this, "GPSLatitude")
+            fileLon = EXIF.getTag(this, "GPSLongitude")
+
+            setFileMarker({
+                lat: (fileLat[0].numerator/fileLat[0].denominator) +
+                     ((fileLat[1].numerator/fileLat[1].denominator) / 60) +
+                     ((fileLat[2].numerator/fileLat[2].denominator) / 3600),
+    
+                lon: (fileLon[0].numerator/fileLon[0].denominator) +
+                     (fileLon[1].numerator/fileLon[1].denominator) / 60 +
+                     (fileLon[2].numerator/fileLon[2].denominator) / 3600
+            })
+        })
         
         event.target.value = null;
     }
@@ -57,7 +74,9 @@ function UploadPhoto() {
                 <MapContainer id="mapContainer" center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     {
-                        <Marker position={[fileMarker.lat, fileMarker.lon]} icon={mIcon} />
+                        <Marker position={[fileMarker.lat, fileMarker.lon]} icon={mIcon}>
+                            <Popup>Photo taken here.</Popup>
+                        </Marker>
                     }
                 </MapContainer>
             </div>

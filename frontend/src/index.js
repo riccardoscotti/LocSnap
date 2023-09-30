@@ -17,9 +17,11 @@ export default function App() {
     <React.StrictMode>
       <BrowserRouter>
         <Routes>
+          <Route path='/login' element={<Login />} />
+        </Routes>
+        <Routes>
           <Route path='/' element={<Layout />} >
             <Route path='/dashboard' element={<Dashboard />} />
-            <Route path='/login' element={<Login />} />
             <Route path='/upload' element={<UploadPhoto />} />
             <Route path='/generate' element={<GenerateMap />} />
           </Route>
