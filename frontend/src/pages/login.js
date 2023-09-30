@@ -22,8 +22,6 @@ const handleLogin = (usr, psw, navigate) => {
     });
 }
 
-
-
 const Logo = () => {
     return (
         <div class='logo'>

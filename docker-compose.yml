@@ -1,9 +1,12 @@
 version: '3'
 services:
   backend:
-    image: christianp01/cas_backend:latest
+    image: node:latest
     network_mode: host
-    command: npm start
+    volumes:
+      - ./backend:/backend
+    working_dir: /backend
+    command: sh -c 'npm i nodemon; npm install; npm start'
     container_name: backend
 
   database:
@@ -14,10 +17,10 @@ services:
     volumes:
       - ./postgres_data:/var/lib/pgsql/data
     network_mode: host
-    container_name: db_login
+    container_name: postgis
 
   frontend:
-    image: christianp01/cas_frontend:latest
+    image: node:latest
     network_mode: host
     volumes:
      - ./frontend:/frontend
