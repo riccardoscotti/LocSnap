@@ -10,7 +10,7 @@ services:
     container_name: backend
 
   database:
-    image: postgis/postgis
+    image: postgis/postgis:15-3.4
     environment:
       - PGDATA=/var/lib/pgsql/data
       - POSTGRES_PASSWORD=contextawarerc
