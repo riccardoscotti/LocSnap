@@ -63,6 +63,7 @@ const icon = L.icon({
     .then((response) => {
       if(response.status === 200) {
         setCollections(response.data.retrievedCollections)
+        localStorage.setItem("collections", JSON.stringify(response.data.retrievedCollections))
       }
     })
     .catch((error) => {
@@ -108,21 +109,18 @@ const icon = L.icon({
     })
   }
 
-  return collections && (
+  return localStorage.getItem("collections") && (
     <div className='main-content'>
       <div className='collections'>
         <h1 className='title'>My collections</h1>
         <input type='text' className='search-collection'/>
         {
-          collections.map( (id, idx) => 
-            {
-              return (<CollectionCard className='collection' key={id} title={id} place={`Collection index: ${idx}`} prevs={collectionsImages} />)
-            }
-          )
+          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (name) => {
+            return (<CollectionCard className='collection' key={name[0]} title={name[0]} place={`Coords: ${name[1]}`} prevs={collectionsImages} />)
+          })
         }
       </div> 
       <MapContainer id='map-container' center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
-      {/* <GeoJSON data={selectedFile} /> */}
       <GetCoords />
       <UploadGeoJSON />
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

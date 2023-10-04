@@ -9,18 +9,17 @@ import markerIcon from '../marker-icon.png'
 import * as d3 from "d3";
 
 const GenerateMap = () => {
-
   localStorage.removeItem("buttonClicked") // Prevent old session saves
 
-    function showMarkersOfFeature(feature) {
-      console.log(feature.properties.feature_name);
+    function showFeatureMarkers(area) {
+
     }
-  
+
     function featureContainer(json, point) {
-      console.log(json);
         for (let index = 0; index < json.features.length; index++) {
           if (d3.geoContains(json.features[index], point)) {
-            showMarkersOfFeature(json.features[index])
+            console.log(json.features[index].properties.feature_name)
+            showFeatureMarkers(json)
           }
         }
     }

@@ -302,7 +302,7 @@ app.post('/add_friend', async (req, res) => {
 
 app.post('/retrievecollections', async (req, res) => {
     var statusCode;
-    var retrieved_collections = [];
+    var retrieved_collections = {};
 
     const client = new Client({
         user: 'postgres',
@@ -312,14 +312,15 @@ app.post('/retrievecollections', async (req, res) => {
     });
 
     client.connect();
-
-    query = `SELECT collection_name as name FROM collections WHERE author=\'${req.body.logged_user}\';`
+    query = `SELECT ST_X(location) as lat, ST_Y(location) as lng, collection_name as name
+    FROM collections
+    WHERE author=\'${req.body.logged_user}\';`
 
     try {
         const res = await client.query(query);
         if (res.rowCount > 0) {
             res.rows.forEach(collection => {
-                retrieved_collections.push(collection.name)
+                retrieved_collections[collection.name] = [collection.lat, collection.lng]
             })
             statusCode = 200;
         } else {
@@ -332,7 +333,8 @@ app.post('/retrievecollections', async (req, res) => {
 
     res.json({
         status: statusCode,
-        retrievedCollections: retrieved_collections})
+        retrievedCollections: retrieved_collections
+    })
     
 })
 
