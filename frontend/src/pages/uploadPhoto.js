@@ -20,6 +20,8 @@ function UploadPhoto() {
         var fileLat;
         var fileLon;
 
+        console.log(fileObj);
+
         EXIF.getData(fileObj, function(){
             fileLat = EXIF.getTag(this, "GPSLatitude")
             fileLon = EXIF.getTag(this, "GPSLongitude")

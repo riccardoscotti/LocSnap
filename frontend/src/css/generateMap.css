@@ -1,27 +1,34 @@
-#dropdown-basic-button {
+.menuItem {
     border-radius: .75vh;
     width: 12vw;
     height: 8vh;
-    margin-left: 5vw;
-    margin-top: 3vh;
+    margin-left: 1vw;
     background: #FFF;
     font-size: 2.25vh;
     font-weight: bold;
 }
 
-#backgroundItems {
-    background-color: #FFF;
-    width: 16vw;
-    height: 30vh;
-    border-radius: 1.5vh;
-    margin-left: 3vw;
-    margin-top: 8vh;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
+#LeafletMap {
+    width: 100vw;
+    height: 100vh;
 }
 
-.dropdown-item {
-    margin-top: 4.5vh;
-    font-size: 2.75vh;
+#mapContainer {
+    border-radius: 1vw;
+    border: 1px solid #000;
+    margin-left: 1vw;
+    width: 98vw;
+    height: 78vh;
+}
+
+#menuOptions {
+    background-color: #FFF;
+    width: 53vw;
+    height: 10vh;
+    border-radius: 1.5vh;
+    margin-left: 1vw;
+    margin-top: 2vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }

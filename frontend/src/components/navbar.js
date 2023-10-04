@@ -9,13 +9,17 @@ const Navbar = () => {
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null);
     const [user, setUser] = useLocalStorage("user", null)
+    const [geojson, setGeoJSON] = useLocalStorage("geojson", null)
 
     const uploadFilter = event => {
         const fileObj = event.target.files && event.target.files[0];
-        if (!fileObj)
-            return;
+        if (!fileObj) 
+            return 
+        else 
+            setGeoJSON(fileObj)
         
         event.target.value = null;
+        console.log(fileObj)
     }
 
     const logout = () => {

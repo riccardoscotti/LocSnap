@@ -24,7 +24,7 @@ app.post('/imageupload', async (req, res) => {
     const lat = req.body.lat
     var statusCode
     const lon = req.body.lon
-    const lenght = req.body.lenght
+    const length = req.body.length
     const tagged_people = req.body.tagged_people
 
     var imagesArray = [];
@@ -41,9 +41,9 @@ app.post('/imageupload', async (req, res) => {
 
     try {
 
-        query = `INSERT INTO collections (collection_name, author, images, location, tagged_people, lenght)
+        query = `INSERT INTO collections (collection_name, author, images, location, tagged_people, length)
         VALUES (\'${name}\', \'${author}\', \'{${imagesArray}}\', 
-        \'${postgisPoint}\', \'{${tags}}\', \'${lenght}\');`
+        \'${postgisPoint}\', \'{${tags}}\', \'${length}\');`
 
         const client = new Client({
             user: 'postgres',
