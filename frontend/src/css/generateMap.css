@@ -8,6 +8,10 @@
     font-weight: bold;
 }
 
+.menuItem:active {
+    color: red;
+}
+
 #LeafletMap2 {
     width: 100vw;
     height: 100vh;

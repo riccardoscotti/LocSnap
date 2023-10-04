@@ -8,12 +8,12 @@ const Navbar = () => {
 
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null);
-    const [user, setUser] = useLocalStorage("user", null)
+    const [, setUser] = useLocalStorage("user", null)
 
     const uploadFilter = event => {
 
         const fileObj = event.target.files[0];
-        var reader = new FileReader();
+        const reader = new FileReader();
 
         reader.onload = function() {
             localStorage.setItem("geojson", reader.result)
