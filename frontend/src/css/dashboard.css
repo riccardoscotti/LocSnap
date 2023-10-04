@@ -6,17 +6,12 @@
     margin-top: 8vh;
 }
 
-.map {
-    width: 35vw;
-    height: 60vh;
-}
-
 #map-container {
     border-radius: 1vw;
     border: 1px solid #000;
     width: 35vw;
     height: 60vh;
-    margin-top: -625vh;
+    margin-top: -590vh;
 }
 
 .title {

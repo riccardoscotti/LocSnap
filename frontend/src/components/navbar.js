@@ -9,17 +9,18 @@ const Navbar = () => {
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null);
     const [user, setUser] = useLocalStorage("user", null)
-    const [geojson, setGeoJSON] = useLocalStorage("geojson", null)
 
     const uploadFilter = event => {
-        const fileObj = event.target.files && event.target.files[0];
-        if (!fileObj) 
-            return 
-        else 
-            setGeoJSON(fileObj)
-        
+
+        const fileObj = event.target.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function() {
+            localStorage.setItem("geojson", reader.result)
+        }
+        reader.readAsText(fileObj)
+
         event.target.value = null;
-        console.log(fileObj)
     }
 
     const logout = () => {
@@ -37,7 +38,7 @@ const Navbar = () => {
                 style={{display: 'none'}}
                 ref={uploadFilterRef}
                 type="file"
-                accept=".geojson" 
+                accept=".geojson, .json" 
                 onChange={uploadFilter}
             />
             <div className='nav-content'>

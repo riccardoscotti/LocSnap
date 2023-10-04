@@ -8,12 +8,12 @@
     font-weight: bold;
 }
 
-#LeafletMap {
+#LeafletMap2 {
     width: 100vw;
     height: 100vh;
 }
 
-#mapContainer {
+#mapContainer2 {
     border-radius: 1vw;
     border: 1px solid #000;
     margin-left: 1vw;
