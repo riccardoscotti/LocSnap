@@ -312,7 +312,7 @@ app.post('/retrievecollections', async (req, res) => {
     });
 
     client.connect();
-    query = `SELECT ST_X(location) as lat, ST_Y(location) as lng, collection_name as name
+    query = `SELECT ST_X(location) as lng, ST_Y(location) as lat, collection_name as name
     FROM collections
     WHERE author=\'${req.body.logged_user}\';`
 

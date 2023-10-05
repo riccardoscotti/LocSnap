@@ -19,8 +19,8 @@ const GenerateMap = () => {
     // User clicked on an area, showing out relative markers
     function showFeatureMarkers(area, map) {
       Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-        if (d3.geoContains(area, [collection[1][0], collection[1][1]])) {
-          var marker = new L.marker([collection[1][1], collection[1][0]], {icon: icon}).addTo(map);
+        if (d3.geoContains(area, [collection[1][1], collection[1][0]])) {
+          var marker = new L.marker([collection[1][0], collection[1][1]], {icon: icon}).addTo(map);
         }
       })
     }
