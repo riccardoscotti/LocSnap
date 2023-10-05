@@ -50,11 +50,12 @@ class UploadUtils {
 
             val jsonObject = JSONObject()
             jsonObject.put("name", name)
-            jsonObject.put("image", image)
+            jsonObject.put("image", JSONArray().put(image))
             jsonObject.put("username", logged_user)
-            jsonObject.put("shared_by", shared_by)
+            jsonObject.put("tagged_people", JSONArray())
             jsonObject.put("lat", location?.latitude)
             jsonObject.put("lon", location?.longitude)
+            jsonObject.put("length", 1)
 
             val sendImageRequest = object : JsonObjectRequest(
 
@@ -78,7 +79,7 @@ class UploadUtils {
 
         fun uploadCollection(file: File, fragment: Fragment) {
 
-            val url = "${fragment.resources.getString(R.string.base_url)}/collectionupload"
+            val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
             val queue = Volley.newRequestQueue(fragment.context)
             val json = JSONObject()
             val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
@@ -91,8 +92,8 @@ class UploadUtils {
             }
 
             json.put("name", file.name)
-            json.put("date", date)
-            json.put("bitmaps", bitmaps)
+            //json.put("date", date)
+            json.put("image", bitmaps)
             json.put("lat", location?.latitude)
             json.put("lon", location?.longitude)
 

@@ -8,18 +8,29 @@ import us from '../us.json'
 import markerIcon from '../marker-icon.png'
 import * as d3 from "d3";
 
+const icon = L.icon({
+  iconUrl: 'https://leafletjs.com/examples/custom-icons/leaf-green.png',
+  iconSize: [38, 95],
+});
+
 const GenerateMap = () => {
   localStorage.removeItem("buttonClicked") // Prevent old session saves
 
-    function showFeatureMarkers(area) {
-
+    // User clicked on an area, showing out relative markers
+    function showFeatureMarkers(area, map) {
+      Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+        if (d3.geoContains(area, [collection[1][0], collection[1][1]])) {
+          var marker = new L.marker([collection[1][1], collection[1][0]], {icon: icon}).addTo(map);
+        }
+      })
     }
 
-    function featureContainer(json, point) {
+    function featureContainer(json, point, map) {
         for (let index = 0; index < json.features.length; index++) {
           if (d3.geoContains(json.features[index], point)) {
-            console.log(json.features[index].properties.feature_name)
-            showFeatureMarkers(json)
+            // console.log(point);
+            // console.log(json.features[index].properties.feature_name)
+            showFeatureMarkers(json.features[index], map)
           }
         }
     }
@@ -32,12 +43,14 @@ const GenerateMap = () => {
     }
 
     function PhotoPerArea() {
+      const map = useMap();
       useMapEvents({
         click(e) {
           if (localStorage.getItem("buttonClicked") == "ppa") {
             featureContainer(
               Object(JSON.parse(localStorage.getItem("geojson"))),
-              [e.latlng.lng, e.latlng.lat]
+              [e.latlng.lng, e.latlng.lat],
+              map
             )
           }
         }

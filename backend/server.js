@@ -41,8 +41,8 @@ app.post('/imageupload', async (req, res) => {
 
     try {
 
-        query = `INSERT INTO collections (collection_name, author, images, location, tagged_people, length)
-        VALUES (\'${name}\', \'${author}\', \'{${imagesArray}}\', 
+        query = `INSERT INTO collections (collection_name, author, location, tagged_people, length)
+        VALUES (\'${name}\', \'${author}\',
         \'${postgisPoint}\', \'{${tags}}\', \'${length}\');`
 
         const client = new Client({
