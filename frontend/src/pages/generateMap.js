@@ -24,134 +24,221 @@ const GenerateMap = () => {
   var heatmap;
   var markerGroup;
 
-    // User clicked on an area, showing out relative markers
-    function showFeatureMarkers(area, map) {
-      markerGroup = L.layerGroup().addTo(map);
-      Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-        if (d3.geoContains(area, [collection[1][1], collection[1][0]])) {
-          var marker = new L.marker([collection[1][0], collection[1][1]], {icon: markerIcon}).addTo(markerGroup);
-          marker.bindPopup(collection[0])
-        }
-      })
-      // console.log(markerGroup);
+  var CPMap = new Map(); // Hashmap for photos taken on each country
+
+  function checkCountry(area, coords) {
+    for (let index = 0; index < area.features.length; index++) {
+      if (d3.geoContains(area.features[index], coords)) {
+        return area.features[index].feature_name
+      }
     }
+  }
+  
+  function ColorMap() {
+    const map = useMap()
+    useMapEvents({
+      click() {
 
-    function featureContainer(json, point, map) {
-        for (let index = 0; index < json.features.length; index++) {
-          if (d3.geoContains(json.features[index], point)) {
-            showFeatureMarkers(json.features[index], map)
-          }
-        }
-    }
+        if (localStorage.getItem("buttonClicked") == "cm") {
+          const json = JSON.parse(localStorage.getItem("geojson"))
 
-    function AddGeoJSON() {
-      const map = useMap();
-      geoJsonLayer = L.geoJSON()
-        .addData(Object(JSON.parse(localStorage.getItem("geojson"))))
-
-      geoJsonLayer.addTo(map);
-    }
-
-    function PhotoPerArea() {
-      const map = useMap();
-      useMapEvents({
-        click(e) {
-          if (localStorage.getItem("buttonClicked") == "ppa") {
-
-            map.eachLayer(function(layer) {
-              if(typeof layer._heat !== "undefined") {
-                  layer.removeFrom(map)
+          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+            for (let index = 0; index < json.features.length; index++) {
+              if (d3.geoContains(json.features[index], [collection[1][1], collection[1][0]])) {
+                var countryName = json.features[index].properties.feature_name;
+                if (CPMap.has(countryName))
+                  CPMap.set(countryName, CPMap.get(countryName) + 1);
+                else 
+                  CPMap.set(countryName, 1);
               }
-            });
+            }
+          })
 
-            geoJsonLayer = L.geoJSON()
-              .addData(Object(JSON.parse(localStorage.getItem("geojson"))))
-              .addTo(map);
+          // Remove heatmap
+          map.eachLayer(function(layer) {
+            if(typeof layer._heat !== "undefined") {
+                layer.removeFrom(map)
+            }
+          });
 
-            featureContainer(
-              Object(JSON.parse(localStorage.getItem("geojson"))),
-              [e.latlng.lng, e.latlng.lat],
-              map
-            );
-            localStorage.removeItem("buttonClicked")
-          }
+          // Remove old geojson
+          map.eachLayer(function(layer) {
+            if(typeof layer.feature !== "undefined") {
+                layer.removeFrom(map)
+            }
+          });
+
+          markerGroup?.removeFrom(map) // Remove markers, if present.
+
+          // Update with new geojson
+          var newgeoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
+            onEachFeature: function (feature, layer) {
+              if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
+                layer.setStyle({
+                  fillColor: '#00FF00',
+                  fillOpacity: '0.1'
+                })
+              } else if (CPMap.get(feature.properties.feature_name) > 0) {
+                
+                layer.setStyle({
+                  fillColor: '#00FF00',
+                  fillOpacity: '0.3'
+                })
+              } else if (CPMap.get(feature.properties.feature_name) >= 5) {
+                layer.setStyle({
+                  fillColor: '#00FF00',
+                  fillOpacity: '0.6'
+                })
+              } else if (CPMap.get(feature.properties.feature_name) >= 10) {
+                layer.setStyle({
+                  fillColor: '#00FF00',
+                  fillOpacity: '0.8'
+                })
+              }
+            }
+          })
+          
+          newgeoJsonLayer.addTo(map);
         }
-      })
-    }
+      }
+    })
+  }
 
-    function Heatmap() {
-      const map = useMap();
-      useMapEvents({
-        click() {
-          if (localStorage.getItem("buttonClicked") == "hm") { // Remove GeoJSON
-            
-            map.eachLayer(function(layer) {
-              if(typeof layer.feature !== "undefined") {
-                  layer.removeFrom(map)
-              }
-            });
+  // User clicked on an area, showing out relative markers
+  function showFeatureMarkers(area, map) {
+    markerGroup = L.layerGroup().addTo(map);
+    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+      
+      if (d3.geoContains(area, [collection[1][1], collection[1][0]])) {
+        var marker = new L.marker([collection[1][0], collection[1][1]], {icon: markerIcon}).addTo(markerGroup);
+        marker.bindPopup(collection[0])
+      }
+    })
+  }
 
-            markerGroup?.removeFrom(map) // Remove all markers, if present.
-
-            heatmap = L.heatLayer([], {
-              radius: 25,
-              minOpacity: .5,
-              blur: 15,
-              gradient: {
-                0.0: 'green',
-                0.5: 'yellow',
-                1.0: 'red'
-              }
-            }).addTo(map);
-
-            Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-              if (d3.geoContains(Object(JSON.parse(localStorage.getItem("geojson"))),
-                  [collection[1][1], collection[1][0]])) {
-                heatmap.addLatLng([collection[1][0], collection[1][1], 100])
-              }
-            });
-
-            localStorage.removeItem("buttonClicked")
-          }
+  function featureContainer(json, point, map) {
+      for (let index = 0; index < json.features.length; index++) {
+        if (d3.geoContains(json.features[index], point)) {
+          showFeatureMarkers(json.features[index], map)
         }
-      })
-    }
+      }
+  }
 
-    const bolognaCoords = [44.494887, 11.3426163]
+  function AddGeoJSON() {
+    const map = useMap();
+    geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
+    
+    geoJsonLayer.addTo(map);
+  }
 
-    return (
-        <div id="LeafletMap2">
-            <div id="menuOptions">
-                <Button className="menuItem">
-                  Choose map type
-                </Button>
-                <Button className="menuItem" onClick={ () => {
-                  localStorage.setItem("buttonClicked", "hm");
-                  alert("Select the map you want to apply the heatmap to");
+  function PhotoPerArea() {
+    const map = useMap();
+    useMapEvents({
+      click(e) {
+        if (localStorage.getItem("buttonClicked") == "ppa") {
+
+          map.eachLayer(function(layer) {
+            if(typeof layer._heat !== "undefined") {
+                layer.removeFrom(map)
+            }
+          });
+
+          geoJsonLayer = L.geoJSON()
+            .addData(Object(JSON.parse(localStorage.getItem("geojson"))))
+            .addTo(map);
+
+          featureContainer(
+            Object(JSON.parse(localStorage.getItem("geojson"))),
+            [e.latlng.lng, e.latlng.lat],
+            map
+          );
+          localStorage.removeItem("buttonClicked")
+        }
+      }
+    })
+  }
+
+  function Heatmap() {
+    const map = useMap();
+    useMapEvents({
+      click() {
+        if (localStorage.getItem("buttonClicked") == "hm") { // Remove GeoJSON
+          
+          map.eachLayer(function(layer) {
+            if(typeof layer.feature !== "undefined") {
+                layer.removeFrom(map)
+            }
+          });
+
+          markerGroup?.removeFrom(map) // Remove all markers, if present.
+
+          heatmap = L.heatLayer([], {
+            radius: 25,
+            minOpacity: .5,
+            blur: 15,
+            gradient: {
+              0.0: 'green',
+              0.3: 'yellow',
+              1.0: 'red'
+            }
+          }).addTo(map);
+
+          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+            if (d3.geoContains(Object(JSON.parse(localStorage.getItem("geojson"))),
+                [collection[1][1], collection[1][0]])) {
+              heatmap.addLatLng([collection[1][0], collection[1][1], 100])
+            }
+          });
+
+          localStorage.removeItem("buttonClicked")
+        }
+      }
+    })
+  }
+
+  const bolognaCoords = [44.494887, 11.3426163]
+
+  return (
+      <div id="LeafletMap2">
+          <div id="menuOptions">
+              <Button className="menuItem">
+                Choose map type
+              </Button>
+              <Button className="menuItem" onClick={ () => {
+                localStorage.setItem("buttonClicked", "hm");
+                alert("Select the map you want to apply the heatmap to");
+              }}>
+                Heatmap
+              </Button>
+              <Button className="menuItem" onClick={
+                () => {
+                  localStorage.setItem("buttonClicked", "ppa")
+                  alert("Select the country you're concerned in");
+                  }}>
+                  Photo per area
+              </Button>
+              <Button className="menuItem" onClick={
+                () => {
+                  localStorage.setItem("buttonClicked", "cm")
+                  alert("Click the map to color it")
                 }}>
-                  Heatmap
-                </Button>
-                <Button className="menuItem" onClick={
-                  () => {
-                    localStorage.setItem("buttonClicked", "ppa")
-                    alert("Select the country you're concerned in");
-                    }}>
-                    Photo per area
-                </Button>
-                <Button className="menuItem">
-                  Cluster
-                </Button>
-            </div>
-            
-            <MapContainer id="mapContainer2" ref={mapRef} center={bolognaCoords} zoom={13} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
-                <AddGeoJSON />
-                <PhotoPerArea />
-                <Heatmap />
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            </MapContainer>
-            
-        </div>
-    )
+                Color Map
+              </Button>
+              <Button className="menuItem">
+                Cluster
+              </Button>
+          </div>
+          
+          <MapContainer id="mapContainer2" ref={mapRef} center={bolognaCoords} zoom={13} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
+              <AddGeoJSON />
+              <PhotoPerArea />
+              <Heatmap />
+              <ColorMap />
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          </MapContainer>
+          
+      </div>
+  )
 }
 
 export default GenerateMap;

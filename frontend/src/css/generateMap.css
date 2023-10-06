@@ -12,25 +12,26 @@
     color: red;
 }
 
-#LeafletMap2 {
+/* #LeafletMap2 {
     width: 100vw;
-    height: 100vh;
-}
+    height: 88vh;
+} */
 
 #mapContainer2 {
     border-radius: 1vw;
     border: 1px solid #000;
     margin-left: 1vw;
+    margin-top: 1vh;
     width: 98vw;
-    height: 78vh;
+    height: 77vh;
 }
 
 #menuOptions {
     background-color: #FFF;
-    width: 53vw;
+    width: 66vw;
     height: 10vh;
     border-radius: 1.5vh;
-    margin-left: 1vw;
+    margin-left: 15vw;
     margin-top: 2vh;
     display: flex;
     flex-direction: row;
