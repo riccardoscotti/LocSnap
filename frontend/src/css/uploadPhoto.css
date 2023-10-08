@@ -56,10 +56,35 @@
 
 #file-metadata {
     margin-left: 1vw;
-    margin-top: 4vh;
+    margin-top: 7vh;
+}
+
+#inner-inner-rectangle {
+    display: flex;
+    flex-direction: row;
+    align-items: space-around;
+    height: 5vh;
+}
+
+#confirm-upload {
+    height: 5vh;
+    width: 7vw;
+    margin-top: 9vh;
+    margin-left: 1.5vw;
+    visibility: hidden;
+    border-radius: 1.5vh;
+    border: .3vh solid #4F4F4F;
+    background: #A9A9A9;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    color: #ffffffb7;
 }
 
 #chooseFileBtn:hover {
+    background-color: rgba(255,255,255,0);
+    cursor: pointer;
+}
+
+#confirm-upload:hover {
     background-color: rgba(255,255,255,0);
     cursor: pointer;
 }

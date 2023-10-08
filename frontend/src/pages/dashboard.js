@@ -1,16 +1,11 @@
 import '../css/dashboard.css';
 import CollectionCard from '../components/collectionCard';
-import { MapContainer, Marker, Popup, useMapEvents, MapConsumer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useEffect } from 'react';
 import axios from "axios";
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import varchi from '../varchi.json'
-import regioni from '../regioniit.json'
-import europe from '../europe.json'
 import * as L from 'leaflet';
 import markerIcon from '../marker-icon.png'
-import * as d3 from "d3";
 
 const base_url = "http://localhost:8080"
 
@@ -26,14 +21,12 @@ const Dashboard = () => {
     popupAnchor: [-3, -76],
 })
 
-  const [user, setUser] = useLocalStorage("user", null)
-
   useEffect(() => {
     retrieveCollections()
   }, []);
 
   const retrieveCollections = () => {
-    axios.post(`${base_url}/retrievecollections`, {logged_user: user})
+    axios.post(`${base_url}/retrievecollections`, {logged_user: localStorage.getItem("user")})
     .then((response) => {
       if(response.status === 200) {
         localStorage.setItem("collections", JSON.stringify(response.data.retrievedCollections))

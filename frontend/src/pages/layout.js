@@ -1,23 +1,19 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 
 import '../css/layout.css';
 const Layout = () => {
-    const [user, setUser] = useLocalStorage("user", null)
-    if(user) {
-        
+    if(localStorage.getItem("user") !== null) {
         return (
             <>
                 <Navbar />
                 <Outlet />
             </> 
         )
+    } else {
+        alert("You must be logged first!")
+        return <Navigate to='/login' />
     }
-
-    alert("You must be logged first!")
-    return <Navigate to='/login' />
-
 }
 
 export default Layout;

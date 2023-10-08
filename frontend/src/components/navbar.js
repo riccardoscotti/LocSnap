@@ -8,7 +8,6 @@ const Navbar = () => {
 
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null);
-    const [, setUser] = useLocalStorage("user", null)
 
     const uploadFilter = event => {
 
@@ -24,7 +23,7 @@ const Navbar = () => {
     }
 
     const logout = () => {
-        setUser(null);
+        localStorage.removeItem("user")
         navigate('/login')
     }
 

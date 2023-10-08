@@ -5,18 +5,57 @@ import {useRef, useState} from 'react';
 import markerIcon from '../marker-icon.png'
 import * as L from "leaflet";
 import EXIF from 'exif-js'
+import axios from "axios";
+
+const base_url = "http://localhost:8080"
 
 function UploadPhoto() {
 
     const inputRef = useRef(null);
     const bolognaCoords = [44.494887, 11.3426163]
     var [fileMarker, setFileMarker] = useState({lat: 0.0, lon: 0.0})
-    var [country, setCountry] = useState(null)
+    var [selectedFile, setSelectedFile] = useState(null)
+
+    // At the moment the only accepted format are .png/.jpg
+    // TODO Allow user to upload .zip files
+    function uploadOnDB() {
+        var reader = new FileReader();
+        
+
+        reader.readAsDataURL(selectedFile);
+        reader.onload = function () {
+            axios.post(`${base_url}/imageupload`, {
+                name: selectedFile.name,
+                image: [reader.result.split(',')[1]],
+                username: localStorage.getItem("user"),
+                lat: fileMarker.lat,
+                lon: fileMarker.lon,
+                length: 1,
+                tagged_people: []
+            })
+            .then((response) => {
+                if(response.status === 200) {
+                    alert("Image uploaded successfully!")
+                }
+                })
+            .catch((error) => {
+                console.log(error);
+                if(error.response.status === 401) {
+                    alert("Error during image uploading...")
+                }
+            });
+        };
+        reader.onerror = function (error) {
+            console.log('Error: ', error);
+        };
+    }
 
     const handleFileChange = event => {
         const fileObj = event.target.files && event.target.files[0];
         if (!fileObj)
             return;
+
+        setSelectedFile(fileObj)
 
         var fileLat;
         var fileLon;
@@ -45,16 +84,15 @@ function UploadPhoto() {
           })
             .then(response => response.json())
             .then(result => {
-                console.log(result);
                 document.getElementById('file-metadata').innerHTML = `
                 Name: ${fileObj.name}<br/>
                 Taken on: ${datetime} <br/>
                 Country: ${result.features[0].properties.city}, ${result.features[0].properties.country}
                 `;
             })
-            .catch(error => setCountry("N/A"));
+            .catch(error => console.log(error));
 
-        
+        document.getElementById("confirm-upload").style.visibility = "visible"
         
         event.target.value = null;
     }
@@ -88,7 +126,12 @@ function UploadPhoto() {
                             Choose file...
                         </h1>
                     </button>
-                    <h3 id="file-metadata" />
+                    <div id="inner-inner-rectangle">
+                        <h3 id="file-metadata"/>
+                        <button id="confirm-upload" onClick={uploadOnDB}>
+                            Confirm
+                        </button>
+                    </div>
                 </div>
             </div>
 
