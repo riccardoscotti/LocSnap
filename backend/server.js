@@ -16,6 +16,69 @@ app.post('/check', (req, res) => {
     res.json({status: 200})
 })
 
+app.post('/clusterize', async (req, res) => {
+
+    var statusCode;
+    var clusters = {}
+    for (let i = 0; i < req.body.num_cluster; i++) {
+        clusters[i] = {};
+        clusters[i].image_names = []
+        clusters[i].coords = []
+    }
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+    client.connect();
+
+    let query = `
+        SELECT ST_ClusterKMeans(location, ${req.body.num_cluster}) OVER() as cid, image_name as image_name
+        FROM images
+        WHERE author=\'${req.body.logged_user}\'
+    `
+    try {
+
+        // Assign each photo to cluster
+        let resQuery = await client.query(query);
+        if (resQuery.rowCount > 0) {
+            resQuery.rows.forEach(cluster => {
+                clusters[cluster.cid].image_names.push(cluster.image_name)
+            })
+        }
+
+        let query2 = `
+            SELECT	ST_ClusterKMeans(location, ${req.body.num_cluster}) OVER() as cid, 
+                    ST_X(ST_Centroid(ST_Collect(ST_SetSRID(location, 4326)))) AS lng,  
+                    ST_Y(ST_Centroid(ST_Collect(ST_SetSRID(location, 4326)))) AS lat
+            FROM images
+            WHERE author=\'${req.body.logged_user}\'
+            GROUP BY location
+            `
+
+        let resQuery2 = await client.query(query2);
+        if (resQuery2.rowCount > 0) {
+            resQuery2.rows.forEach(cluster => {
+                clusters[cluster.cid].coords.push(cluster.lat)
+                clusters[cluster.cid].coords.push(cluster.lng)
+            })
+        }
+                    
+        statusCode = 200;
+        client.end();
+
+    } catch {
+        statusCode = 204;
+        client.end();
+    }
+    res.json({
+        status: statusCode,
+        clusters: clusters
+    })
+})
+
 app.post('/imageupload', async (req, res) => {
 
     const name = req.body.name

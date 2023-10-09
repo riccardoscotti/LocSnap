@@ -88,8 +88,7 @@ function UploadPhoto() {
                 Name: ${fileObj.name}<br/>
                 Taken on: ${datetime} <br/>
                 Country: ${result.features[0].properties.city}, ${result.features[0].properties.country}
-                `;
-            })
+                `;})
             .catch(error => console.log(error));
 
         document.getElementById("confirm-upload").style.visibility = "visible"

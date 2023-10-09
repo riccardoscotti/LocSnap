@@ -6,6 +6,10 @@ import * as L from 'leaflet';
 import * as d3 from "d3";
 import { useState, useRef } from 'react';
 import "leaflet.heat";
+import axios from "axios"
+
+const base_url = "http://localhost:8080"
+
 
 const markerIcon = L.icon({
   iconSize: [25, 41],
@@ -158,6 +162,45 @@ const GenerateMap = () => {
     })
   }
 
+  function Cluster() {
+    const map = useMap()
+    useMapEvents({
+      click() {
+        if (localStorage.getItem("buttonClicked") == "cst") {
+          map.eachLayer(function(layer) {
+            if(typeof layer.feature !== "undefined") {
+                layer.removeFrom(map)
+            }
+          });
+
+          markerGroup?.removeFrom(map) // Remove all markers, if present.
+
+          axios.post(`${base_url}/clusterize`, {
+            logged_user: localStorage.getItem("user"),
+            num_cluster: 3
+          })
+          .then((response) => {
+            if(response.status === 200) {
+              const clusters = response.data.clusters;
+              var markerGroup = L.layerGroup().addTo(map);
+
+              Object.entries(clusters).map( (cluster) => {
+                var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: markerIcon}).addTo(markerGroup);
+                marker.bindPopup(`Photos taken here: ${cluster[1].image_names.length}`)
+              })
+
+            }
+          })
+          .catch((error) => {
+              console.log(error);
+          });
+
+          localStorage.removeItem("buttonClicked")
+        }
+      }
+    })
+  }
+
   function Heatmap() {
     const map = useMap();
     useMapEvents({
@@ -224,7 +267,11 @@ const GenerateMap = () => {
                 }}>
                 Color Map
               </Button>
-              <Button className="menuItem">
+              <Button className="menuItem" onClick={
+                () => {
+                  localStorage.setItem("buttonClicked", "cst")
+                  alert("Click the map to clusterize it")
+                }}>
                 Cluster
               </Button>
           </div>
@@ -234,6 +281,7 @@ const GenerateMap = () => {
               <PhotoPerArea />
               <Heatmap />
               <ColorMap />
+              <Cluster />
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           </MapContainer>
           
