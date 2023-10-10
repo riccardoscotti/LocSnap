@@ -4,9 +4,18 @@ import Button from 'react-bootstrap/Button';
 import { MapContainer, Marker, Popup, useMapEvents, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import * as L from 'leaflet';
 import * as d3 from "d3";
-import { useState, useRef } from 'react';
+import { useState, useRef, createRef } from 'react';
 import "leaflet.heat";
 import axios from "axios"
+import cIcon from "../cluster_icon.png"
+import Slider from '@mui/material/Slider';
+import DialogActions from '@mui/material/DialogActions'; 
+import DialogContent from '@mui/material/DialogContent'; 
+import DialogTitle from '@mui/material/DialogTitle'; 
+import DialogContentText from '@mui/material/DialogContentText'; 
+import Dialog from '@mui/material/Dialog';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 const base_url = "http://localhost:8080"
 
@@ -15,97 +24,104 @@ const markerIcon = L.icon({
   iconSize: [25, 41],
   iconAnchor: [10, 41],
   popupAnchor: [2, -40],
-  // specify the path here
   iconUrl: "https://unpkg.com/leaflet@1.5.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.5.1/dist/images/marker-shadow.png"
 });
 
+const clusterIcon = L.icon({
+  iconUrl: cIcon,
+  iconRetinaUrl: cIcon,
+  iconSize: [40, 40],
+  iconAnchor: [10, 40],
+  popupAnchor: [2, -40],
+});
+
 const GenerateMap = () => {
   localStorage.removeItem("buttonClicked") // Prevent old session saves
-  
-  const mapRef = useRef(null)
+
+  const mapRef = createRef()
+  const [open, setOpen] = useState(false); 
+  const [checked, setChecked] = useState(true);
+
   var geoJsonLayer;
   var heatmap;
   var markerGroup;
-
   var CPMap = new Map(); // Hashmap for photos taken on each country
 
-  function checkCountry(area, coords) {
-    for (let index = 0; index < area.features.length; index++) {
-      if (d3.geoContains(area.features[index], coords)) {
-        return area.features[index].feature_name
-      }
-    }
+  const handleClickOpen = () => { 
+    setOpen(true); 
+  }; 
+  
+  const handleClose = () => { 
+    setOpen(false); 
+  };
+
+  function invertChecked(event) {
+    setChecked(event.target.checked)
   }
   
   function ColorMap() {
-    const map = useMap()
-    useMapEvents({
-      click() {
+    if (localStorage.getItem("buttonClicked") == "cm") {
+      const json = JSON.parse(localStorage.getItem("geojson"))
 
-        if (localStorage.getItem("buttonClicked") == "cm") {
-          const json = JSON.parse(localStorage.getItem("geojson"))
-
-          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-            for (let index = 0; index < json.features.length; index++) {
-              if (d3.geoContains(json.features[index], [collection[1][1], collection[1][0]])) {
-                var countryName = json.features[index].properties.feature_name;
-                if (CPMap.has(countryName))
-                  CPMap.set(countryName, CPMap.get(countryName) + 1);
-                else 
-                  CPMap.set(countryName, 1);
-              }
-            }
-          })
-
-          // Remove heatmap
-          map.eachLayer(function(layer) {
-            if(typeof layer._heat !== "undefined") {
-                layer.removeFrom(map)
-            }
-          });
-
-          // Remove old geojson
-          map.eachLayer(function(layer) {
-            if(typeof layer.feature !== "undefined") {
-                layer.removeFrom(map)
-            }
-          });
-
-          markerGroup?.removeFrom(map) // Remove markers, if present.
-
-          // Update with new geojson
-          var newgeoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
-            onEachFeature: function (feature, layer) {
-              if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
-                layer.setStyle({
-                  fillColor: '#00FF00',
-                  fillOpacity: '0.1'
-                })
-              } else if (CPMap.get(feature.properties.feature_name) > 0) {
-                
-                layer.setStyle({
-                  fillColor: '#00FF00',
-                  fillOpacity: '0.3'
-                })
-              } else if (CPMap.get(feature.properties.feature_name) >= 5) {
-                layer.setStyle({
-                  fillColor: '#00FF00',
-                  fillOpacity: '0.6'
-                })
-              } else if (CPMap.get(feature.properties.feature_name) >= 10) {
-                layer.setStyle({
-                  fillColor: '#00FF00',
-                  fillOpacity: '0.8'
-                })
-              }
-            }
-          })
-          
-          newgeoJsonLayer.addTo(map);
+      Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+        for (let index = 0; index < json.features.length; index++) {
+          if (d3.geoContains(json.features[index], [collection[1][1], collection[1][0]])) {
+            var countryName = json.features[index].properties.feature_name;
+            if (CPMap.has(countryName))
+              CPMap.set(countryName, CPMap.get(countryName) + 1);
+            else 
+              CPMap.set(countryName, 1);
+          }
         }
-      }
-    })
+      })
+
+      // Remove heatmap
+      mapRef.current.eachLayer(function(layer) {
+        if(typeof layer._heat !== "undefined") {
+            layer.removeFrom(mapRef.current)
+        }
+      });
+
+      // Remove old geojson
+      mapRef.current.eachLayer(function(layer) {
+        if(typeof layer.feature !== "undefined") {
+            layer.removeFrom(mapRef.current)
+        }
+      });
+
+      markerGroup?.removeFrom(mapRef.current) // Remove markers, if present.
+
+      // Update with new geojson
+      var newgeoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
+        onEachFeature: function (feature, layer) {
+          if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
+            layer.setStyle({
+              fillColor: '#00FF00',
+              fillOpacity: '0.1'
+            })
+          } else if (CPMap.get(feature.properties.feature_name) > 0) {
+            
+            layer.setStyle({
+              fillColor: '#00FF00',
+              fillOpacity: '0.3'
+            })
+          } else if (CPMap.get(feature.properties.feature_name) >= 5) {
+            layer.setStyle({
+              fillColor: '#00FF00',
+              fillOpacity: '0.6'
+            })
+          } else if (CPMap.get(feature.properties.feature_name) >= 10) {
+            layer.setStyle({
+              fillColor: '#00FF00',
+              fillOpacity: '0.8'
+            })
+          }
+        }
+      })
+      
+      newgeoJsonLayer.addTo(mapRef.current);
+    }
   }
 
   // User clicked on an area, showing out relative markers
@@ -162,94 +178,100 @@ const GenerateMap = () => {
     })
   }
 
+  function confirmCluster() {
+    setOpen(false)
+    Cluster()
+  }
+
   function Cluster() {
-    const map = useMap()
-    useMapEvents({
-      click() {
-        if (localStorage.getItem("buttonClicked") == "cst") {
-          map.eachLayer(function(layer) {
-            if(typeof layer.feature !== "undefined") {
-                layer.removeFrom(map)
-            }
-          });
+    
+    mapRef.current.eachLayer(function(layer) {
+      if( typeof layer.feature !== "undefined" ||
+          typeof layer._layers !== "undefined" ||
+          typeof layer._center !== "undefined") {
+          layer.removeFrom(mapRef.current)
+      }
+    });
 
-          markerGroup?.removeFrom(map) // Remove all markers, if present.
+    console.log(mapRef.current._layers);
+    // markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
 
-          axios.post(`${base_url}/clusterize`, {
-            logged_user: localStorage.getItem("user"),
-            num_cluster: 3
-          })
-          .then((response) => {
-            if(response.status === 200) {
-              const clusters = response.data.clusters;
-              var markerGroup = L.layerGroup().addTo(map);
+    // mapRef.current.addLayer(L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"))
 
-              Object.entries(clusters).map( (cluster) => {
-                var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: markerIcon}).addTo(markerGroup);
-                marker.bindPopup(`Photos taken here: ${cluster[1].image_names.length}`)
-              })
 
-            }
-          })
-          .catch((error) => {
-              console.log(error);
-          });
+    axios.post(`${base_url}/clusterize`, {
+      logged_user: localStorage.getItem("user"),
+      num_cluster: 3
+    })
+    .then((response) => {
+      if(response.status === 200) {
+        const clusters = response.data.clusters;
+        
+        var markerGroup = L.layerGroup().addTo(mapRef.current);
 
-          localStorage.removeItem("buttonClicked")
-        }
+        Object.entries(clusters).map( (cluster) => {
+          var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: clusterIcon}).addTo(markerGroup);
+          marker.bindPopup(`Photos taken here: ${cluster[1].image_names.length}`)
+        })
+
+        localStorage.setItem("clusters", clusters)
+
       }
     })
+    .catch((error) => {
+        console.log(error);
+    });
+
+    
+    localStorage.removeItem("buttonClicked")
   }
 
   function Heatmap() {
-    const map = useMap();
-    useMapEvents({
-      click() {
-        if (localStorage.getItem("buttonClicked") == "hm") { // Remove GeoJSON
-          
-          map.eachLayer(function(layer) {
-            if(typeof layer.feature !== "undefined") {
-                layer.removeFrom(map)
-            }
-          });
-
-          markerGroup?.removeFrom(map) // Remove all markers, if present.
-
-          heatmap = L.heatLayer([], {
-            radius: 25,
-            minOpacity: .5,
-            blur: 15,
-            gradient: {
-              0.0: 'green',
-              0.3: 'yellow',
-              1.0: 'red'
-            }
-          }).addTo(map);
-
-          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-            if (d3.geoContains(Object(JSON.parse(localStorage.getItem("geojson"))),
-                [collection[1][1], collection[1][0]])) {
-              heatmap.addLatLng([collection[1][0], collection[1][1], 100])
-            }
-          });
-
-          localStorage.removeItem("buttonClicked")
+    if (localStorage.getItem("buttonClicked") == "hm") { // Remove GeoJSON
+      
+      mapRef.current.eachLayer(function(layer) {
+        if(typeof layer.feature != "undefined") {
+            layer.removeFrom(mapRef.current)
         }
-      }
-    })
+      });
+
+      markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
+
+      heatmap = L.heatLayer([], {
+        radius: 25,
+        minOpacity: .5,
+        blur: 15,
+        gradient: {
+          0.0: 'green',
+          0.3: 'yellow',
+          1.0: 'red'
+        }
+      }).addTo(mapRef.current);
+
+      Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+        if (d3.geoContains(Object(JSON.parse(localStorage.getItem("geojson"))),
+            [collection[1][1], collection[1][0]])) {
+          heatmap.addLatLng([collection[1][0], collection[1][1], 100])
+        }
+      });
+
+      localStorage.removeItem("buttonClicked")
+    }
   }
 
   const bolognaCoords = [44.494887, 11.3426163]
 
   return (
       <div id="LeafletMap2">
+        
           <div id="menuOptions">
+          
               <Button className="menuItem">
                 Choose map type
               </Button>
               <Button className="menuItem" onClick={ () => {
                 localStorage.setItem("buttonClicked", "hm");
-                alert("Select the map you want to apply the heatmap to");
+                Heatmap()
               }}>
                 Heatmap
               </Button>
@@ -263,14 +285,14 @@ const GenerateMap = () => {
               <Button className="menuItem" onClick={
                 () => {
                   localStorage.setItem("buttonClicked", "cm")
-                  alert("Click the map to color it")
+                  ColorMap()
                 }}>
                 Color Map
               </Button>
               <Button className="menuItem" onClick={
                 () => {
-                  localStorage.setItem("buttonClicked", "cst")
-                  alert("Click the map to clusterize it")
+                  handleClickOpen()
+                  // Cluster()
                 }}>
                 Cluster
               </Button>
@@ -279,12 +301,23 @@ const GenerateMap = () => {
           <MapContainer id="mapContainer2" ref={mapRef} center={bolognaCoords} zoom={13} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
               <AddGeoJSON />
               <PhotoPerArea />
-              <Heatmap />
-              <ColorMap />
-              <Cluster />
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           </MapContainer>
-          
+
+          <Dialog open={open} onClose={handleClose}> 
+            <DialogTitle> 
+              Choose clustering method
+            </DialogTitle>
+            <DialogContent> 
+              <FormControlLabel control={<Checkbox defaultChecked checked={checked} onChange={invertChecked} />}  label="Elbow" />
+              <Slider defaultValue={10} valueLabelDisplay="auto" min={2} max={20} disabled={checked} />
+            </DialogContent> 
+            <DialogActions> 
+              <Button onClick={confirmCluster} color="primary"> 
+              Confirm 
+              </Button>
+            </DialogActions> 
+          </Dialog> 
       </div>
   )
 }

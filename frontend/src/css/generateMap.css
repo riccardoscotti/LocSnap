@@ -12,10 +12,9 @@
     color: red;
 }
 
-/* #LeafletMap2 {
-    width: 100vw;
-    height: 88vh;
-} */
+#elbowSlider {
+    visibility: false;
+}
 
 #mapContainer2 {
     border-radius: 1vw;
