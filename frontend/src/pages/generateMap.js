@@ -83,67 +83,65 @@ const GenerateMap = () => {
   }
   
   function ColorMap() {
-    if (localStorage.getItem("buttonClicked") == "cm") {
-      const json = JSON.parse(localStorage.getItem("geojson"))
+    const json = JSON.parse(localStorage.getItem("geojson"))
 
-      Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-        for (let index = 0; index < json.features.length; index++) {
-          if (d3.geoContains(json.features[index], [collection[1][1], collection[1][0]])) {
-            var countryName = json.features[index].properties.feature_name;
-            if (CPMap.has(countryName))
-              CPMap.set(countryName, CPMap.get(countryName) + 1);
-            else 
-              CPMap.set(countryName, 1);
-          }
+    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+      for (let index = 0; index < json.features.length; index++) {
+        if (d3.geoContains(json.features[index], [collection[1][1], collection[1][0]])) {
+          var countryName = json.features[index].properties.feature_name;
+          if (CPMap.has(countryName))
+            CPMap.set(countryName, CPMap.get(countryName) + 1);
+          else 
+            CPMap.set(countryName, 1);
         }
-      })
+      }
+    })
 
-      // Remove heatmap
-      mapRef.current.eachLayer(function(layer) {
-        if(typeof layer._heat !== "undefined") {
-            layer.removeFrom(mapRef.current)
+    // Remove heatmap
+    mapRef.current.eachLayer(function(layer) {
+      if(typeof layer._heat !== "undefined") {
+          layer.removeFrom(mapRef.current)
+      }
+    });
+
+    // Remove old geojson
+    mapRef.current.eachLayer(function(layer) {
+      if(typeof layer.feature !== "undefined") {
+          layer.removeFrom(mapRef.current)
+      }
+    });
+
+    markerGroup?.removeFrom(mapRef.current) // Remove markers, if present.
+
+    // Update with new geojson
+    var newgeoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
+      onEachFeature: function (feature, layer) {
+        if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
+          layer.setStyle({
+            fillColor: '#00FF00',
+            fillOpacity: '0.1'
+          })
+        } else if (CPMap.get(feature.properties.feature_name) > 0) {
+          
+          layer.setStyle({
+            fillColor: '#00FF00',
+            fillOpacity: '0.3'
+          })
+        } else if (CPMap.get(feature.properties.feature_name) >= 5) {
+          layer.setStyle({
+            fillColor: '#00FF00',
+            fillOpacity: '0.6'
+          })
+        } else if (CPMap.get(feature.properties.feature_name) >= 10) {
+          layer.setStyle({
+            fillColor: '#00FF00',
+            fillOpacity: '0.8'
+          })
         }
-      });
-
-      // Remove old geojson
-      mapRef.current.eachLayer(function(layer) {
-        if(typeof layer.feature !== "undefined") {
-            layer.removeFrom(mapRef.current)
-        }
-      });
-
-      markerGroup?.removeFrom(mapRef.current) // Remove markers, if present.
-
-      // Update with new geojson
-      var newgeoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
-        onEachFeature: function (feature, layer) {
-          if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
-            layer.setStyle({
-              fillColor: '#00FF00',
-              fillOpacity: '0.1'
-            })
-          } else if (CPMap.get(feature.properties.feature_name) > 0) {
-            
-            layer.setStyle({
-              fillColor: '#00FF00',
-              fillOpacity: '0.3'
-            })
-          } else if (CPMap.get(feature.properties.feature_name) >= 5) {
-            layer.setStyle({
-              fillColor: '#00FF00',
-              fillOpacity: '0.6'
-            })
-          } else if (CPMap.get(feature.properties.feature_name) >= 10) {
-            layer.setStyle({
-              fillColor: '#00FF00',
-              fillOpacity: '0.8'
-            })
-          }
-        }
-      })
-      
-      newgeoJsonLayer.addTo(mapRef.current);
-    }
+      }
+    })
+    
+    newgeoJsonLayer.addTo(mapRef.current);
   }
 
   // User clicked on an area, showing out relative markers
@@ -167,10 +165,8 @@ const GenerateMap = () => {
   }
 
   function AddGeoJSON() {
-    if (localStorage.getItem("buttonClicked") == "gj") {
-      geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
-      geoJsonLayer.addTo(mapRef.current);
-    }
+    geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
+    geoJsonLayer.addTo(mapRef.current);
   }
 
   function PhotoPerArea() {
@@ -179,8 +175,6 @@ const GenerateMap = () => {
       useMapEvents({
         click(e) {
           if (localStorage.getItem("geojson")) {
-            
-            if (localStorage.getItem("buttonClicked") == "ppa") {
   
               map.eachLayer(function(layer) {
                 if(typeof layer._heat !== "undefined") {
@@ -198,7 +192,6 @@ const GenerateMap = () => {
                 map
               );
               localStorage.removeItem("buttonClicked")
-            }
           }
         }
       })
@@ -222,13 +215,14 @@ const GenerateMap = () => {
     mapRef.current.eachLayer(function(layer) {
       if( typeof layer.feature !== "undefined" ||
       typeof layer._layers !== "undefined" ||
-      typeof layer._center !== "undefined") {
+      typeof layer._center !== "undefined" ||
+      typeof layer._heat !== "undefined") {
         layer.removeFrom(mapRef.current)
       }
     });
     
     markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present. 
-    clusterGroups?.removeFrom(mapRef.current) // Remove all clusters, if present.    
+    clusterGroups?.removeFrom(mapRef.current) // Remove all clusters, if present.
 
     axios.post(`${base_url}/clusterize`, {
       logged_user: localStorage.getItem("user"),
@@ -237,7 +231,9 @@ const GenerateMap = () => {
     .then((response) => {
       if(response.status === 200) {
         const clusters = response.data.clusters;
-        clusterGroups = L.layerGroup().addTo(mapRef.current);
+        clusterGroups = L.layerGroup()
+        clusterGroups.addTo(mapRef.current);
+        console.log(clusterGroups);
 
         Object.entries(clusters).map( (cluster) => {
           var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: clusterIcon}).addTo(clusterGroups);
@@ -257,12 +253,14 @@ const GenerateMap = () => {
   function Heatmap() {
 
     mapRef.current.eachLayer(function(layer) {
-      if(typeof layer.feature != "undefined") {
+      if(typeof layer.feature != "undefined" ||
+         typeof layer._heat != "undefined") {
           layer.removeFrom(mapRef.current)
       }
     });
 
     markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
+    clusterGroups?.removeFrom(mapRef.current)
 
     heatmap = L.heatLayer([], {
       radius: 25,
@@ -273,7 +271,9 @@ const GenerateMap = () => {
         0.3: 'yellow',
         1.0: 'red'
       }
-    }).addTo(mapRef.current);
+    })
+
+    heatmap.addTo(mapRef.current);
 
     Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
       heatmap.addLatLng([collection[1][0], collection[1][1], 100])
@@ -325,7 +325,6 @@ const GenerateMap = () => {
               <Button className="menuItem" onClick={
                  () => {
                   uploadFilterRef.current.click()
-                  localStorage.setItem("buttonClicked", "gj")
                  }
               }>
                 Load GeoJSON
@@ -340,8 +339,7 @@ const GenerateMap = () => {
                   if (localStorage.getItem("geojson") == null) {
                     alert("You must upload a GeoJSON file first.")
                   } else {
-                    alert("Select the country you're concerned in");
-                    localStorage.setItem("buttonClicked", "ppa")
+                    alert("Select the country you're concerned in")
                   }
                   }}>
                   Photo per area
@@ -351,7 +349,6 @@ const GenerateMap = () => {
                   if (localStorage.getItem("geojson") == null) {
                     alert("You must upload a GeoJSON file first.")
                   } else {
-                    localStorage.setItem("buttonClicked", "cm")
                     ColorMap()
                   }
                 }}>
