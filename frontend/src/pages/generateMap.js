@@ -4,21 +4,23 @@ import Button from 'react-bootstrap/Button';
 import { MapContainer, Marker, Popup, useMapEvents, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import * as L from 'leaflet';
 import * as d3 from "d3";
-import { useState, useRef, createRef } from 'react';
+import { useState, useRef, createRef, useEffect } from 'react';
 import "leaflet.heat";
 import axios from "axios"
 import cIcon from "../cluster_icon.png"
 import Slider from '@mui/material/Slider';
-import DialogActions from '@mui/material/DialogActions'; 
-import DialogContent from '@mui/material/DialogContent'; 
-import DialogTitle from '@mui/material/DialogTitle'; 
-import DialogContentText from '@mui/material/DialogContentText'; 
-import Dialog from '@mui/material/Dialog';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Modal from 'react-bootstrap/Modal';
 import Checkbox from '@mui/material/Checkbox';
 
-const base_url = "http://localhost:8080"
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+  crossorigin="anonymous"
+/>
 
+const base_url = "http://localhost:8080"
 
 const markerIcon = L.icon({
   iconSize: [25, 41],
@@ -37,20 +39,40 @@ const clusterIcon = L.icon({
 });
 
 const GenerateMap = () => {
-  localStorage.removeItem("buttonClicked") // Prevent old session saves
+  // Prevent old session saves
+  localStorage.removeItem("buttonClicked")
+  localStorage.removeItem("geojson")
+  localStorage.removeItem("clusters")
 
   const mapRef = createRef()
-  const [open, setOpen] = useState(false); 
+  const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+  const [numCluster, setNumCluster] = useState(null);
+  const uploadFilterRef = useRef(null);
 
   var geoJsonLayer;
   var heatmap;
   var markerGroup;
+  var clusterGroups;
   var CPMap = new Map(); // Hashmap for photos taken on each country
 
+  function uploadFilter (event) {
+
+    const fileObj = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function() {
+        localStorage.setItem("geojson", reader.result)
+        AddGeoJSON()
+    }
+    reader.readAsText(fileObj)
+    event.target.value = null;
+  }
+
   const handleClickOpen = () => { 
-    setOpen(true); 
-  }; 
+    setOpen(true);
+  };
   
   const handleClose = () => { 
     setOpen(false); 
@@ -145,179 +167,213 @@ const GenerateMap = () => {
   }
 
   function AddGeoJSON() {
-    const map = useMap();
-    geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
-    
-    geoJsonLayer.addTo(map);
+    if (localStorage.getItem("buttonClicked") == "gj") {
+      geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
+      geoJsonLayer.addTo(mapRef.current);
+    }
   }
 
   function PhotoPerArea() {
-    const map = useMap();
-    useMapEvents({
-      click(e) {
-        if (localStorage.getItem("buttonClicked") == "ppa") {
-
-          map.eachLayer(function(layer) {
-            if(typeof layer._heat !== "undefined") {
-                layer.removeFrom(map)
+    
+      const map = useMap();
+      useMapEvents({
+        click(e) {
+          if (localStorage.getItem("geojson")) {
+            
+            if (localStorage.getItem("buttonClicked") == "ppa") {
+  
+              map.eachLayer(function(layer) {
+                if(typeof layer._heat !== "undefined") {
+                    layer.removeFrom(map)
+                }
+              });
+  
+              geoJsonLayer = L.geoJSON()
+                .addData(Object(JSON.parse(localStorage.getItem("geojson"))))
+                .addTo(map);
+  
+              featureContainer(
+                Object(JSON.parse(localStorage.getItem("geojson"))),
+                [e.latlng.lng, e.latlng.lat],
+                map
+              );
+              localStorage.removeItem("buttonClicked")
             }
-          });
-
-          geoJsonLayer = L.geoJSON()
-            .addData(Object(JSON.parse(localStorage.getItem("geojson"))))
-            .addTo(map);
-
-          featureContainer(
-            Object(JSON.parse(localStorage.getItem("geojson"))),
-            [e.latlng.lng, e.latlng.lat],
-            map
-          );
-          localStorage.removeItem("buttonClicked")
+          }
         }
-      }
-    })
+      })
   }
 
-  function confirmCluster() {
-    setOpen(false)
-    Cluster()
+  useEffect(() => {
+    if (confirmed == true) {
+      Cluster();
+    }
+  }, [confirmed])
+
+  function ConfirmCluster() {
+    setOpen(false);
+    setConfirmed(true);
   }
 
   function Cluster() {
+
+    localStorage.removeItem("clusters") // Updates new value
     
     mapRef.current.eachLayer(function(layer) {
       if( typeof layer.feature !== "undefined" ||
-          typeof layer._layers !== "undefined" ||
-          typeof layer._center !== "undefined") {
-          layer.removeFrom(mapRef.current)
+      typeof layer._layers !== "undefined" ||
+      typeof layer._center !== "undefined") {
+        layer.removeFrom(mapRef.current)
       }
     });
-
-    console.log(mapRef.current._layers);
-    // markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
-
-    // mapRef.current.addLayer(L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"))
-
+    
+    markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present. 
+    clusterGroups?.removeFrom(mapRef.current) // Remove all clusters, if present.    
 
     axios.post(`${base_url}/clusterize`, {
       logged_user: localStorage.getItem("user"),
-      num_cluster: 3
+      num_cluster: numCluster
     })
     .then((response) => {
       if(response.status === 200) {
         const clusters = response.data.clusters;
-        
-        var markerGroup = L.layerGroup().addTo(mapRef.current);
+        clusterGroups = L.layerGroup().addTo(mapRef.current);
 
         Object.entries(clusters).map( (cluster) => {
-          var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: clusterIcon}).addTo(markerGroup);
+          var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: clusterIcon}).addTo(clusterGroups);
           marker.bindPopup(`Photos taken here: ${cluster[1].image_names.length}`)
         })
 
         localStorage.setItem("clusters", clusters)
-
       }
     })
     .catch((error) => {
         console.log(error);
     });
 
-    
     localStorage.removeItem("buttonClicked")
   }
 
   function Heatmap() {
-    if (localStorage.getItem("buttonClicked") == "hm") { // Remove GeoJSON
-      
-      mapRef.current.eachLayer(function(layer) {
-        if(typeof layer.feature != "undefined") {
-            layer.removeFrom(mapRef.current)
-        }
-      });
 
-      markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
+    mapRef.current.eachLayer(function(layer) {
+      if(typeof layer.feature != "undefined") {
+          layer.removeFrom(mapRef.current)
+      }
+    });
 
-      heatmap = L.heatLayer([], {
-        radius: 25,
-        minOpacity: .5,
-        blur: 15,
-        gradient: {
-          0.0: 'green',
-          0.3: 'yellow',
-          1.0: 'red'
-        }
-      }).addTo(mapRef.current);
+    markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
 
-      Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-        if (d3.geoContains(Object(JSON.parse(localStorage.getItem("geojson"))),
-            [collection[1][1], collection[1][0]])) {
-          heatmap.addLatLng([collection[1][0], collection[1][1], 100])
-        }
-      });
+    heatmap = L.heatLayer([], {
+      radius: 25,
+      minOpacity: .5,
+      blur: 15,
+      gradient: {
+        0.0: 'green',
+        0.3: 'yellow',
+        1.0: 'red'
+      }
+    }).addTo(mapRef.current);
 
-      localStorage.removeItem("buttonClicked")
-    }
+    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+      heatmap.addLatLng([collection[1][0], collection[1][1], 100])
+    });
   }
 
   const bolognaCoords = [44.494887, 11.3426163]
 
+  function MyVerticallyCenteredModal(props) {
+    return (
+      <Modal
+        {...props}
+        size="md"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered >
+        <Modal.Header>
+          <Modal.Title id="contained-modal-title-vcenter">
+            Select clustering technique
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <FormControlLabel id="elbowLabel" control={<Checkbox checked={checked} onChange={invertChecked} />} label="Elbow" />
+          <Slider 
+          onChange={(e, val) => {setNumCluster(val)}}
+          onChangeCommitted={(e, val) => setNumCluster(val)}
+          defaultValue={10}
+          valueLabelDisplay="auto"
+          min={2}
+          max={20}
+          disabled={checked} />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button id="confirmButton" onClick={ConfirmCluster}>Confirm</Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  }
+
   return (
       <div id="LeafletMap2">
-        
           <div id="menuOptions">
-          
-              <Button className="menuItem">
-                Choose map type
+              <input
+                  style={{display: 'none'}}
+                  ref={uploadFilterRef}
+                  type="file"
+                  accept=".geojson, .json" 
+                  onChange={uploadFilter}
+              />
+              <Button className="menuItem" onClick={
+                 () => {
+                  uploadFilterRef.current.click()
+                  localStorage.setItem("buttonClicked", "gj")
+                 }
+              }>
+                Load GeoJSON
               </Button>
-              <Button className="menuItem" onClick={ () => {
-                localStorage.setItem("buttonClicked", "hm");
+              <Button className="menuItem" onClick={() => {
                 Heatmap()
               }}>
                 Heatmap
               </Button>
               <Button className="menuItem" onClick={
                 () => {
-                  localStorage.setItem("buttonClicked", "ppa")
-                  alert("Select the country you're concerned in");
+                  if (localStorage.getItem("geojson") == null) {
+                    alert("You must upload a GeoJSON file first.")
+                  } else {
+                    alert("Select the country you're concerned in");
+                    localStorage.setItem("buttonClicked", "ppa")
+                  }
                   }}>
                   Photo per area
               </Button>
               <Button className="menuItem" onClick={
                 () => {
-                  localStorage.setItem("buttonClicked", "cm")
-                  ColorMap()
+                  if (localStorage.getItem("geojson") == null) {
+                    alert("You must upload a GeoJSON file first.")
+                  } else {
+                    localStorage.setItem("buttonClicked", "cm")
+                    ColorMap()
+                  }
                 }}>
                 Color Map
               </Button>
               <Button className="menuItem" onClick={
                 () => {
                   handleClickOpen()
-                  // Cluster()
                 }}>
                 Cluster
               </Button>
           </div>
           
           <MapContainer id="mapContainer2" ref={mapRef} center={bolognaCoords} zoom={13} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
-              <AddGeoJSON />
               <PhotoPerArea />
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           </MapContainer>
 
-          <Dialog open={open} onClose={handleClose}> 
-            <DialogTitle> 
-              Choose clustering method
-            </DialogTitle>
-            <DialogContent> 
-              <FormControlLabel control={<Checkbox defaultChecked checked={checked} onChange={invertChecked} />}  label="Elbow" />
-              <Slider defaultValue={10} valueLabelDisplay="auto" min={2} max={20} disabled={checked} />
-            </DialogContent> 
-            <DialogActions> 
-              <Button onClick={confirmCluster} color="primary"> 
-              Confirm 
-              </Button>
-            </DialogActions> 
-          </Dialog> 
+          <MyVerticallyCenteredModal
+            show={open}
+            onHide={() => setOpen(false)}
+          />          
       </div>
   )
 }
