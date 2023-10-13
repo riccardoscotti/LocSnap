@@ -1,0 +1,53 @@
+.menuItem {
+    border-radius: .75vh;
+    width: 12vw;
+    height: 8vh;
+    margin-left: 1vw;
+    font-size: 2.25vh;
+    font-weight: bold;
+}
+
+.menuItem:hover {
+    background: var(--Main-Blue, #1464F6);
+    color: rgb(255, 255, 255);
+}
+
+#mapContainer2 {
+    border-radius: 1vw;
+    border: 1px solid #000;
+    margin-left: 1vw;
+    margin-top: 1vh;
+    width: 98vw;
+    height: 77vh;
+}
+
+#contained-modal-title-vcenter {
+    color: black;
+    font-weight: bold;
+    font-size: 2.25vh;
+    font-family: 'Inter', sans-serif;
+}
+
+#elbowLabel {
+    color: black;
+}
+
+#confirmButton {
+    border-radius: .75vh;
+    width: 6vw;
+    height: 4vh;
+    margin-left: 1vw;
+    font-size: 1.5vh;
+    font-weight: bold;
+}
+
+#menuOptions {
+    width: 66vw;
+    height: 10vh;
+    border-radius: 1.5vh;
+    margin-left: 15vw;
+    margin-top: 2vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}

@@ -1,0 +1,33 @@
+.collection-card {
+    margin-top: 60px;
+}
+
+.collection-title {
+    color: #FFF;
+    text-align: center;
+    font-family: Inter;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.collection-place {
+    color: var(--Main-Blue, #1464F6);
+}
+
+.collection-prevs {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    margin-left: 30px;
+}
+
+.collection-prev {
+    border-radius: 10px;
+    border: 2px solid #4F4F4F;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-right: 20px;
+}

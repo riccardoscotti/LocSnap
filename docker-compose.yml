@@ -1,13 +1,16 @@
 version: '3'
 services:
   backend:
-    image: christianp01/cas_backend:latest
+    image: node:latest
     network_mode: host
-    command: npm start
+    volumes:
+      - ./backend:/backend
+    working_dir: /backend
+    command: sh -c 'rm -rf node_modules; npm install; npm start'
     container_name: backend
 
   database:
-    image: postgis/postgis
+    image: postgis/postgis:15-3.4
     environment:
       - PGDATA=/var/lib/pgsql/data
       - POSTGRES_PASSWORD=contextawarerc
@@ -17,8 +20,10 @@ services:
     container_name: database
 
   frontend:
-    image: christianp01/cas_frontend:latest
+    image: node:latest
     network_mode: host
+    volumes:
+     - ./frontend:/frontend
     working_dir: /frontend
-    command: npm start
+    command: sh -c 'rm -rf node_modules; npm install; npm start'
     container_name: frontend
