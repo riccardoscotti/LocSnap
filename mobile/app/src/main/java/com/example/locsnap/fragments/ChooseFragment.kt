@@ -69,7 +69,7 @@ class ChooseFragment : Fragment() {
         val args = this.arguments
         loggedUser = args?.getString("loggedUsername").toString()
 
-        UploadUtils.reloadUpdatedCollections(this.loggedUser, this)
+        UploadUtils.reloadUpdatedCollections(loggedUser, this)
     }
 
     override fun onCreateView(

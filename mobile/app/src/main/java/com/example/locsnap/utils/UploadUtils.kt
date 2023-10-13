@@ -48,8 +48,7 @@ class UploadUtils {
             val formattedDateTime = currentDateTime.format(formatter)
             val name: String = "IMG_" + formattedDateTime
             val location = fragment.getLastKnownLocation()
-            var bitmaps = JSONArray()
-            bitmaps.put(bitmapEncoded)
+            val bitmaps = JSONArray(bitmapEncoded)
 
             val jsonObject = JSONObject()
 
@@ -90,7 +89,7 @@ class UploadUtils {
             json.put("lat", location?.latitude)
             json.put("lon", location?.longitude)
             json.put("tagged_people", JSONArray())
-            json.put("lenght", bitmaps.length())
+            json.put("length", bitmaps.length())
 
             upload(url, json, fragment)
         }
@@ -100,15 +99,7 @@ class UploadUtils {
             // Creazione coda per le richieste Volley
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
-            jsonObject.put("image", JSONArray().put(image))
-            jsonObject.put("username", logged_user)
-            jsonObject.put("tagged_people", JSONArray())
-            jsonObject.put("lat", location?.latitude)
-            jsonObject.put("lon", location?.longitude)
-            jsonObject.put("length", 1)
-
-
-            val sendImageRequest = object : JsonObjectRequest(
+            val sendRequest = object : JsonObjectRequest(
 
                 Method.POST, url, jsonObject,
                 { response ->
@@ -129,48 +120,23 @@ class UploadUtils {
                     return "application/json; charset=utf-8"
                 }
             }
-            queue.add(sendImageRequest)
+            queue.add(sendRequest)
         }
 
         fun showNearestPhotos(num_photos: Int, actualPos: Location, fragment: ChooseFragment) {
 
-
             val url : String = fragment.resources.getString(R.string.base_url)+"/nearest"
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
             val jsonObject = JSONObject()
             jsonObject.put("actual_lat", actualPos.latitude)
             jsonObject.put("actual_lon", actualPos.longitude)
             jsonObject.put("num_photos", num_photos)
 
-            val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
-            val queue = Volley.newRequestQueue(fragment.context)
-            val json = JSONObject()
-            val date = SimpleDateFormat("yyyy-MM-dd").format(Date(file.lastModified()))
-
-
-            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
-            val sendImageRequest = object : JsonObjectRequest(
-
-
-                Method.POST, url, jsonObject,
-
-            var bitmaps = JSONArray()
-            for ((index, bitmap) in file.readText().split(",").withIndex()) {
-                bitmaps.put(index, bitmap)
-            }
-
-            json.put("name", file.name)
-            //json.put("date", date)
-            json.put("image", bitmaps)
-            json.put("lat", location?.latitude)
-            json.put("lon", location?.longitude)
-
-            Log.d("collection", json.toString())
-
             val sendCollectionRequest = object : JsonObjectRequest(
                 Method.POST,
                 url,
-                json,
-
+                jsonObject,
                 { response ->
                     if (response.getString("status").equals("200")) {
                         val receivedImagesString = response.getString("images")
@@ -207,7 +173,7 @@ class UploadUtils {
                     return "application/json; charset=utf-8"
                 }
             }
-            queue.add(sendImageRequest)
+            queue.add(sendCollectionRequest)
         }
 
         fun tagFriend(logged_user: String, friend: String, collection_name: String, fragment: ChooseFragment) {
@@ -251,11 +217,12 @@ class UploadUtils {
                 Method.POST, url, jsonObject,
                 { response ->
                     if (response.getString("status").equals("200")) {
-                        val jsonColl = response.getJSONArray("retrievedCollections")
+                        val jsonColl = response.getJSONObject("retrievedCollections")
                         val retrievedCollections = mutableListOf<String>()
 
-                        for (i in 0 until jsonColl.length())
-                            retrievedCollections.add(jsonColl.getString(i))
+                        for (i in 0 until jsonColl.length()) {
+                            retrievedCollections.add(jsonColl.getJSONObject("${i}").getString("name"))
+                        }
 
                         fragment.setCollections(retrievedCollections)
                     }

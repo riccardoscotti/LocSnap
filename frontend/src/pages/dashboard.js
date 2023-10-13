@@ -2,7 +2,7 @@ import '../css/dashboard.css';
 import CollectionCard from '../components/collectionCard';
 import { MapContainer, TileLayer } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from "axios";
 import * as L from 'leaflet';
 import markerIcon from '../marker-icon.png'
@@ -45,17 +45,34 @@ const Dashboard = () => {
     'https://www.offerte-vacanza.com/informazioni/wp-content/uploads/2021/09/lago-di-braies-800x445.jpg', 
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
-
+  
+  let [searchText, setSearchText] = useState("")
+  let [collectionList, setCollectionList] = useState(["collezione1"])
   return localStorage.getItem("collections") && (
     <div className='main-content'>
       <div className='collections'>
         <h1 className='title'>My collections</h1>
-        <input type='text' className='search-collection'/>
+        <input type='text' value={searchText} className='search-collection' onChange={e => {
+          setSearchText(e.target.value);
+          // axios.post(`${base_url}/search`, {
+          //   "logged_user": localStorage.getItem("user"),
+          //   "search_text": searchText
+          // }).then(res => {
+          //   // mostrare le collezioni
+          // })
+
+          // fare la query e poi aggiornare la lista di collezioni
+          setCollectionList(prev => [e.target.value])
+        }}/>
         {
-          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-            return (<CollectionCard className='collection' key={collection[0]} 
-            title={collection[0]} place={`Coords: ${collection[1]}`} prevs={collectionsImages} />)
-          })
+          // Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+          //   return (<CollectionCard className='collection' key={collection[0]} 
+          //   title={collection[0]} place={`Coords: ${collection[1]}`} prevs={collectionsImages} />)
+          // })
+          <div>
+            {collectionList.map(c => <p key={c}>{c}</p>)}
+          </div>
+
         }
       </div> 
       <MapContainer id='map-container' center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>

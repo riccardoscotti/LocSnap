@@ -81,14 +81,14 @@ app.post('/clusterize', async (req, res) => {
 
 app.post('/imageupload', async (req, res) => {
 
+    var statusCode
     const name = req.body.name
     const image64 = req.body.image
     const author = req.body.username
     const lat = req.body.lat
-    var statusCode
     const lon = req.body.lon
-    const length = req.body.length
     const tagged_people = req.body.tagged_people
+    const length = req.body.length
 
     var imagesArray = [];
     var tags = []
@@ -155,6 +155,8 @@ app.post('/nearest', async (req, res) => {
     var num_photos = req.body.num_photos
     var actualLat = req.body.actual_lat
     var actualLon = req.body.actual_lon
+
+    console.log(actualLat, actualLon)
 
     const client = new Client({
         user: 'postgres',
@@ -382,8 +384,13 @@ app.post('/retrievecollections', async (req, res) => {
     try {
         const res = await client.query(query);
         if (res.rowCount > 0) {
+            var numColl = 0;
             res.rows.forEach(collection => {
-                retrieved_collections[collection.name] = [collection.lat, collection.lng]
+                let tmp_collection = {};
+                tmp_collection.name = collection.name
+                tmp_collection.coords = [collection.lat, collection.lng]
+                retrieved_collections[numColl] = tmp_collection
+                numColl++;
             })
             statusCode = 200;
         } else {
