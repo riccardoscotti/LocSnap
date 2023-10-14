@@ -38,7 +38,7 @@ class ChooseFragment : Fragment() {
             last_known_location = intent.extras!!.get("location") as Location
 
             if (intent.extras!!.getString("action").equals("nearby"))
-                UploadUtils.showNearestPhotos(8, last_known_location!!, thisInstance)
+                UploadUtils.showNearestPhotos(4, last_known_location!!, thisInstance)
 
             else if (intent.extras!!.getString("action").equals("camera"))
                 startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)

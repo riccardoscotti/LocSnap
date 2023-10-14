@@ -29,7 +29,25 @@ const Dashboard = () => {
     axios.post(`${base_url}/retrievecollections`, {logged_user: localStorage.getItem("user")})
     .then((response) => {
       if(response.status === 200) {
-        localStorage.setItem("collections", JSON.stringify(response.data.retrievedCollections))
+        console.log(response.data);
+        localStorage.setItem("collections", JSON.stringify(response.data.collections))
+      }
+    })
+    .catch((error) => {
+        if(error.response.status === 401) {
+            alert("Error during collection retrieval!")
+        }
+    });
+  }
+
+  const searchTextQuery = () => {
+    axios.post(`${base_url}/search`, {
+      logged_user: localStorage.getItem("user"),
+      search_text: searchText
+    })
+    .then((response) => {
+      if(response.status === 200) {
+        localStorage.setItem("collections", JSON.stringify(response.data.collections))
       }
     })
     .catch((error) => {
@@ -65,18 +83,18 @@ const Dashboard = () => {
           setCollectionList(prev => [e.target.value])
         }}/>
         {
-          // Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-          //   return (<CollectionCard className='collection' key={collection[0]} 
-          //   title={collection[0]} place={`Coords: ${collection[1]}`} prevs={collectionsImages} />)
-          // })
-          <div>
-            {collectionList.map(c => <p key={c}>{c}</p>)}
-          </div>
+          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+            return (<CollectionCard className='collection' key={collection[0]} 
+            title={collection[1].name} place={'Prova'} prevs={collectionsImages} />)
+          })
+          // <div>
+          //   {collectionList.map(c => <p key={c}>{c}</p>)}
+          // </div>
 
         }
       </div> 
       <MapContainer id='map-container' center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer id='tile-layer' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       </MapContainer>
     </div>
   );

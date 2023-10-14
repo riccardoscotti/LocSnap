@@ -4,9 +4,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
 import android.util.Base64
-import android.util.Log
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.locsnap.fragments.ChooseFragment
@@ -40,8 +38,6 @@ class UploadUtils {
             // Leggi i dati dall'InputStream e convertili in una stringa codificata in base64
             val bitmapEncoded = Base64.encodeToString(bitmapBA.toByteArray(), Base64.DEFAULT)
 
-            Log.d("image", "size: ${bitmapEncoded.length}")
-
             val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
             val currentDateTime = LocalDateTime.now()
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
@@ -58,7 +54,7 @@ class UploadUtils {
             jsonObject.put("username", logged_user)
             jsonObject.put("lat", location?.latitude)
             jsonObject.put("lon", location?.longitude)
-            jsonObject.put("lenght", 1)
+            jsonObject.put("length", 1)
 
             if (taggedFriend != "") {
                 jsonObject.put("tagged_people", JSONArray().put(taggedFriend))

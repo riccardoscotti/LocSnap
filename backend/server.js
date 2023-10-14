@@ -6,6 +6,13 @@ const { escapeIdentifier } = require('pg/lib/utils');
 const app = express();
 const port = 8080;
 
+const client_info = {
+    user: 'postgres',
+    host: '0.0.0.0',
+    database: 'contextawarerc',
+    port: 5432,
+}
+
 app.use(cors({
     origin: 'http://localhost:3000'
 }));
@@ -15,6 +22,47 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.post('/check', (req, res) => {
     res.json({status: 200})
 })
+
+app.post('/search', async (req, res) => {
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    let collections = {};
+    let statusCode;
+    const query = `
+        SELECT collection_name
+        FROM collections
+        WHERE author='${req.body.logged_user}' 
+        AND collection_name LIKE '${req.body.search_text}%'
+    `;
+    client.connect();
+
+    try {
+        const resQuery = await client.query(query);
+        if(resQuery.rowCount > 0) {
+            
+            resQuery.rows.map( (collection, index) => {
+                collections[index] = collection
+            })
+            statusCode = 200;
+        } else {
+            statusCode = 204;
+        }         
+    } catch {
+        statusCode = 401;
+    }
+    
+    client.end()
+    res.json({
+        status: statusCode,
+        collections: collections
+    })
+
+});
 
 app.post('/clusterize', async (req, res) => {
 
@@ -50,12 +98,12 @@ app.post('/clusterize', async (req, res) => {
         }
 
         let query2 = `
-            SELECT	ST_ClusterKMeans(location, ${req.body.num_cluster}) OVER() as cid, 
-                    ST_X(ST_Centroid(ST_Collect(ST_SetSRID(location, 4326)))) AS lng,  
-                    ST_Y(ST_Centroid(ST_Collect(ST_SetSRID(location, 4326)))) AS lat
-            FROM images
-            WHERE author=\'${req.body.logged_user}\'
-            GROUP BY location
+            SELECT	ST_ClusterKMeans(i.location, ${req.body.num_cluster}) OVER() as cid, 
+                    ST_X(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lng,  
+                    ST_Y(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lat
+            FROM images as i, collections as c
+            WHERE i.reference=c.collection_name and c.author=\'${req.body.logged_user}\'
+            GROUP BY i.location
             `
 
         let resQuery2 = await client.query(query2);
@@ -104,9 +152,8 @@ app.post('/imageupload', async (req, res) => {
 
     try {
 
-        query = `INSERT INTO collections (collection_name, author, location, tagged_people, length)
-        VALUES (\'${name}\', \'${author}\',
-        \'${postgisPoint}\', \'{${tags}}\', \'${length}\');`
+        query = `INSERT INTO collections (collection_name, author, length)
+        VALUES (\'${name}\', \'${author}\', \'${length}\');`
 
         const client = new Client({
             user: 'postgres',
@@ -131,8 +178,8 @@ app.post('/imageupload', async (req, res) => {
         var index = 1;
         imagesArray.forEach(image => {
 
-            query = `INSERT INTO images (image_name, author, image, location, tagged_people, reference)
-            VALUES (\'${index}_${name}\', \'${author}\', \'${image}\', 
+            query = `INSERT INTO images (image_name, image, location, tagged_people, reference)
+            VALUES (\'${index}_${name}\', \'${image}\', 
             \'${postgisPoint}\', \'{${tags}}\', \'${name}\');`
 
             pool.query(query);
@@ -140,10 +187,10 @@ app.post('/imageupload', async (req, res) => {
         })
 
         pool.end();
-        statusCode = 200
+        statusCode = 200;
 
     } catch (err) {
-        statusCode = 401
+        statusCode = 401;
         console.log(err);
     }
     
@@ -206,25 +253,30 @@ app.post('/deletecollection', async (req, res) => {
     client.connect();
 
     try {
-        query_coll = `
-        DELETE
-        FROM collections 
-        WHERE collection_name = \'${req.body.collection_name}\' AND
-        author = \'${req.body.logged_user}\';
-        `
 
         query_imgs = `
         DELETE
-        FROM images 
-        WHERE reference = \'${req.body.collection_name}\' AND
-        author = \'${req.body.logged_user}\';
+        FROM images as i
+        USING collections as c
+        WHERE
+            i.reference=c.collection_name AND
+            i.reference=\'${req.body.collection_name}\' AND
+            c.author=\'${req.body.logged_user}\';
+        `
+
+        query_coll = `
+        DELETE
+        FROM collections as c
+        WHERE 
+            c.collection_name=\'${req.body.collection_name}\' AND
+            c.author=\'${req.body.logged_user}\';
         `
 
         const resImgs = await client.query(query_imgs);
         const resColl = await client.query(query_coll);
         
         if (resColl.rowCount > 0 && resImgs.rowCount > 0) {
-            statusCode = 200
+            statusCode = 200;
         } else {
             statusCode = 304 // Document not modified
         }
@@ -254,26 +306,28 @@ app.post('/tag_friend', async (req, res) => {
     client.connect();
 
     try {
-        query_coll = `
-        UPDATE collections 
-        SET tagged_people = array_append(tagged_people, \'${req.body.friend}\') 
-        WHERE collection_name = \'${req.body.collection_name}\' AND
-        author = \'${req.body.logged_user}\';
-        `
-
         query_imgs = `
-        UPDATE images
-        SET tagged_people = array_append(tagged_people, \'${req.body.friend}\') 
-        WHERE reference = \'${req.body.collection_name}\';
+        UPDATE images as i
+        SET tagged_people = CASE
+		WHEN \'${req.body.friend}\'=ANY(tagged_people)
+			THEN tagged_people
+			ELSE array_append(tagged_people, \'${req.body.friend}\')
+		END
+        FROM collections as c
+		WHERE
+            i.reference=\'${req.body.collection_name}\' AND
+            i.reference=c.collection_name AND
+            c.author=\'${req.body.logged_user}\'
         `
 
-        const resColl = await client.query(query_coll);
         const resImgs = await client.query(query_imgs);
-        if (resColl.rowCount > 0 && resImgs.rowCount > 0) {
-            statusCode = 200
+
+        if (resImgs.rowCount > 0) {
+            statusCode = 200;
         } else {
-            statusCode = 304 // Document not modified
+            statusCode = 304; // Document not modified
         }
+        
         client.end();
         
     } catch (err) {
@@ -337,16 +391,25 @@ app.post('/add_friend', async (req, res) => {
 
     client.connect();
 
-    query = `SELECT user_2 FROM friendships WHERE user_1=\'${req.body.loggedUser}\' and user_2=\'${req.body.newFriend}\';`
+    query = `
+            SELECT user_2
+            FROM friendships
+            WHERE
+                user_1=\'${req.body.loggedUser}\' AND
+                user_2=\'${req.body.newFriend}\';`
 
     try {
         const res = await client.query(query);
         if (res.rowCount > 0) {
-            statusCode = 409
+            statusCode = 409;
         } else {
             try {
-                query1 = `INSERT INTO friendships (user_1, user_2) VALUES (\'${req.body.loggedUser}\', \'${req.body.newFriend}\');`
-                query2 = `INSERT INTO friendships (user_1, user_2) VALUES (\'${req.body.newFriend}\', \'${req.body.loggedUser}\');`
+                let query1 = `INSERT INTO friendships (user_1, user_2)
+                            VALUES (\'${req.body.loggedUser}\', \'${req.body.newFriend}\');`
+                
+                let query2 = `INSERT INTO friendships (user_1, user_2)
+                            VALUES (\'${req.body.newFriend}\', \'${req.body.loggedUser}\');`
+
                 await client.query(query1)
                 await client.query(query2)
                 statusCode = 200
@@ -365,6 +428,7 @@ app.post('/add_friend', async (req, res) => {
     
 })
 
+// Only used to display collection names on dashboard page
 app.post('/retrievecollections', async (req, res) => {
     var statusCode;
     var retrieved_collections = {};
@@ -377,9 +441,10 @@ app.post('/retrievecollections', async (req, res) => {
     });
 
     client.connect();
-    query = `SELECT ST_X(location) as lng, ST_Y(location) as lat, collection_name as name
-    FROM collections
-    WHERE author=\'${req.body.logged_user}\';`
+    query = `
+            SELECT collection_name as name
+            FROM collections
+            WHERE author=\'${req.body.logged_user}\';`
 
     try {
         const res = await client.query(query);
@@ -388,7 +453,6 @@ app.post('/retrievecollections', async (req, res) => {
             res.rows.forEach(collection => {
                 let tmp_collection = {};
                 tmp_collection.name = collection.name
-                tmp_collection.coords = [collection.lat, collection.lng]
                 retrieved_collections[numColl] = tmp_collection
                 numColl++;
             })
@@ -411,8 +475,6 @@ app.post('/retrievecollections', async (req, res) => {
 app.post('/login', async (req, res) => {
 
     var statusCode;
-
-    console.log("User login request with:", req.body.username, req.body.password)
 
     const client = new Client({
         user: 'postgres',
@@ -454,7 +516,8 @@ app.post('/signup', (req, res) => {
 
     client.connect();
 
-    query = `INSERT INTO users (name, surname, username, password) VALUES (\'${req.body.name}\', \'${req.body.surname}\', \'${req.body.username}\', \'${req.body.password}\');`
+    query = `INSERT INTO users (name, surname, username, password)
+            VALUES (\'${req.body.name}\', \'${req.body.surname}\', \'${req.body.username}\', \'${req.body.password}\');`
 
     client.query(query, (err, res) => {
         console.log(err, res);
