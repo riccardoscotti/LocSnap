@@ -85,9 +85,9 @@ const GenerateMap = () => {
   function ColorMap() {
     const json = JSON.parse(localStorage.getItem("geojson"))
 
-    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+    Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
       for (let index = 0; index < json.features.length; index++) {
-        if (d3.geoContains(json.features[index], [collection[1][1], collection[1][0]])) {
+        if (d3.geoContains(json.features[index], [img[1].coords[1], img[1].coords[0]])) {
           var countryName = json.features[index].properties.feature_name;
           if (CPMap.has(countryName))
             CPMap.set(countryName, CPMap.get(countryName) + 1);
@@ -147,11 +147,11 @@ const GenerateMap = () => {
   // User clicked on an area, showing out relative markers
   function showFeatureMarkers(area, map) {
     markerGroup = L.layerGroup().addTo(map);
-    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+    Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
       
-      if (d3.geoContains(area, [collection[1][1], collection[1][0]])) {
-        var marker = new L.marker([collection[1][0], collection[1][1]], {icon: markerIcon}).addTo(markerGroup);
-        marker.bindPopup(collection[0])
+      if (d3.geoContains(area, [img[1].coords[1], img[1].coords[0]])) {
+        var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: markerIcon}).addTo(markerGroup);
+        marker.bindPopup(img[1].name)
       }
     })
   }
@@ -197,11 +197,29 @@ const GenerateMap = () => {
       })
   }
 
+  function loadImages() {
+    axios.post('/retrieveimages', {
+      logged_user: localStorage.getItem("user")
+    })
+    .then((response) => {
+      if(response.data.status === 200) {
+        localStorage.setItem("imgs", JSON.stringify(response.data.imgs))
+      }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+  }
+
   useEffect(() => {
     if (confirmed == true) {
       Cluster();
     }
   }, [confirmed])
+
+  useEffect(() => {
+    loadImages()
+  }, [])
 
   function ConfirmCluster() {
     setOpen(false);
@@ -275,8 +293,8 @@ const GenerateMap = () => {
 
     heatmap.addTo(mapRef.current);
 
-    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-      heatmap.addLatLng([collection[1][0], collection[1][1], 100])
+    Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
+      heatmap.addLatLng([img[1].coords[0], img[1].coords[1], 100])
     });
   }
 

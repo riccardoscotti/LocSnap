@@ -86,6 +86,54 @@ app.post('/search', async (req, res) => {
 
 });
 
+app.post('/retrieveimages', async (req, res) => {
+    var statusCode;
+    var imgs = {};
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    client.connect();
+
+    query = `
+        SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat
+        FROM images
+        WHERE author=\'${req.body.logged_user}\'
+    `
+
+    try {
+        const resQuery = await client.query(query);
+        let numColl = 0;
+
+        resQuery.rows.forEach(img => {
+            let tmp_img = {}
+            tmp_img.name = img.name
+            tmp_img.coords = [img.lat, img.lng]
+            // imgs[numColl].name = img.name
+            // imgs[numColl].coords = [img.lat, img.lng]
+            console.log(tmp_img);
+            imgs[numColl] = tmp_img
+            numColl++;
+        })
+
+        statusCode = 200;
+
+    } catch {
+        statusCode = 401;
+    }
+    
+    client.end()
+    res.json({
+        status: statusCode,
+        imgs: imgs
+    })
+
+})
+
 app.post('/clusterize', async (req, res) => {
 
     var statusCode;

@@ -32,9 +32,10 @@ const Dashboard = () => {
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
 
-  // useEffect(() => {
-  //   retrieveCollections()
-  // }, []);
+  // Collections initialization
+  useEffect(() => {
+    retrieveCollections()
+  }, []);
 
   const retrieveCollections = () => {
     axios.post("/retrievecollections", {
