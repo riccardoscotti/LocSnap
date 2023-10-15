@@ -113,9 +113,6 @@ app.post('/retrieveimages', async (req, res) => {
             let tmp_img = {}
             tmp_img.name = img.name
             tmp_img.coords = [img.lat, img.lng]
-            // imgs[numColl].name = img.name
-            // imgs[numColl].coords = [img.lat, img.lng]
-            console.log(tmp_img);
             imgs[numColl] = tmp_img
             numColl++;
         })
@@ -427,7 +424,7 @@ app.post('/get_friends', async (req, res) => {
 
     client.connect();
 
-    query = `SELECT user_2 as friend FROM friendships WHERE user_1=\'${req.body.loggedUser}\';`
+    query = `SELECT user_2 as friend FROM friendships WHERE user_1=\'${req.body.logged_user}\';`
 
     try {
         const res = await client.query(query);

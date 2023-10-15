@@ -1,0 +1,38 @@
+.main-content-social {
+    margin-top: 8vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.horizontal-list {
+    display: flex;
+    flex-direction: row;
+}
+
+.friends-list {
+    margin-top: 5vh;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+.icons-list {
+    display: flex;
+    flex-direction: row;
+}
+
+#shareIcon {
+    width: 4vw;
+    height: 7vh;
+}
+
+#friend {
+    margin-right: 70vw;
+    font-family: Inter;
+    font-size: 25pt;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}

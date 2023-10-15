@@ -3,10 +3,10 @@ import React from 'react'
 import axios from 'axios'
 import { MapContainer, Marker, Popup, useMapEvents, TileLayer, GeoJSON, useMap } from "react-leaflet";
 
-const base_url = "http://localhost:8080"
+axios.defaults.baseURL = 'http://localhost:8080'
 
 const getFavorites = () => {
-    axios.post(`${base_url}/favorites`, {
+    axios.post('/favorites', {
         logged_user: localStorage.getItem("user")
     })
     .then(res => {

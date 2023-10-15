@@ -9,6 +9,29 @@
     justify-content: space-around;
 }
 
+#social-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.social-option {
+    color: black;
+    font-size: 14pt;
+    font-weight: 1000;
+    text-align: center;
+}
+
+.social-option-div {
+    border-radius: 8px;
+    width: 14vw;
+}
+
+.social-option-div:hover {
+    background-color: #3d87b290;
+    cursor: pointer;
+}
+
 #logo:hover {
     cursor: pointer;
 }

@@ -82,8 +82,6 @@ const Dashboard = () => {
             })
           }
           
-
-          // fare la query e poi aggiornare la lista di collezioni
           setCollectionList(prev => [e.target.value])
         }}/>
         {

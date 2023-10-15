@@ -10,6 +10,7 @@ import Login from './pages/login';
 import UploadPhoto from './pages/uploadPhoto';
 import GenerateMap from './pages/generateMap';
 import Explore from './pages/explore'
+import Social from './pages/social'
 
 // import { ProtectedRoute } from './components/protectedRoute'
 
@@ -26,6 +27,7 @@ export default function App() {
             <Route path='/upload' element={<UploadPhoto />} />
             <Route path='/generate' element={<GenerateMap />} />
             <Route path='/explore' element={<Explore />} />
+            <Route path='/social' element={<Social />} />
           </Route>
         </Routes>
       </BrowserRouter>
