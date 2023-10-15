@@ -206,9 +206,9 @@ app.post('/imageupload', async (req, res) => {
         var index = 1;
         imagesArray.forEach(image => {
 
-            query = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place)
+            query = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
             VALUES (\'${index}_${name}\', \'${image}\', 
-            \'${postgisPoint}\', \'{${tags}}\', \'${name}\', \'${isPublic}\', \'${type}\', \'${place}\');`
+            \'${postgisPoint}\', \'{${tags}}\', \'${name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
 
             pool.query(query);
             index++;

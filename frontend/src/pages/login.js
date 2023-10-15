@@ -14,7 +14,6 @@ const handleLogin = (usr, psw, navigate) => {
         password: sha256(psw)
     })
     .then((response) => {
-        console.log(response);
         if(response.data.status === 200) {
             localStorage.setItem("user", usr)
             navigate('/dashboard')

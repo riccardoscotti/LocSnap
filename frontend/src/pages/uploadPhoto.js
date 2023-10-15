@@ -15,6 +15,7 @@ function UploadPhoto() {
     const bolognaCoords = [44.494887, 11.3426163]
     var [fileMarker, setFileMarker] = useState({lat: 0.0, lon: 0.0})
     var [selectedFile, setSelectedFile] = useState(null)
+    var [place, setPlace] = useState(null)
 
     // TODO Allow user to select more files at once, to upload them as a collection.
     function uploadOnDB() {
@@ -30,7 +31,11 @@ function UploadPhoto() {
                 lat: fileMarker.lat,
                 lon: fileMarker.lon,
                 length: 1,
-                tagged_people: []
+                tagged_people: [],
+                public: false, // Default
+                type: "City", // Default
+                place: place 
+
             })
             .then((response) => {
                 if(response.status === 200) {
@@ -87,7 +92,10 @@ function UploadPhoto() {
                 Name: ${fileObj.name}<br/>
                 Taken on: ${datetime} <br/>
                 Country: ${result.features[0].properties.city}, ${result.features[0].properties.country}
-                `;})
+                `;
+                
+                setPlace(result.features[0].properties.city)
+            })
             .catch(error => console.log(error));
 
         document.getElementById("confirm-upload").style.visibility = "visible"
