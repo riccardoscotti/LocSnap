@@ -7,7 +7,14 @@ import axios from "axios";
 import * as L from 'leaflet';
 import markerIcon from '../marker-icon.png'
 
-const base_url = "http://localhost:8080"
+axios.defaults.baseURL = 'http://localhost:8080'
+
+const header_config = {
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
+}
 
 const Dashboard = () => {
 
@@ -26,11 +33,14 @@ const Dashboard = () => {
   }, []);
 
   const retrieveCollections = () => {
-    axios.post(`${base_url}/retrievecollections`, {logged_user: localStorage.getItem("user")})
+    axios.post("/retrievecollections", {
+      logged_user: localStorage.getItem("user")
+    },
+    header_config  
+    )
     .then((response) => {
       if(response.status === 200) {
-        console.log(response.data);
-        localStorage.setItem("collections", JSON.stringify(response.data.collections))
+        localStorage.setItem("collections", JSON.stringify(response.data.retrievedCollections))
       }
     })
     .catch((error) => {
@@ -41,10 +51,12 @@ const Dashboard = () => {
   }
 
   const searchTextQuery = () => {
-    axios.post(`${base_url}/search`, {
+    axios.post("/search", {
       logged_user: localStorage.getItem("user"),
       search_text: searchText
-    })
+    },
+      header_config
+    )
     .then((response) => {
       if(response.status === 200) {
         localStorage.setItem("collections", JSON.stringify(response.data.collections))

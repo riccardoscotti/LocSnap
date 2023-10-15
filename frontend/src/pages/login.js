@@ -5,14 +5,21 @@ import locsnapLogo from '../locsnap_icon.png'
 import axios from "axios";
 import sha256 from 'js-sha256';
 
-const base_url = "http://localhost:8080"
+axios.defaults.baseURL = 'http://localhost:8080'
+
 
 const handleLogin = (usr, psw, navigate) => {
-    axios.post(`${base_url}/login`, {username: usr, password: sha256(psw)})
+    axios.post('/login', {
+        username: usr,
+        password: sha256(psw)
+    })
     .then((response) => {
-        if(response.status === 200) {
+        console.log(response);
+        if(response.data.status === 200) {
             localStorage.setItem("user", usr)
             navigate('/dashboard')
+        } else {
+            alert("Login failed.")
         }
     })
     .catch((error) => {

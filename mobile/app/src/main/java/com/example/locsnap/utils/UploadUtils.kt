@@ -1,9 +1,14 @@
 package com.example.locsnap
 
+import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
 import android.util.Base64
+import android.util.Log
+import android.widget.Button
+import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.Toast
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
@@ -94,19 +99,57 @@ class UploadUtils {
 
             // Creazione coda per le richieste Volley
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+            val apiKey = "01114512c1ce49018d40d94d6aab3d68"
 
-            val sendRequest = object : JsonObjectRequest(
+            val placeURL = "https://api.geoapify.com/v1/geocode/reverse?lat=${jsonObject.get("lat")}&lon=${jsonObject.get("lon")}&apiKey=${apiKey}"
 
-                Method.POST, url, jsonObject,
+            val placeRequest = object : JsonObjectRequest(
+                Method.GET, placeURL, null,
                 { response ->
-                    if (response.getString("status").equals("200")) {
-                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT)
-                            .show()
-                        fragment.refresh()
+                    val place: String = response.getJSONArray("features")
+                        .getJSONObject(0)
+                        .getJSONObject("properties")
+                        .getString("city")
 
+                    if (place != "") {
+                        val dialog = Dialog(fragment.requireContext())
+                        dialog.setContentView(R.layout.info_upload_dialog)
+                        val proceed = dialog.findViewById<Button>(R.id.confirmButton)
+
+                        proceed.setOnClickListener {
+                            val publicCheck = dialog.findViewById<CheckBox>(R.id.publicCheckBox)
+
+                            jsonObject.put("public", publicCheck.isActivated)
+                            jsonObject.put("type", "Mountain")
+                            jsonObject.put("place", "Monte Cimone")
+
+                            val sendRequest = object : JsonObjectRequest(
+
+                                Method.POST, url, jsonObject,
+                                { response ->
+                                    if (response.getString("status").equals("200")) {
+                                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT)
+                                            .show()
+                                        fragment.refresh()
+                                    }
+                                    else
+                                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
+                                },
+                                {
+                                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                override fun getBodyContentType(): String {
+                                    return "application/json; charset=utf-8"
+                                }
+                            }
+                            queue.add(sendRequest)
+                            dialog.dismiss()
+                        }
+                        dialog.show()
                     }
                     else
-                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during reverse geocoding process.", Toast.LENGTH_SHORT).show()
                 },
                 {
                     Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
@@ -116,7 +159,7 @@ class UploadUtils {
                     return "application/json; charset=utf-8"
                 }
             }
-            queue.add(sendRequest)
+            queue.add(placeRequest)
         }
 
         fun showNearestPhotos(num_photos: Int, actualPos: Location, fragment: ChooseFragment) {

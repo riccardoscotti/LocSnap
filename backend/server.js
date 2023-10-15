@@ -13,14 +13,39 @@ const client_info = {
     port: 5432,
 }
 
-app.use(cors({
-    origin: 'http://localhost:3000'
-}));
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+  });
 
 app.use(bodyParser.json({limit: '50mb'}));
 
 app.post('/check', (req, res) => {
     res.json({status: 200})
+})
+
+app.post('/recommend', async (req, res) => {
+    let collections = {};
+    let statusCode;
+    const client = new Client(client_info);
+    let tagQuery = `
+        SELECT type
+        FROM images as i
+        WHERE author=${req.logged_user}
+    `
+    client.connect();
+    try {
+        const tags = await client.query(tagQuery);
+        if(tags.rowCount > 0) {
+            
+        } else {
+            statusCode = 204;
+        }
+
+    } catch {
+        statusCode = 401;
+    }
 })
 
 app.post('/search', async (req, res) => {
@@ -137,6 +162,9 @@ app.post('/imageupload', async (req, res) => {
     const lon = req.body.lon
     const tagged_people = req.body.tagged_people
     const length = req.body.length
+    const isPublic = req.body.public
+    const type = req.body.type
+    const place = req.body.place
 
     var imagesArray = [];
     var tags = []
@@ -178,9 +206,9 @@ app.post('/imageupload', async (req, res) => {
         var index = 1;
         imagesArray.forEach(image => {
 
-            query = `INSERT INTO images (image_name, image, location, tagged_people, reference)
+            query = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place)
             VALUES (\'${index}_${name}\', \'${image}\', 
-            \'${postgisPoint}\', \'{${tags}}\', \'${name}\');`
+            \'${postgisPoint}\', \'{${tags}}\', \'${name}\', \'${isPublic}\', \'${type}\', \'${place}\');`
 
             pool.query(query);
             index++;
@@ -435,7 +463,7 @@ app.post('/retrievecollections', async (req, res) => {
 
     const client = new Client({
         user: 'postgres',
-        host: '0.0.0.0',
+        host: '127.0.0.1',
         database: 'contextawarerc',
         port: 5432,
     });
@@ -444,32 +472,30 @@ app.post('/retrievecollections', async (req, res) => {
     query = `
             SELECT collection_name as name
             FROM collections
-            WHERE author=\'${req.body.logged_user}\';`
+            WHERE author=\'${req.body.logged_user}\'`
 
     try {
-        const res = await client.query(query);
-        if (res.rowCount > 0) {
-            var numColl = 0;
-            res.rows.forEach(collection => {
-                let tmp_collection = {};
-                tmp_collection.name = collection.name
-                retrieved_collections[numColl] = tmp_collection
-                numColl++;
-            })
-            statusCode = 200;
-        } else {
-            statusCode = 401;
-        }
-        client.end();
+        const resQuery = await client.query(query);
+        let numColl = 0;
+
+        resQuery.rows.forEach(collection => {
+            let tmp_collection = {};
+            tmp_collection.name = collection.name
+            retrieved_collections[numColl] = tmp_collection
+            numColl++;
+        })
+
+        statusCode = 200;
     } catch (err) {
-        console.log(err);
+        statusCode = 401; 
     }
+
+    client.end();
 
     res.json({
         status: statusCode,
         retrievedCollections: retrieved_collections
     })
-    
 })
 
 app.post('/login', async (req, res) => {
@@ -485,25 +511,28 @@ app.post('/login', async (req, res) => {
 
     client.connect();
 
-    query = `SELECT username FROM users WHERE username=\'${req.body.username}\' 
-            AND password=\'${req.body.password}\';`
+    query = `
+        SELECT username
+        FROM users
+        WHERE
+            username=\'${req.body.username}\' AND
+            password=\'${req.body.password}\'`
 
     try {
-        const res = await client.query(query);
-        if (res.rowCount == 1) {
+        const resQuery = await client.query(query);
+        if (resQuery.rowCount == 1) {
             console.log("Login successful.");
             statusCode = 200;
         } else {
             console.log("Login incorrect.");
             statusCode = 401;
         }
-        client.end();
     } catch (err) {
         console.log(err);
     }
+    client.end();
 
     res.json({status: statusCode})
-    
 })
 
 app.post('/signup', (req, res) => {

@@ -16,8 +16,7 @@ function UploadPhoto() {
     var [fileMarker, setFileMarker] = useState({lat: 0.0, lon: 0.0})
     var [selectedFile, setSelectedFile] = useState(null)
 
-    // At the moment the only accepted format are .png/.jpg
-    // TODO Allow user to upload .zip files
+    // TODO Allow user to select more files at once, to upload them as a collection.
     function uploadOnDB() {
         var reader = new FileReader();
         
