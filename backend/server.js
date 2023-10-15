@@ -59,24 +59,21 @@ app.post('/search', async (req, res) => {
     let collections = {};
     let statusCode;
     const query = `
-        SELECT collection_name
+        SELECT collection_name as name
         FROM collections
-        WHERE author='${req.body.logged_user}' 
-        AND collection_name LIKE '${req.body.search_text}%'
+        WHERE author=\'${req.body.logged_user}\' 
+        AND collection_name ILIKE \'${req.body.search_text}%\'
     `;
     client.connect();
 
     try {
         const resQuery = await client.query(query);
-        if(resQuery.rowCount > 0) {
-            
-            resQuery.rows.map( (collection, index) => {
-                collections[index] = collection
-            })
-            statusCode = 200;
-        } else {
-            statusCode = 204;
-        }         
+
+        resQuery.rows.map( (collection, index) => {
+            collections[index] = collection
+        })
+
+        statusCode = 200;       
     } catch {
         statusCode = 401;
     }

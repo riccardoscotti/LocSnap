@@ -45,6 +45,7 @@ const Navbar = () => {
                 {/* <div className='nav-button' onClick={() => uploadFilterRef.current.click()}>Upload geo filter</div> */}
                 <div className='nav-button' onClick={() => navigate('/generate')}>Generate map</div>
                 <div className='nav-button' onClick={() => navigate('/explore')}>Explore</div>
+                <div className='nav-button' onClick={() => navigate('/friends')}>Social</div>
                 <div className='nav-button' onClick={() => logout()} id='logout'>Logout</div>
             </div>
         </nav>

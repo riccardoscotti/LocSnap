@@ -2,7 +2,7 @@ import '../css/dashboard.css';
 import CollectionCard from '../components/collectionCard';
 import { MapContainer, TileLayer } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createRef, useRef } from 'react';
 import axios from "axios";
 import * as L from 'leaflet';
 import markerIcon from '../marker-icon.png'
@@ -28,9 +28,13 @@ const Dashboard = () => {
     popupAnchor: [-3, -76],
   })
 
-  useEffect(() => {
-    retrieveCollections()
-  }, []);
+  let [searchText, setSearchText] = useState("")
+  let [collectionList, setCollectionList] = useState(["collezione1"])
+  const searchRef = createRef()
+
+  // useEffect(() => {
+  //   retrieveCollections()
+  // }, []);
 
   const retrieveCollections = () => {
     axios.post("/retrievecollections", {
@@ -49,25 +53,6 @@ const Dashboard = () => {
         }
     });
   }
-
-  const searchTextQuery = () => {
-    axios.post("/search", {
-      logged_user: localStorage.getItem("user"),
-      search_text: searchText
-    },
-      header_config
-    )
-    .then((response) => {
-      if(response.status === 200) {
-        localStorage.setItem("collections", JSON.stringify(response.data.collections))
-      }
-    })
-    .catch((error) => {
-        if(error.response.status === 401) {
-            alert("Error during collection retrieval!")
-        }
-    });
-  }
   
   const bolognaCoords = [44.494887, 11.3426163]
   const collectionsImages = [
@@ -76,20 +61,26 @@ const Dashboard = () => {
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
   
-  let [searchText, setSearchText] = useState("")
-  let [collectionList, setCollectionList] = useState(["collezione1"])
+  
   return localStorage.getItem("collections") && (
     <div className='main-content'>
       <div className='collections'>
         <h1 className='title'>My collections</h1>
-        <input type='text' value={searchText} className='search-collection' onChange={e => {
-          setSearchText(e.target.value);
-          // axios.post(`${base_url}/search`, {
-          //   "logged_user": localStorage.getItem("user"),
-          //   "search_text": searchText
-          // }).then(res => {
-          //   // mostrare le collezioni
-          // })
+        <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
+          if (e.key === 'Enter') {
+            console.log("Searching with: ", searchRef.current.value);
+            axios.post('/search', {
+              "logged_user": localStorage.getItem("user"),
+              "search_text": searchRef.current.value
+            }).then(response => {
+              if(response.data.status === 200) {
+                console.log(response.data.collections);
+                localStorage.setItem("collections", JSON.stringify(response.data.collections)) // Update new collections
+                window.location.reload()
+              }
+            })
+          }
+          
 
           // fare la query e poi aggiornare la lista di collezioni
           setCollectionList(prev => [e.target.value])
