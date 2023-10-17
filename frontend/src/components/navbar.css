@@ -15,30 +15,30 @@
     align-items: center;
 }
 
-.social-option {
+.dialog-option {
     color: black;
     font-size: 14pt;
     font-weight: 1000;
     text-align: center;
 }
 
-.social-option-div {
+.dialog-option-div {
     border-radius: 8px;
     width: 14vw;
 }
 
-.friendItem {
+.dialogItem {
     color: black;
     font-weight: 900;
 }
 
-.friendDiv {
+.dialogDiv {
     border-radius: 10px;
     width: 14vw;
     text-align: center;
 }
 
-.friendDiv:hover {
+.dialogDiv:hover {
     background-color: #3d87b290;
     cursor: pointer;
 }
@@ -49,7 +49,7 @@ hr.new5 {
     width: 20vw;
 }
 
-.social-option-div:hover {
+.dialog-option-div:hover {
     background-color: #3d87b290;
     cursor: pointer;
 }

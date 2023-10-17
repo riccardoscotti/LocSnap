@@ -3,10 +3,7 @@ import logo_path from '../locsnap_icon.png'
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom'
 import React, { useRef, useState, createRef, useEffect } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Modal from 'react-bootstrap/Modal';
-import Checkbox from '@mui/material/Checkbox';
 import axios from 'axios'
 import ListGroup from 'react-bootstrap/ListGroup';
 
@@ -15,13 +12,66 @@ const Navbar = () => {
     const [friendsDialogStatus, openFriendsDialog] = React.useState(false);
     const [friendTextStatus, openFriendsText] = React.useState(false);
     const [friendTextRemoveStatus, openFriendsTextRemove] = React.useState(false);
+    const [choosePhotoDialogStatus, openChoosePhotoDialog] = React.useState(false);
+    const [ManagePhotosDialogStatus, openManageDialog] = React.useState(false);
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null)
-    var friendRef = createRef();
-    var friendRef2 = createRef();
+    var friendRef = createRef(); // Add
+    var friendRef2 = createRef(); // Remove
+    var friendRef3 = createRef(); // Tag
+
+    function ChoosePhotoDialog(props) {
+        return (
+            <Modal
+            {...props}
+              size="md"
+              aria-labelledby="contained-modal-title-vcenter"
+              centered >
+              <Modal.Header>
+                <Modal.Title id="contained-modal-title-vcenter">
+                Select the photo
+                </Modal.Title>
+              </Modal.Header>
+              <Modal.Body id='social-body'>
+                {
+                    Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+                        return (
+                            <div className="dialogDiv" id="photoSelected">
+                                <p className="dialogItem"> {collection[1].name} </p> 
+                            </div>
+                        )
+                    })
+                }
+              </Modal.Body>
+            </Modal>
+          );
+    }
+
+    function ChooseFriendDialog(props) {
+        return (
+            <Modal
+            {...props}
+              size="md"
+              aria-labelledby="contained-modal-title-vcenter"
+              centered >
+              <Modal.Header>
+                <Modal.Title id="contained-modal-title-vcenter">
+                Select the friend you want to send the photo to
+                </Modal.Title>
+              </Modal.Header>
+              <Modal.Body id='social-body'>
+                <input type='text' ref={friendRef3} className='search-collection' />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button id="confirmButton" onClick={() => {
+                    
+                }}>Confirm</Button>
+              </Modal.Footer>
+            </Modal>
+          );
+    }
 
     function OpenInputText(props) {
-    
         return (
             <Modal
             {...props}
@@ -44,10 +94,12 @@ const Navbar = () => {
                     })
                     .then((response) => {
                         if(response.data.status === 200) {
-                            alert(`You and ${friendRef.current.value} "are now friends!`)
+                            alert(`You and ${friendRef.current.value} are now friends!`)
                             window.location.reload()
-                        } else if (response.data.status === 409) {
-                            alert(`${friendRef.current.value} and you are already friend.`)
+                        } else if (response.data.status === 204) {
+                            alert(`User ${friendRef.current.value} does not exist.`)
+                        } else {
+                            alert(`You and ${friendRef.current.value} are already friends.`)
                         }
                     })
                     .catch((error) => {
@@ -64,21 +116,19 @@ const Navbar = () => {
     function addFriend() {
         openFriendsDialog(false)
         openFriendsText(true)
-        
     }
     
     function removeFriend() {
         openFriendsDialog(false)
         openFriendsTextRemove(true)
-        
     }
     
+    // Tag a single user
     function sharePhoto() {
-        // ...
-    }
-    
-    function publishPhoto() {
-        // ...
+        openFriendsDialog(false)
+        openChoosePhotoDialog(true)
+        // then after open...
+        // chooseFriendDialog(true) 
     }
 
     function FriendTextRemove(props) {
@@ -107,7 +157,7 @@ const Navbar = () => {
                             alert(`You and ${friendRef2.current.value} are no longer friends!`)
                             window.location.reload()
                         } else if (response.data.status === 409) {
-                            alert(`${friendRef2.current.value} are not friend.`)
+                            alert(`You and ${friendRef2.current.value} are not friend.`)
                         }
                     })
                     .catch((error) => {
@@ -139,32 +189,50 @@ const Navbar = () => {
                     {    
                         Object.entries(JSON.parse(localStorage.getItem("friends"))).map( (friend) => {
                             return (
-                                <div className="friendDiv">
-                                    <ListGroup.Item className="friendItem"> {friend[1].name} </ListGroup.Item> 
+                                <div className="dialogDiv">
+                                    <ListGroup.Item className="dialogItem"> {friend[1].name} </ListGroup.Item> 
                                 </div>
                             )
                         })
                     }
                 </ListGroup>
                 <hr class="new5" />
-                <div className='social-option-div' onClick={addFriend}>
-                    <p className='social-option'>Add friend</p>
+                <div className='dialog-option-div' onClick={addFriend}>
+                    <p className='dialog-option'>Add friend</p>
                 </div>
-                <div className='social-option-div' onClick={removeFriend}>
-                    <p className='social-option'>Remove friend</p>
+                <div className='dialog-option-div' onClick={removeFriend}>
+                    <p className='dialog-option'>Remove friend</p>
                 </div>
-                <div className='social-option-div' onClick={sharePhoto}>
-                    <p className='social-option'>Share photo with a friend</p>
-                </div>
-                <div className='social-option-div' onClick={publishPhoto}>
-                    <p className='social-option'>Publish photo</p>
+                <div className='dialog-option-div' onClick={sharePhoto}>
+                    <p className='dialog-option'>Share photo with a friend</p>
                 </div>
               </Modal.Body>
-              <Modal.Footer>
-                <Button id="confirmButton">Confirm</Button>
-              </Modal.Footer>
             </Modal>
         );
+    }
+
+    function ManagePhotosDialog(props) {
+        return (
+            <Modal
+              {...props}
+              size="md"
+              aria-labelledby="contained-modal-title-vcenter"
+              centered >
+              <Modal.Header>
+                <Modal.Title id="contained-modal-title-vcenter">
+                  Manage your photos
+                </Modal.Title>
+              </Modal.Header>
+              <Modal.Body id='social-body'>
+                <div className="dialog-option-div">
+                    <p className='dialog-option'>Publish photo</p> 
+                </div>
+                <div className="dialog-option-div">
+                    <p className='dialog-option'>Delete photo</p> 
+                </div>
+              </Modal.Body>
+            </Modal>
+        )
     }
 
     const uploadFilter = event => {
@@ -201,16 +269,21 @@ const Navbar = () => {
             <div className='nav-content'>
                 <div className='nav-button' onClick={() => navigate('/upload')}>Upload photo</div>
                 <div className='nav-button' onClick={() => navigate('/generate')}>Generate map</div>
-                <div className='nav-button' onClick={() => {}}>Manage your photos</div>
-                <div className='nav-button' onClick={() => navigate('/explore')}>Explore</div>
+                <div className='nav-button' onClick={() => {
+                    openManageDialog(true)
+                }}>Manage your photos</div>
                 <div className='nav-button' onClick={() => {
                     openFriendsDialog(true)
-                }}>
-                    Social
-                </div>
+                }}> Social </div>
+                <div className='nav-button' onClick={() => navigate('/explore')}>Explore</div>
                 {/* <div className='nav-button' onClick={() => navigate('/social')}>Social</div> */}
                 <div className='nav-button' onClick={() => logout()} id='logout'>Logout</div>
             </div>
+
+            <ManagePhotosDialog
+                show={ ManagePhotosDialogStatus }
+                onHide={() => { openManageDialog(false) }}
+            /> 
 
             <SocialDialog
                 show={ friendsDialogStatus }
@@ -225,6 +298,11 @@ const Navbar = () => {
             <FriendTextRemove
                 show={ friendTextRemoveStatus }
                 onHide={ () => openFriendsTextRemove(false) }
+            />
+
+            <ChoosePhotoDialog
+                show={ choosePhotoDialogStatus }
+                onHide={ () => openChoosePhotoDialog(false) }
             />
 
         </nav>

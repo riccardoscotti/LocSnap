@@ -121,7 +121,6 @@ function loadFriends() {
         logged_user: localStorage.getItem('user')
     })
     .then((response) => {
-        console.log(response.data);
         if(response.data.status === 200) {
             localStorage.setItem("friends", JSON.stringify(response.data.friends))
         }

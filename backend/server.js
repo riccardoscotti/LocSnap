@@ -430,7 +430,7 @@ app.post('/get_friends', async (req, res) => {
     try {
         const res = await client.query(query);
         let index = 0;
-        
+
         res.rows.forEach(friendRow => {
             let tmp_friend = {}
             tmp_friend.name = friendRow.friend
@@ -519,7 +519,7 @@ app.post('/add_friend', async (req, res) => {
     try {
         const res = await client.query(query);
         if (res.rowCount > 0) {
-            statusCode = 409;
+            statusCode = 409; // Already friends
         } else {
             try {
                 let query1 = `INSERT INTO friendships (user_1, user_2)
@@ -533,7 +533,7 @@ app.post('/add_friend', async (req, res) => {
                 statusCode = 200
                 console.log("Amicizia aggiunta")
             } catch (err) {
-                statusCode = 204
+                statusCode = 204;
                 console.log("Utente non trovato")
             }
         }
