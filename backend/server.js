@@ -429,24 +429,22 @@ app.post('/get_friends', async (req, res) => {
 
     try {
         const res = await client.query(query);
-        if (res.rowCount > 0) {
-            let index = 0;
-            res.rows.forEach(friendRow => {
-                let tmp_friend = {}
-                tmp_friend.name = friendRow.friend
-                friends[index] = tmp_friend
-                index++;
-            });
-            statusCode = 200;
-        } else {
-            console.log("No friends available.");
-            statusCode = 401;
-        }
-        client.end();
+        let index = 0;
+        
+        res.rows.forEach(friendRow => {
+            let tmp_friend = {}
+            tmp_friend.name = friendRow.friend
+            friends[index] = tmp_friend
+            index++;
+        });
+        statusCode = 200;
     } catch (err) {
+        statusCode = 401;
         console.log(err);
     }
 
+    client.end();
+    
     res.json({
         status: statusCode,
         friends: friends});
@@ -540,6 +538,49 @@ app.post('/add_friend', async (req, res) => {
             }
         }
     } catch (err) {
+        statusCode = 401;
+        console.log(err);
+    }
+    
+    client.end();
+    res.json({status: statusCode});
+    
+})
+
+app.post('/remove_friend', async (req, res) => {
+
+    var statusCode;
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    client.connect();
+
+    const query1 = `
+            DELETE
+            FROM friendships
+            WHERE
+                user_1=\'${req.body.logged_user}\' AND
+                user_2=\'${req.body.friend}\';`
+
+    const query2 = `
+            DELETE
+            FROM friendships
+            WHERE
+                user_1=\'${req.body.friend}\' AND
+                user_2=\'${req.body.logged_user}\';`
+
+    try {
+        const resQuery1 = await client.query(query1);
+        const resQuery2 = await client.query(query2);
+
+        statusCode = 200;
+    } catch (err) {
+        statusCode = 401;
         console.log(err);
     }
     

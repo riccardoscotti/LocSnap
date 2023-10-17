@@ -14,9 +14,11 @@ const Navbar = () => {
 
     const [friendsDialogStatus, openFriendsDialog] = React.useState(false);
     const [friendTextStatus, openFriendsText] = React.useState(false);
+    const [friendTextRemoveStatus, openFriendsTextRemove] = React.useState(false);
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null)
     var friendRef = createRef();
+    var friendRef2 = createRef();
 
     function OpenInputText(props) {
     
@@ -28,7 +30,7 @@ const Navbar = () => {
               centered >
               <Modal.Header>
                 <Modal.Title id="contained-modal-title-vcenter">
-                  Insert friend's username
+                Insert the username of the friend you want to add
                 </Modal.Title>
               </Modal.Header>
               <Modal.Body id='social-body'>
@@ -43,6 +45,7 @@ const Navbar = () => {
                     .then((response) => {
                         if(response.data.status === 200) {
                             alert(`You and ${friendRef.current.value} "are now friends!`)
+                            window.location.reload()
                         } else if (response.data.status === 409) {
                             alert(`${friendRef.current.value} and you are already friend.`)
                         }
@@ -61,10 +64,13 @@ const Navbar = () => {
     function addFriend() {
         openFriendsDialog(false)
         openFriendsText(true)
+        
     }
     
     function removeFriend() {
-        // ...
+        openFriendsDialog(false)
+        openFriendsTextRemove(true)
+        
     }
     
     function sharePhoto() {
@@ -73,6 +79,46 @@ const Navbar = () => {
     
     function publishPhoto() {
         // ...
+    }
+
+    function FriendTextRemove(props) {
+        return (
+            <Modal
+            {...props}
+              size="md"
+              aria-labelledby="contained-modal-title-vcenter"
+              centered >
+              <Modal.Header>
+                <Modal.Title id="contained-modal-title-vcenter">
+                  Insert the username of the friend you want to delete
+                </Modal.Title>
+              </Modal.Header>
+              <Modal.Body id='social-body'>
+                <input type='text' ref={friendRef2} className='search-collection' />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button id="confirmButton" onClick={() => {
+                    axios.post('/remove_friend', {
+                        logged_user: localStorage.getItem('user'),
+                        friend: friendRef2.current.value
+                    })
+                    .then((response) => {
+                        if(response.data.status === 200) {
+                            alert(`You and ${friendRef2.current.value} are no longer friends!`)
+                            window.location.reload()
+                        } else if (response.data.status === 409) {
+                            alert(`${friendRef2.current.value} are not friend.`)
+                        }
+                    })
+                    .catch((error) => {
+                        if(error.response.status === 401) {
+                            alert("Error during friend removal.")
+                        }
+                    });
+                }}>Confirm</Button>
+              </Modal.Footer>
+            </Modal>
+        ); 
     }
     
     function SocialDialog(props) {
@@ -174,6 +220,11 @@ const Navbar = () => {
             <OpenInputText
                 show={ friendTextStatus }
                 onHide={() => openFriendsText(false) }
+            />
+
+            <FriendTextRemove
+                show={ friendTextRemoveStatus }
+                onHide={ () => openFriendsTextRemove(false) }
             />
 
         </nav>
