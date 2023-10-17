@@ -14,7 +14,6 @@ const Social = () => {
             logged_user: localStorage.getItem("user")
         })
         .then(response => {
-            console.log(response);
             setFriends(response.data.friends)
         })
     }

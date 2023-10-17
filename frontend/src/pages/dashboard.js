@@ -73,7 +73,7 @@ const Dashboard = () => {
           }
         }} />
         <label for="publicCheckBox">
-          Checked
+          Show public photos
         </label>
       </div>
     )
@@ -101,8 +101,6 @@ const Dashboard = () => {
       if(response.data.status === 200) {
         publicPhotoMarkers.addTo(mapRef.current);
 
-        console.log(response.data.public_photos);
-
         Object.entries(response.data.public_photos).map( (img) => {
           var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(publicPhotoMarkers);
           marker.bindPopup(img[1].name);
@@ -113,6 +111,27 @@ const Dashboard = () => {
         console.log(error);
     });
   }
+
+  useEffect(() => {
+    loadFriends()    
+}, [])
+
+function loadFriends() {
+    axios.post('/get_friends', {
+        logged_user: localStorage.getItem('user')
+    })
+    .then((response) => {
+        console.log(response.data);
+        if(response.data.status === 200) {
+            localStorage.setItem("friends", JSON.stringify(response.data.friends))
+        }
+    })
+    .catch((error) => {
+        if(error.response.status === 401) {
+            alert("Error during friend addition.")
+        }
+    })
+}
 
   function showMarkers() {
     if (mapRef.current !== "undefined") {
@@ -175,6 +194,7 @@ const Dashboard = () => {
             title={collection[1].name} place={'Prova'} prevs={collectionsImages} />)
           })
         }
+        
       </div> 
         <DrawMap />
         <CheckBoxPublic />

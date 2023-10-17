@@ -27,6 +27,28 @@
     width: 14vw;
 }
 
+.friendItem {
+    color: black;
+    font-weight: 900;
+}
+
+.friendDiv {
+    border-radius: 10px;
+    width: 14vw;
+    text-align: center;
+}
+
+.friendDiv:hover {
+    background-color: #3d87b290;
+    cursor: pointer;
+}
+
+hr.new5 {
+    border: 4px solid #208dec;
+    border-radius: 5px;
+    width: 20vw;
+}
+
 .social-option-div:hover {
     background-color: #3d87b290;
     cursor: pointer;

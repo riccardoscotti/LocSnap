@@ -414,7 +414,7 @@ app.post('/tag_friend', async (req, res) => {
 app.post('/get_friends', async (req, res) => {
 
     var statusCode;
-    var friends = [];
+    var friends = {};
 
     const client = new Client({
         user: 'postgres',
@@ -430,8 +430,12 @@ app.post('/get_friends', async (req, res) => {
     try {
         const res = await client.query(query);
         if (res.rowCount > 0) {
+            let index = 0;
             res.rows.forEach(friendRow => {
-                friends.push(friendRow.friend)
+                let tmp_friend = {}
+                tmp_friend.name = friendRow.friend
+                friends[index] = tmp_friend
+                index++;
             });
             statusCode = 200;
         } else {
