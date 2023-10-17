@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const { Client, Pool } = require('pg');
 const cors = require('cors');
 const { escapeIdentifier } = require('pg/lib/utils');
+const { rows } = require('pg/lib/defaults');
 const app = express();
 const port = 8080;
 
@@ -448,6 +449,51 @@ app.post('/get_friends', async (req, res) => {
     
 })
 
+app.post('/retrieve_public', async (req, res) => {
+    var statusCode;
+    var public_photos = {}
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    client.connect();
+
+    query = `
+        SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat
+        FROM images
+        WHERE
+            author <> \'${req.body.logged_user}\' AND
+            public = true
+    `
+
+    try {
+        let index = 0;
+        const resQuery = await client.query(query)
+        resQuery.rows.forEach( row => {
+            let tmp_img = {};
+            tmp_img.name = row.name
+            tmp_img.coords = [row.lat, row.lng]
+            public_photos[index] = tmp_img
+            index++;
+        })
+        statusCode = 200
+    } catch(err) {
+        statusCode = 401
+        console.log(err);
+    }
+
+    client.end();
+    res.json({
+        status: statusCode,
+        public_photos: public_photos
+    });
+
+})
+
 app.post('/add_friend', async (req, res) => {
 
     var statusCode;
@@ -489,11 +535,11 @@ app.post('/add_friend', async (req, res) => {
                 console.log("Utente non trovato")
             }
         }
-        client.end();
     } catch (err) {
         console.log(err);
     }
-
+    
+    client.end();
     res.json({status: statusCode});
     
 })

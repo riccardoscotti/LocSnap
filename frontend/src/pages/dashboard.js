@@ -31,7 +31,9 @@ const Dashboard = () => {
   let [searchText, setSearchText] = useState("")
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
+  const checkBoxRef = createRef()
   const mapRef = createRef()
+  var publicPhotoMarkers = L.layerGroup();
 
   // Collections initialization
   useEffect(() => {
@@ -39,9 +41,7 @@ const Dashboard = () => {
     loadImages();
   }, []);
 
-  
-
-  function useHookWithRefCallback() {
+  function MapHookCB() {
     const mapCB = useCallback(node => {
       if (node) {
         mapRef.current = node
@@ -53,14 +53,30 @@ const Dashboard = () => {
   }
 
   function DrawMap() {
-    const [mapRef] = useHookWithRefCallback()
+    const [innerMapRef] = MapHookCB()
     
     return (
-      <MapContainer id='map-container' ref={mapRef} center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
+      <MapContainer id='map-container' ref={innerMapRef} center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
         <TileLayer id='tile-layer' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       </MapContainer>
     )
+  }
 
+  function CheckBoxPublic() {
+    return (
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="publicCheckBox" onChange={(e) => {
+          if (e.target.checked === true) {
+            loadPublicPhotos()
+          } else {
+            publicPhotoMarkers?.removeFrom(mapRef.current)
+          }
+        }} />
+        <label for="publicCheckBox">
+          Checked
+        </label>
+      </div>
+    )
   }
 
   function loadImages() {
@@ -77,13 +93,33 @@ const Dashboard = () => {
     });
   }
 
+  function loadPublicPhotos() {
+    axios.post('/retrieve_public', {
+      logged_user: localStorage.getItem("user")
+    })
+    .then((response) => {
+      if(response.data.status === 200) {
+        publicPhotoMarkers.addTo(mapRef.current);
+
+        console.log(response.data.public_photos);
+
+        Object.entries(response.data.public_photos).map( (img) => {
+          var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(publicPhotoMarkers);
+          marker.bindPopup(img[1].name);
+        })
+      }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+  }
+
   function showMarkers() {
     if (mapRef.current !== "undefined") {
-      var markerGroup = L.layerGroup().addTo(mapRef.current);
+      var userPhotosMarkers = L.layerGroup().addTo(mapRef.current);
       Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
-        var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(markerGroup);
+        var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(userPhotosMarkers);
         marker.bindPopup(img[1].name);
-        console.log(img);
       })
     }
   }
@@ -115,7 +151,6 @@ const Dashboard = () => {
   
   return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
     <div className='main-content'>
-      
       <div className='collections'>
         <h1 className='title'>My collections</h1>
         <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
@@ -142,6 +177,7 @@ const Dashboard = () => {
         }
       </div> 
         <DrawMap />
+        <CheckBoxPublic />
     </div>
   );
 }
