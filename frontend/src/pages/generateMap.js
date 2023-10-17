@@ -197,29 +197,13 @@ const GenerateMap = () => {
       })
   }
 
-  function loadImages() {
-    axios.post('/retrieveimages', {
-      logged_user: localStorage.getItem("user")
-    })
-    .then((response) => {
-      if(response.data.status === 200) {
-        localStorage.setItem("imgs", JSON.stringify(response.data.imgs))
-      }
-    })
-    .catch((error) => {
-        console.log(error);
-    });
-  }
+
 
   useEffect(() => {
     if (confirmed == true) {
       Cluster();
     }
   }, [confirmed])
-
-  useEffect(() => {
-    loadImages()
-  }, [])
 
   function ConfirmCluster() {
     setOpen(false);

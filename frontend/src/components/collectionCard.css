@@ -10,6 +10,13 @@
     font-style: normal;
     font-weight: 600;
     line-height: normal;
+    display: flex;
+}
+
+#delete-img {
+    width: 3vw;
+    height: 6vh;
+    margin-left: 1vw;
 }
 
 .collection-place {

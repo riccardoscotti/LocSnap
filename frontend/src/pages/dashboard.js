@@ -2,7 +2,7 @@ import '../css/dashboard.css';
 import CollectionCard from '../components/collectionCard';
 import { MapContainer, TileLayer } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
-import React, { useEffect, useState, createRef, useRef } from 'react';
+import React, { useEffect, useState, createRef, useRef, useCallback } from 'react';
 import axios from "axios";
 import * as L from 'leaflet';
 import markerIcon from '../marker-icon.png'
@@ -31,11 +31,62 @@ const Dashboard = () => {
   let [searchText, setSearchText] = useState("")
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
+  const mapRef = createRef()
 
   // Collections initialization
   useEffect(() => {
-    retrieveCollections()
+    retrieveCollections();
+    loadImages();
   }, []);
+
+  
+
+  function useHookWithRefCallback() {
+    const mapCB = useCallback(node => {
+      if (node) {
+        mapRef.current = node
+        showMarkers()
+      }
+    }, [])
+
+    return [mapCB];
+  }
+
+  function DrawMap() {
+    const [mapRef] = useHookWithRefCallback()
+    
+    return (
+      <MapContainer id='map-container' ref={mapRef} center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
+        <TileLayer id='tile-layer' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      </MapContainer>
+    )
+
+  }
+
+  function loadImages() {
+    axios.post('/retrieveimages', {
+      logged_user: localStorage.getItem("user")
+    })
+    .then((response) => {
+      if(response.data.status === 200) {
+        localStorage.setItem("imgs", JSON.stringify(response.data.imgs))
+      }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+  }
+
+  function showMarkers() {
+    if (mapRef.current !== "undefined") {
+      var markerGroup = L.layerGroup().addTo(mapRef.current);
+      Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
+        var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(markerGroup);
+        marker.bindPopup(img[1].name);
+        console.log(img);
+      })
+    }
+  }
 
   const retrieveCollections = () => {
     axios.post("/retrievecollections", {
@@ -62,9 +113,9 @@ const Dashboard = () => {
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
   
-  
-  return localStorage.getItem("collections") && (
+  return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
     <div className='main-content'>
+      
       <div className='collections'>
         <h1 className='title'>My collections</h1>
         <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
@@ -75,7 +126,6 @@ const Dashboard = () => {
               "search_text": searchRef.current.value
             }).then(response => {
               if(response.data.status === 200) {
-                console.log(response.data.collections);
                 localStorage.setItem("collections", JSON.stringify(response.data.collections)) // Update new collections
                 window.location.reload()
               }
@@ -89,15 +139,9 @@ const Dashboard = () => {
             return (<CollectionCard className='collection' key={collection[0]} 
             title={collection[1].name} place={'Prova'} prevs={collectionsImages} />)
           })
-          // <div>
-          //   {collectionList.map(c => <p key={c}>{c}</p>)}
-          // </div>
-
         }
       </div> 
-      <MapContainer id='map-container' center={bolognaCoords} zoom={14} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
-        <TileLayer id='tile-layer' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      </MapContainer>
+        <DrawMap />
     </div>
   );
 }
