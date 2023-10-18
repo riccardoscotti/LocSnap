@@ -28,6 +28,16 @@ const Dashboard = () => {
     popupAnchor: [-3, -76],
   })
 
+  const publicMarker = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    iconRetinaUrl: markerIcon,
+    iconSize: [45, 48],
+    shadowSize: [50, 64],
+    iconAnchor: [22, 94],
+    shadowAnchor: [4, 62],
+    popupAnchor: [-3, -76]
+  })
+
   let [searchText, setSearchText] = useState("")
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
@@ -102,7 +112,7 @@ const Dashboard = () => {
         publicPhotoMarkers.addTo(mapRef.current);
 
         Object.entries(response.data.public_photos).map( (img) => {
-          var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(publicPhotoMarkers);
+          var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: publicMarker}).addTo(publicPhotoMarkers);
           marker.bindPopup(img[1].name);
         })
       }
@@ -136,6 +146,7 @@ function loadFriends() {
     if (mapRef.current !== "undefined") {
       var userPhotosMarkers = L.layerGroup().addTo(mapRef.current);
       Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
+        console.log(`${img[1].name} uploaded.`);
         var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(userPhotosMarkers);
         marker.bindPopup(img[1].name);
       })

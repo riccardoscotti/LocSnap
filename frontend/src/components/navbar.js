@@ -21,7 +21,7 @@ const Navbar = () => {
     var friendRef3 = createRef(); // Tag
 
     function ChoosePhotoDialog(props) {
-        return (
+        return localStorage.getItem("imgs") && (
             <Modal
             {...props}
               size="md"

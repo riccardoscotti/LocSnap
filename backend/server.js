@@ -26,27 +26,118 @@ app.post('/check', (req, res) => {
     res.json({status: 200})
 })
 
+// User favorite type of photos
 app.post('/recommend', async (req, res) => {
-    let collections = {};
     let statusCode;
+    var recommendedPlaces;
     const client = new Client(client_info);
-    let tagQuery = `
-        SELECT type
-        FROM images as i
-        WHERE author=${req.logged_user}
+    
+    let retrieveAllUsernamesQuery = `
+        SELECT username as username
+        FROM users
     `
+
     client.connect();
     try {
-        const tags = await client.query(tagQuery);
-        if(tags.rowCount > 0) {
-            
-        } else {
-            statusCode = 204;
+
+        const resQuery1 = await client.query(retrieveAllUsernamesQuery);
+        let user_array = [];
+        let type_array = new Map();
+
+        resQuery1.rows.forEach(user => {
+            user_array.push(user.username)
+        })
+
+        for (const user of user_array) {
+            const resQuery2 = await client.query(`
+            SELECT type as type
+            FROM images
+            WHERE author=\'${user}\'`)
+
+            let user_types = [];
+
+            resQuery2.rows.forEach(img => {
+                user_types.push(img.type)
+            })
+
+            // Calculate user favorite type of photos
+            // a is the array, c the item
+            let counts = user_types.reduce((a, c) => {
+                a[c] = (a[c] || 0) + 1;
+                return a;
+            }, {});
+
+            let maxCount = Math.max(...Object.values(counts));
+            mostFrequent = Object.keys(counts).filter(k => counts[k] === maxCount);
+
+            // Map with {username: favorite_type}
+            if (typeof mostFrequent[0] !== "undefined")
+                type_array[user] = mostFrequent[0];
         }
 
-    } catch {
+        let similar_users = [];
+
+        Object.keys(type_array).map(k => {
+            if (k !== req.body.logged_user && // Not the logged_user constraint
+            type_array[req.body.logged_user] === type_array[k]) { // Similarity between users
+                
+                similar_users.push(k) // is a similar user
+            }
+        })
+
+        // Retrieve places visited by logged_user to avoid doubles
+        let user_places = [];
+
+        const resQuery3 = await client.query(`
+            SELECT place as place
+            FROM images
+            WHERE author = \'${req.body.logged_user}\'
+        `)
+
+        resQuery3.rows.forEach(place => {
+            user_places.push(place.place)
+        })
+
+
+        // Retrieve places visited by other similar users
+        let other_users_places = [];
+
+        for (const user in similar_users) {
+            const resQuery4 = await client.query(`
+                SELECT place as place
+                FROM images
+                WHERE author = \'${similar_users[0]}\'`)
+            
+            resQuery4.rows.forEach(place => {
+                other_users_places.push(place.place);
+            })
+        }
+
+        // Returns occurrences of places in the previous array
+        let counts = other_users_places.reduce((a, c) => {
+            if (user_places.indexOf(c) == -1) // Place not visited by logged_user, so recommended.
+                a[c] = (a[c] || 0) + 1;
+            return a;
+        }, {});
+
+        const sortedArray = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        
+        // First 2 places, to be changed when more photos available.
+        recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
+
+        statusCode = 200;
+
+    } catch (err) {
+        console.log(err);
         statusCode = 401;
     }
+
+    client.end()
+    res.json({
+        status: statusCode,
+        recommendedPlaces: recommendedPlaces,
+
+    })
 })
 
 app.post('/search', async (req, res) => {

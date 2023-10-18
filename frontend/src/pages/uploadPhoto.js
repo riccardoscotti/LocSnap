@@ -83,18 +83,15 @@ function UploadPhoto() {
             datetime = EXIF.getTag(this, "DateTimeOriginal")
         })
 
-        fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${fileMarker.lat}&lon=${fileMarker.lon}&apiKey=${RGC_API_KEY}`, {
-            method: 'GET',
-          })
-            .then(response => response.json())
-            .then(result => {
+        axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${fileMarker.lat}&lon=${fileMarker.lon}&apiKey=${RGC_API_KEY}`)
+            .then(response => {
                 document.getElementById('file-metadata').innerHTML = `
                 Name: ${fileObj.name}<br/>
                 Taken on: ${datetime} <br/>
-                Country: ${result.features[0].properties.city}, ${result.features[0].properties.country}
+                Country: ${response.data.features[0].properties.city}, ${response.data.features[0].properties.country}
                 `;
                 
-                setPlace(result.features[0].properties.city)
+                setPlace(response.data.features[0].properties.city)
             })
             .catch(error => console.log(error));
 
