@@ -69,6 +69,14 @@
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.864"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.951"/>
+    <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp" app:srcCompat="@drawable/explore" android:id="@+id/recommendIcon"
+            android:priority="5"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.742"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.954"/>
     <androidx.recyclerview.widget.RecyclerView
             android:layout_width="298dp"
             android:layout_height="250dp"

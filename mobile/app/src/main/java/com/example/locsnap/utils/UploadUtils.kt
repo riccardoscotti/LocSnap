@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.*
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.example.locsnap.activities.recommendActivity
 import com.example.locsnap.fragments.ChooseFragment
 import org.json.JSONArray
 import org.json.JSONObject
@@ -96,10 +97,8 @@ class UploadUtils {
 
         fun upload(url: String, jsonObject: JSONObject, fragment: ChooseFragment) {
 
-            // Creazione coda per le richieste Volley
             val queue = Volley.newRequestQueue(fragment.requireActivity())
             val apiKey = "01114512c1ce49018d40d94d6aab3d68"
-
 
             val placeURL =
                 "https://api.geoapify.com/v1/geocode/reverse?lat=${jsonObject.get("lat")}&lon=${jsonObject.get("lon")}&apiKey=${apiKey}"
@@ -140,7 +139,7 @@ class UploadUtils {
                                 setType(sea.text.toString())
 
                             if (type == "") {
-                                Toast.makeText(fragment.requireActivity(), "You must choose a type.", Toast.LENGTH_SHORT ).show()
+                                Toast.makeText(fragment.requireActivity(), "You must choose a type.", Toast.LENGTH_SHORT).show()
                             } else {
                                 jsonObject.put("public", publicCheck.isChecked)
                                 jsonObject.put("type", type)
@@ -336,6 +335,44 @@ class UploadUtils {
                 }
             }
             queue.add(deleteRequest)
+        }
+
+        fun retrieveRecommendedPlaces(fragment: ChooseFragment) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/recommend"
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            val jsonObject = JSONObject()
+            jsonObject.put("logged_user", fragment.getLoggedUser())
+
+            // Edit this...
+            val recommendRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        val retrievedPlaces = response.getJSONArray("recommendedPlaces")
+                        var recommendedPlaces : MutableList<String> = mutableListOf()
+
+                        for (i in 0 until retrievedPlaces.length()) {
+                            recommendedPlaces.add(retrievedPlaces.get(i).toString())
+                        }
+
+                        val intent = Intent(fragment.requireContext(), recommendActivity::class.java)
+                        intent.putExtra("recommended_places", recommendedPlaces.toTypedArray())
+                        fragment.startActivity(intent)
+
+                    } else if (response.getString("status").equals("409")) {
+                        Toast.makeText(fragment.requireActivity(), "No available places to be recommended.", Toast.LENGTH_LONG).show()
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(recommendRequest)
         }
     }
 }

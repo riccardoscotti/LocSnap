@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.locsnap.*
 import com.example.locsnap.activities.getLocationService
+import com.example.locsnap.activities.recommendActivity
 import com.example.locsnap.utils.SingleCollectionInListAdapter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -37,8 +38,20 @@ class ChooseFragment : Fragment() {
         override fun onReceive(context: Context, intent: Intent) {
             last_known_location = intent.extras!!.get("location") as Location
 
-            if (intent.extras!!.getString("action").equals("nearby"))
-                UploadUtils.showNearestPhotos(4, last_known_location!!, thisInstance)
+            // Show a dialog to allow user to insert num_photos value
+            if (intent.extras!!.getString("action").equals("nearby")) {
+                val dialog = Dialog(thisInstance.requireActivity())
+                dialog.setContentView(R.layout.nearby_dialog)
+                val proceed = dialog.findViewById<Button>(R.id.confirmButton)
+                val num_photos_tv = dialog.findViewById<TextView>(R.id.num_photos_tv)
+
+                proceed.setOnClickListener {
+                    UploadUtils.showNearestPhotos(num_photos_tv.text.toString().toInt(), last_known_location!!, thisInstance)
+                }
+
+                dialog.show()
+
+            }
 
             else if (intent.extras!!.getString("action").equals("camera"))
                 startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
@@ -89,6 +102,7 @@ class ChooseFragment : Fragment() {
         val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
         val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
+        val recommendIcon = view.findViewById<ImageView>(R.id.recommendIcon)
 
         initialUserLetter.text = this.loggedUser.get(0).uppercase()
 
@@ -96,7 +110,6 @@ class ChooseFragment : Fragment() {
             this.openCamera()
         }
 
-        // Opens dialog with user's friends
         nearbyButton.setOnClickListener {
             val getloc = Intent(this.requireActivity(), getLocationService::class.java)
             getloc.putExtra("action", "nearby")
@@ -106,6 +119,13 @@ class ChooseFragment : Fragment() {
         // Uploads a collection
         uploadButton.setOnClickListener {
             FileManagerUtils.showExistingCollections(this, "upload")
+        }
+
+        recommendIcon.setOnClickListener {
+            val recommendIntent = Intent(this.requireActivity(), recommendActivity::class.java)
+
+            UploadUtils.retrieveRecommendedPlaces(this)
+            startActivity(recommendIntent)
         }
 
         addUserIcon.setOnClickListener {

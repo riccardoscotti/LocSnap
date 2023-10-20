@@ -4,6 +4,7 @@ const { Client, Pool } = require('pg');
 const cors = require('cors');
 const { escapeIdentifier } = require('pg/lib/utils');
 const { rows } = require('pg/lib/defaults');
+const e = require('express');
 const app = express();
 const port = 8080;
 
@@ -75,6 +76,8 @@ app.post('/recommend', async (req, res) => {
                 type_array[user] = mostFrequent[0];
         }
 
+        console.log(type_array);
+
         let similar_users = [];
 
         Object.keys(type_array).map(k => {
@@ -121,11 +124,14 @@ app.post('/recommend', async (req, res) => {
         }, {});
 
         const sortedArray = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        
-        // First 2 places, to be changed when more photos available.
-        recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
 
-        statusCode = 200;
+        if (sortedArray.length >= 2) {
+            // First 2 places, to be changed when more photos available.
+            recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
+            statusCode = 200;
+        } else {
+            statusCode = 409;
+        }
 
     } catch (err) {
         console.log(err);

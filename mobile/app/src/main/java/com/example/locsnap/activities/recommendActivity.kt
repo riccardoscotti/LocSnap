@@ -1,24 +1,19 @@
-package com.example.locsnap
+package com.example.locsnap.activities
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Base64
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ItemDecoration
-import com.example.locsnap.utils.ImagesAdapter
+import com.example.locsnap.R
+import com.example.locsnap.utils.PlaceAdapter
 
+class recommendActivity: AppCompatActivity() {
+    private var recommendedPlaces: Array<String> = arrayOf()
 
-class showImagesActivity : AppCompatActivity() {
-    private var bitmapsString: Array<String> = arrayOf()
-
-    inner class VerticalSpaceItemDecoration(private val verticalSpaceHeight: Int) : ItemDecoration() {
+    inner class VerticalSpaceItemDecoration(private val verticalSpaceHeight: Int) : RecyclerView.ItemDecoration() {
         override fun getItemOffsets(
             outRect: Rect, view: View, parent: RecyclerView,
             state: RecyclerView.State
@@ -31,24 +26,16 @@ class showImagesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         if (intent.extras != null) {
-            bitmapsString = intent.extras!!.getStringArray("imagesString") as Array<String>
+            recommendedPlaces = intent.extras!!.getStringArray("recommended_places") as Array<String>
         }
 
-        var bitmaps = mutableListOf<Bitmap>()
-
-        bitmapsString.forEach {
-            val imageBytes = Base64.decode(it, Base64.DEFAULT)
-            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            bitmaps.add(bitmap)
-        }
-
-        title = "Le tue ${bitmaps.size} foto più vicine"
-        setContentView(R.layout.show_images)
+        title = "Discover new places"
+        setContentView(R.layout.recommended_places)
         supportActionBar?.hide()
 
-        val recyclerView = findViewById<RecyclerView>(R.id.image_recycler)
+        val recyclerView = findViewById<RecyclerView>(R.id.places_recycler)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = ImagesAdapter(bitmaps)
+        recyclerView.adapter = PlaceAdapter(recommendedPlaces)
         recyclerView.addItemDecoration(DividerItemDecoration(this, LinearLayoutManager.VERTICAL))
         recyclerView.addItemDecoration(VerticalSpaceItemDecoration(35))
     }

@@ -40,6 +40,10 @@
                 android:name="com.example.locsnap.showImagesActivity"
                 android:label="@string/ShowImagesActivity" />
 
+        <activity
+                android:name="com.example.locsnap.activities.recommendActivity"
+                android:label="@string/ShowImagesActivity" />
+
         <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts"/>
 
         <service android:name="com.example.locsnap.activities.getLocationService"/>
