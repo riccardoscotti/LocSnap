@@ -4,12 +4,10 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
+import android.provider.MediaStore.Audio.Radio
 import android.util.Base64
 import android.util.Log
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.locsnap.fragments.ChooseFragment
@@ -20,6 +18,7 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+
 
 class UploadUtils {
     companion object {
@@ -98,10 +97,12 @@ class UploadUtils {
         fun upload(url: String, jsonObject: JSONObject, fragment: ChooseFragment) {
 
             // Creazione coda per le richieste Volley
-            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+            val queue = Volley.newRequestQueue(fragment.requireActivity())
             val apiKey = "01114512c1ce49018d40d94d6aab3d68"
 
-            val placeURL = "https://api.geoapify.com/v1/geocode/reverse?lat=${jsonObject.get("lat")}&lon=${jsonObject.get("lon")}&apiKey=${apiKey}"
+
+            val placeURL =
+                "https://api.geoapify.com/v1/geocode/reverse?lat=${jsonObject.get("lat")}&lon=${jsonObject.get("lon")}&apiKey=${apiKey}"
 
             val placeRequest = object : JsonObjectRequest(
                 Method.GET, placeURL, null,
@@ -112,44 +113,79 @@ class UploadUtils {
                         .getString("city")
 
                     if (place != "") {
-                        val dialog = Dialog(fragment.requireContext())
+                        val dialog = Dialog(fragment.requireActivity())
                         dialog.setContentView(R.layout.info_upload_dialog)
+
                         val proceed = dialog.findViewById<Button>(R.id.confirmButton)
+                        val publicCheck = dialog.findViewById<CheckBox>(R.id.publicCheckBox)
+                        val city = dialog.findViewById<RadioButton>(R.id.radio_city)
+                        val mountain = dialog.findViewById<RadioButton>(R.id.radio_mountain)
+                        val sea = dialog.findViewById<RadioButton>(R.id.radio_sea)
 
                         proceed.setOnClickListener {
-                            val publicCheck = dialog.findViewById<CheckBox>(R.id.publicCheckBox)
 
-                            jsonObject.put("public", publicCheck.isActivated)
-                            jsonObject.put("type", "Mountain")
-                            jsonObject.put("place", "Monte Cimone")
+                            var type = ""
 
-                            val sendRequest = object : JsonObjectRequest(
-
-                                Method.POST, url, jsonObject,
-                                { response ->
-                                    if (response.getString("status").equals("200")) {
-                                        Toast.makeText(fragment.requireActivity(), "Image successfully sent.", Toast.LENGTH_SHORT)
-                                            .show()
-                                        fragment.refresh()
-                                    }
-                                    else
-                                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during image sending process.", Toast.LENGTH_SHORT).show()
-                                },
-                                {
-                                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
-                                }
-                            ) {
-                                override fun getBodyContentType(): String {
-                                    return "application/json; charset=utf-8"
-                                }
+                            fun setType(selectedType: String) {
+                                type = selectedType
                             }
-                            queue.add(sendRequest)
-                            dialog.dismiss()
+
+                            if (city.isChecked)
+                                setType(city.text.toString())
+
+                            else if (mountain.isChecked)
+                                setType(mountain.text.toString())
+
+                            else if (sea.isChecked)
+                                setType(sea.text.toString())
+
+                            if (type == "") {
+                                Toast.makeText(fragment.requireActivity(), "You must choose a type.", Toast.LENGTH_SHORT ).show()
+                            } else {
+                                jsonObject.put("public", publicCheck.isChecked)
+                                jsonObject.put("type", type)
+                                jsonObject.put("place", place)
+
+                                val sendRequest = object : JsonObjectRequest(
+
+                                    Method.POST, url, jsonObject,
+                                    { response ->
+                                        if (response.getString("status").equals("200")) {
+                                            Toast.makeText(
+                                                fragment.requireActivity(),
+                                                "Image successfully sent.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            fragment.refresh()
+
+                                        } else {
+                                            Toast.makeText(
+                                                fragment.requireActivity(),
+                                                "[IMAGE] Problem occurred during image sending process.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    },
+                                    {
+                                        Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                ) {
+                                    override fun getBodyContentType(): String {
+                                        return "application/json; charset=utf-8"
+                                    }
+                                }
+                                queue.add(sendRequest)
+                                dialog.dismiss()
+                            }
                         }
                         dialog.show()
-                    }
-                    else
-                        Toast.makeText(fragment.requireActivity(), "[IMAGE] Problem occurred during reverse geocoding process.", Toast.LENGTH_SHORT).show()
+                    } else
+                        Toast.makeText(
+                            fragment.requireActivity(),
+                            "[IMAGE] Problem occurred during reverse geocoding process.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                 },
                 {
                     Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
@@ -159,6 +195,7 @@ class UploadUtils {
                     return "application/json; charset=utf-8"
                 }
             }
+
             queue.add(placeRequest)
         }
 

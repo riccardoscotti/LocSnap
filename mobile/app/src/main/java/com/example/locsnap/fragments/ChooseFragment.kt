@@ -42,9 +42,11 @@ class ChooseFragment : Fragment() {
 
             else if (intent.extras!!.getString("action").equals("camera"))
                 startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
+
+            else if (intent.extras!!.getString("action").equals("upload")) // If upload service was successful, refresh the fragment
+                thisInstance.refresh()
         }
     }
-
     fun setCollections(retrievedCollections: MutableList<String>) {
         this.retrievedCollections = retrievedCollections
 
@@ -65,7 +67,6 @@ class ChooseFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val args = this.arguments
         loggedUser = args?.getString("loggedUsername").toString()
 

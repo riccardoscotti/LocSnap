@@ -20,6 +20,10 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.LocSnap"
             tools:targetApi="31">
+
+        <service android:name=".activities.UploadService" />
+
+
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
@@ -35,6 +39,7 @@
         <activity
                 android:name="com.example.locsnap.showImagesActivity"
                 android:label="@string/ShowImagesActivity" />
+
         <meta-data android:name="preloaded_fonts" android:resource="@array/preloaded_fonts"/>
 
         <service android:name="com.example.locsnap.activities.getLocationService"/>
