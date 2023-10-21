@@ -12,6 +12,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.locsnap.activities.recommendActivity
 import com.example.locsnap.fragments.ChooseFragment
+import com.example.locsnap.utils.SingleCollectionInListAdapter
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -373,6 +374,72 @@ class UploadUtils {
                 }
             }
             queue.add(recommendRequest)
+        }
+
+        fun imagesOfCollection(fragment: ChooseFragment, adapter: SingleCollectionInListAdapter, collection_name: String) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/imagesof"
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            val jsonObject = JSONObject()
+            jsonObject.put("logged_user", fragment.getLoggedUser())
+            jsonObject.put("collection_name", collection_name)
+
+            val retrieveRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        val retrieved_images = response.getJSONArray("images")
+                        var images = mutableListOf<String>()
+
+                        for (i in 0 until retrieved_images.length()) {
+                            images.add(retrieved_images.get(i).toString())
+                        }
+
+                        adapter.setImagesList(images.toTypedArray())
+
+                    } else if (response.getString("status").equals("401")) {
+                        Toast.makeText(fragment.requireActivity(), "Error during images retrieval.", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(retrieveRequest)
+        }
+
+        fun updateImageInfo(fragment: ChooseFragment, image_name: String, public: Boolean, type: String) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/updateimage"
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            val jsonObject = JSONObject()
+            jsonObject.put("logged_user", fragment.getLoggedUser())
+            jsonObject.put("image_name", image_name)
+            jsonObject.put("public", public)
+            jsonObject.put("type", type)
+
+            val retrieveRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        Toast.makeText(fragment.requireActivity(), "Image updated correctly.", Toast.LENGTH_SHORT).show()
+                    } else if (response.getString("status").equals("401")) {
+                        Toast.makeText(fragment.requireActivity(), "Error during image update.", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(retrieveRequest)
         }
     }
 }

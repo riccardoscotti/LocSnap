@@ -48,9 +48,7 @@ class ChooseFragment : Fragment() {
                 proceed.setOnClickListener {
                     UploadUtils.showNearestPhotos(num_photos_tv.text.toString().toInt(), last_known_location!!, thisInstance)
                 }
-
                 dialog.show()
-
             }
 
             else if (intent.extras!!.getString("action").equals("camera"))

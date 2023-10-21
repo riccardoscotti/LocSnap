@@ -229,6 +229,78 @@ app.post('/retrieveimages', async (req, res) => {
 
 })
 
+app.post('/imagesof', async (req, res) => {
+    var statusCode;
+    var images = [];
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+    client.connect();
+
+    try {
+        const resQuery = await client.query(`
+            SELECT image_name as name
+            FROM images
+            WHERE 
+                author = \'${req.body.logged_user}\' AND
+                reference = \'${req.body.collection_name}\'
+        `)
+
+        resQuery.rows.forEach(image => {
+            images.push(image.name)
+        })
+
+        statusCode = 200;
+
+    } catch (error) {
+        console.log(error);
+        statusCode = 401;
+    }
+
+    res.json({
+        status: statusCode,
+        images: images
+    })
+})
+
+app.post('/updateimage', async (req, res) => {
+    var statusCode;
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+    client.connect();
+
+    try {
+        const resQuery = client.query(`
+            UPDATE images
+            SET
+                public = \'${req.body.public}\',
+                type = \'${req.body.type}\'
+            WHERE 
+                author = \'${req.body.logged_user}\' AND
+                image_name = \'${req.body.image_name}\'
+        `)
+
+        statusCode = 200;
+
+    } catch (error) {
+        console.log(error);
+        statusCode = 401;
+    }
+
+    res.json({
+        status: statusCode
+    })
+})
+
 app.post('/clusterize', async (req, res) => {
 
     var statusCode;
@@ -247,6 +319,7 @@ app.post('/clusterize', async (req, res) => {
     });
     client.connect();
 
+    // Retrieving image name from images
     let query = `
         SELECT ST_ClusterKMeans(location, ${req.body.num_cluster}) OVER() as cid, image_name as image_name
         FROM images
@@ -262,6 +335,7 @@ app.post('/clusterize', async (req, res) => {
             })
         }
 
+        // Retrieving image position tag from images
         let query2 = `
             SELECT	ST_ClusterKMeans(i.location, ${req.body.num_cluster}) OVER() as cid, 
                     ST_X(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lng,  
