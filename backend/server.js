@@ -585,7 +585,7 @@ app.post('/tag_friend', async (req, res) => {
 app.post('/get_friends', async (req, res) => {
 
     var statusCode;
-    var friends = {};
+    var friends = [];
 
     const client = new Client({
         user: 'postgres',
@@ -600,13 +600,9 @@ app.post('/get_friends', async (req, res) => {
 
     try {
         const res = await client.query(query);
-        let index = 0;
 
         res.rows.forEach(friendRow => {
-            let tmp_friend = {}
-            tmp_friend.name = friendRow.friend
-            friends[index] = tmp_friend
-            index++;
+            friends.push(friendRow.friend)
         });
         statusCode = 200;
     } catch (err) {
@@ -763,7 +759,7 @@ app.post('/remove_friend', async (req, res) => {
 // Only used to display collection names on dashboard page
 app.post('/retrievecollections', async (req, res) => {
     var statusCode;
-    var retrieved_collections = {};
+    var retrieved_collections = [];
 
     const client = new Client({
         user: 'postgres',
@@ -773,20 +769,39 @@ app.post('/retrievecollections', async (req, res) => {
     });
 
     client.connect();
-    query = `
-            SELECT collection_name as name
-            FROM collections
-            WHERE author=\'${req.body.logged_user}\'`
 
     try {
-        const resQuery = await client.query(query);
-        let numColl = 0;
+        const resQuery = await client.query(`
+        SELECT collection_name as name
+        FROM collections
+        WHERE author=\'${req.body.logged_user}\'`);
 
         resQuery.rows.forEach(collection => {
-            let tmp_collection = {};
-            tmp_collection.name = collection.name
-            retrieved_collections[numColl] = tmp_collection
-            numColl++;
+            retrieved_collections.push(collection.name)
+        })
+
+        // Photos in which the user is tagged
+        const resQuery2 = await client.query(`
+        SELECT reference as name
+        FROM images
+        WHERE
+            author <> \'${req.body.logged_user}\' AND
+            \'${req.body.friend}\' = ANY(tagged_people)`);
+
+        resQuery2.rows.forEach(collection => {
+            retrieved_collections.push(collection.name)
+        })
+
+        // Public photos
+        const resQuery3 = await client.query(`
+        SELECT reference as name
+        FROM images
+        WHERE
+            author <> \'${req.body.logged_user}\' AND
+            public = true`);
+
+        resQuery3.rows.forEach(collection => {
+            retrieved_collections.push(collection.name)
         })
 
         statusCode = 200;
@@ -798,7 +813,7 @@ app.post('/retrievecollections', async (req, res) => {
 
     res.json({
         status: statusCode,
-        retrievedCollections: retrieved_collections
+        retrieved_collections: retrieved_collections
     })
 })
 

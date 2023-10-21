@@ -50,7 +50,8 @@ class UploadUtils {
             val formattedDateTime = currentDateTime.format(formatter)
             val name: String = "IMG_" + formattedDateTime
             val location = fragment.getLastKnownLocation()
-            val bitmaps = JSONArray(bitmapEncoded)
+            val bitmaps = JSONArray()
+            bitmaps.put(bitmapEncoded)
 
             val jsonObject = JSONObject()
 
@@ -293,14 +294,14 @@ class UploadUtils {
                 Method.POST, url, jsonObject,
                 { response ->
                     if (response.getString("status").equals("200")) {
-                        val jsonColl = response.getJSONObject("retrievedCollections")
-                        val retrievedCollections = mutableListOf<String>()
+                        val retrievedCollections = response.getJSONArray("retrieved_collections")
+                        val user_collections = mutableListOf<String>()
 
-                        for (i in 0 until jsonColl.length()) {
-                            retrievedCollections.add(jsonColl.getJSONObject("${i}").getString("name"))
+                        for (i in 0 until retrievedCollections.length()) {
+                            user_collections.add(retrievedCollections.get(i).toString())
                         }
 
-                        fragment.setCollections(retrievedCollections)
+                        fragment.setCollections(user_collections)
                     }
                 },
                 {

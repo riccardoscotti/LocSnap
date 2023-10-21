@@ -52,7 +52,7 @@ class ChooseFragment : Fragment() {
             }
 
             else if (intent.extras!!.getString("action").equals("camera"))
-                startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)
+                startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
 
             else if (intent.extras!!.getString("action").equals("upload")) // If upload service was successful, refresh the fragment
                 thisInstance.refresh()
@@ -200,8 +200,9 @@ class ChooseFragment : Fragment() {
             val taggedFriend = data.extras!!.get("tagged_friend") as String?
             if (taggedFriend != null) {
                 UploadUtils.uploadImage(capturedImage, loggedUser, this, taggedFriend.toString())
+            } else {
+                UploadUtils.uploadImage(capturedImage, loggedUser, this)
             }
-            UploadUtils.uploadImage(capturedImage, loggedUser, this)
         } else if (requestCode == 222 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
             FileManagerUtils.createNewCollection(capturedImage, this, this.last_known_location)

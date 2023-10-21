@@ -20,7 +20,7 @@ class SingleCollectionInListAdapter(
     private val fragment: ChooseFragment
     ) : RecyclerView.Adapter<SingleCollectionInListAdapter.MyViewHolder>() {
 
-        private var images_list: Array<String> = arrayOf()
+        private var images_list: Array<String> = arrayOf() // Images of collection
 
     class MyViewHolder(val ll: LinearLayout) : RecyclerView.ViewHolder(ll)
 

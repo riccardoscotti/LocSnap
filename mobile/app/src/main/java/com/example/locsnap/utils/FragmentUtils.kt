@@ -33,7 +33,7 @@ class FragmentUtils {
             friends.clear()
 
             val json = JSONObject()
-            json.put("loggedUser", loggedUser)
+            json.put("logged_user", loggedUser)
 
             val get_friend_request = JsonObjectRequest(
                 Request.Method.POST,
@@ -46,7 +46,7 @@ class FragmentUtils {
                             friends.add(friendsJson.getString(i))
                         }
                             val dialog = Builder(fragment.requireContext())
-                            dialog.setTitle("Who do you want to send your images to?")
+                            dialog.setTitle("Who do you want to send your collection to?")
                                 .setItems(friends.toTypedArray()
                                 ) { _, which ->
                                     if (command.equals("tag")) {
