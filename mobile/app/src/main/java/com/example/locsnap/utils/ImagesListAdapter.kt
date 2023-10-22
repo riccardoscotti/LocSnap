@@ -1,36 +1,43 @@
 package com.example.locsnap.utils
 
 import android.app.Dialog
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.*
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.example.locsnap.R
 import com.example.locsnap.UploadUtils
 import com.example.locsnap.fragments.ChooseFragment
+import org.json.JSONObject
 
-class ImagesListAdapter(private val images_list: Array<String>,
+class ImagesListAdapter(private val images_list: JSONObject,
                         private val fragment: ChooseFragment
 ) :
     RecyclerView.Adapter<ImagesListAdapter.MyViewHolder>() {
 
-    class MyViewHolder(val place: TextView) : RecyclerView.ViewHolder(place)
-
-
+    class MyViewHolder(val cl: ConstraintLayout) : RecyclerView.ViewHolder(cl)
 
     override fun onCreateViewHolder(parent: ViewGroup,
                                     viewType: Int): MyViewHolder {
-        val placeView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.single_place, parent, false) as TextView
-        return MyViewHolder(placeView)
+        val cl = LayoutInflater.from(parent.context)
+            .inflate(R.layout.single_image_of_collection, parent, false) as ConstraintLayout
+        return MyViewHolder(cl)
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        holder.place.text = images_list[position]
+        val placeText = holder.cl.findViewById<TextView>(R.id.nameView)
+        placeText.text = this.images_list.getJSONObject("$position").getString("name")
 
-        holder.place.setOnClickListener {
+        val imageBytes = Base64.decode(this.images_list.getJSONObject("$position").getString("image"), Base64.DEFAULT)
+        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+        val image = holder.cl.findViewById<ImageView>(R.id.imageofcollection)
+        image.setImageBitmap(bitmap)
+
+        placeText.setOnClickListener {
             val dialog = Dialog(fragment.requireContext())
             dialog.setContentView(R.layout.info_upload_dialog)
             val proceed = dialog.findViewById<Button>(R.id.confirmButton)
@@ -55,7 +62,7 @@ class ImagesListAdapter(private val images_list: Array<String>,
                 else if (sea.isChecked)
                     setType(sea.text.toString())
 
-                UploadUtils.updateImageInfo(fragment, holder.place.text.toString(), publicCheck.isChecked, type)
+                UploadUtils.updateImageInfo(fragment, placeText.text.toString(), publicCheck.isChecked, type)
                 dialog.dismiss()
             }
 
@@ -63,5 +70,5 @@ class ImagesListAdapter(private val images_list: Array<String>,
         }
     }
 
-    override fun getItemCount() = images_list.size
+    override fun getItemCount() = images_list.length()
 }

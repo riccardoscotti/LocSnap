@@ -3,6 +3,8 @@ package com.example.locsnap.utils
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.Rect
+import android.provider.Settings.Global
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,14 +16,16 @@ import com.example.locsnap.FragmentUtils
 import com.example.locsnap.R
 import com.example.locsnap.UploadUtils
 import com.example.locsnap.fragments.ChooseFragment
+import kotlinx.coroutines.*
+import org.json.JSONObject
 
 class SingleCollectionInListAdapter(
     private val collection_names: Array<String>,
     private val fragment: ChooseFragment
     ) : RecyclerView.Adapter<SingleCollectionInListAdapter.MyViewHolder>() {
 
-        private var images_list: Array<String> = arrayOf() // Images of collection
-
+        private var images_list = JSONObject() // Name of images in a collection
+        private var thisInstance = this
     class MyViewHolder(val ll: LinearLayout) : RecyclerView.ViewHolder(ll)
 
     inner class VerticalSpaceItemDecoration(private val verticalSpaceHeight: Int) : RecyclerView.ItemDecoration() {
@@ -53,17 +57,22 @@ class SingleCollectionInListAdapter(
 
         collName.setOnClickListener {
 
-            UploadUtils.imagesOfCollection(fragment, this, collection_names.get(position))
+            GlobalScope.async {
+                UploadUtils.imagesOfCollection(fragment, thisInstance, collection_names.get(position))
 
-            val dialog = Dialog(fragment.requireActivity())
-            dialog.setContentView(R.layout.list_images_dialog)
-            val recyclerView = dialog.findViewById<RecyclerView>(R.id.images_recycler)
-            recyclerView.layoutManager = LinearLayoutManager(fragment.requireContext())
-            recyclerView.adapter = ImagesListAdapter(this.images_list, fragment)
-            recyclerView.addItemDecoration(DividerItemDecoration(fragment.requireContext(), LinearLayoutManager.VERTICAL))
-            recyclerView.addItemDecoration(VerticalSpaceItemDecoration(35))
+                withContext(Dispatchers.Main) {
+                    val dialog = Dialog(fragment.requireContext())
+                    dialog.setContentView(R.layout.list_images_dialog)
+                    dialog.getWindow()!!.setBackgroundDrawableResource(android.R.color.transparent);
+                    val recyclerView = dialog.findViewById<RecyclerView>(R.id.images_recycler)
+                    recyclerView.layoutManager = LinearLayoutManager(fragment.requireContext())
+                    recyclerView.adapter = ImagesListAdapter(thisInstance.images_list, fragment)
+                    recyclerView.addItemDecoration(DividerItemDecoration(fragment.requireContext(), LinearLayoutManager.VERTICAL))
+                    recyclerView.addItemDecoration(VerticalSpaceItemDecoration(35))
 
-            dialog.show()
+                    dialog.show()
+                }
+            }
         }
 
         deleteView.setOnClickListener {
@@ -75,7 +84,7 @@ class SingleCollectionInListAdapter(
         }
     }
 
-    fun setImagesList(images_list: Array<String>) {
+    fun setImagesList(images_list: JSONObject) {
         this.images_list = images_list
     }
 

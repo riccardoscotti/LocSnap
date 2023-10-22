@@ -8,15 +8,21 @@ import android.provider.MediaStore.Audio.Radio
 import android.util.Base64
 import android.util.Log
 import android.widget.*
+import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.RequestFuture
 import com.android.volley.toolbox.Volley
 import com.example.locsnap.activities.recommendActivity
 import com.example.locsnap.fragments.ChooseFragment
 import com.example.locsnap.utils.SingleCollectionInListAdapter
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.lang.Exception
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -377,40 +383,76 @@ class UploadUtils {
             queue.add(recommendRequest)
         }
 
-        fun imagesOfCollection(fragment: ChooseFragment, adapter: SingleCollectionInListAdapter, collection_name: String) {
-            val url : String = fragment.resources.getString(R.string.base_url)+"/imagesof"
+        @OptIn(DelicateCoroutinesApi::class)
+        fun imagesOfCollection(fragment: ChooseFragment, adapter: SingleCollectionInListAdapter, collection_name: String) : Boolean {
+            val url: String = fragment.resources.getString(R.string.base_url) + "/imagesof"
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
             val jsonObject = JSONObject()
             jsonObject.put("logged_user", fragment.getLoggedUser())
             jsonObject.put("collection_name", collection_name)
 
-            val retrieveRequest = object : JsonObjectRequest(
-                Method.POST, url, jsonObject,
-                { response ->
-                    if (response.getString("status").equals("200")) {
-                        val retrieved_images = response.getJSONArray("images")
-                        var images = mutableListOf<String>()
-
-                        for (i in 0 until retrieved_images.length()) {
-                            images.add(retrieved_images.get(i).toString())
-                        }
-
-                        adapter.setImagesList(images.toTypedArray())
-
-                    } else if (response.getString("status").equals("401")) {
-                        Toast.makeText(fragment.requireActivity(), "Error during images retrieval.", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                {
-                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
-                }
-            ) {
+            val future = RequestFuture.newFuture<JSONObject>()
+            val newRequest = object : JsonObjectRequest(Method.POST, url, jsonObject, future, future) {
                 override fun getBodyContentType(): String {
                     return "application/json; charset=utf-8"
                 }
             }
-            queue.add(retrieveRequest)
+            queue.add(newRequest)
+
+            try {
+                    val response: JSONObject = future.get()
+
+                    if (response.getString("status").equals("200")) {
+                        val retrieved_images = response.getJSONObject("images")
+                        var images = JSONObject()
+
+                        for (i in 0 until retrieved_images.length()) {
+                            images.put("$i", retrieved_images.getJSONObject("$i"))
+                        }
+
+                        adapter.setImagesList(images)
+
+                    } else {
+                        Toast.makeText(fragment.requireActivity(), "Error during images retrieval.", Toast.LENGTH_SHORT).show()
+                    }
+
+            } catch (e: Exception) {
+                Toast.makeText(fragment.requireContext(), "Errore nel future request", Toast.LENGTH_LONG).show()
+            }
+
+//            val retrieveRequest = object : JsonObjectRequest(
+//                Method.POST, url, jsonObject,
+//                { response ->
+//                    if (response.getString("status").equals("200")) {
+//                        Log.d("await", "Entrata2")
+//                        val retrieved_images = response.getJSONArray("images")
+//                        var images = mutableListOf<String>()
+//
+//                        for (i in 0 until retrieved_images.length()) {
+//                            images.add(retrieved_images.get(i).toString())
+//                            Log.d("await", "[UploadUtils] ${retrieved_images.get(i).toString()}")
+//                        }
+//
+//
+////                        adapter.setImagesList(images.toTypedArray())
+//                        adapter.setImagesList(images.toTypedArray())
+//                        Log.d("await", "Entrata3")
+//
+//                    } else if (response.getString("status").equals("401")) {
+//                        Toast.makeText(fragment.requireActivity(), "Error during images retrieval.", Toast.LENGTH_SHORT).show()
+//                    }
+//                },
+//                {
+//                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+//                }
+//            ) {
+//                override fun getBodyContentType(): String {
+//                    return "application/json; charset=utf-8"
+//                }
+//            }
+
+            return true
         }
 
         fun updateImageInfo(fragment: ChooseFragment, image_name: String, public: Boolean, type: String) {

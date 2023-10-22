@@ -231,7 +231,7 @@ app.post('/retrieveimages', async (req, res) => {
 
 app.post('/imagesof', async (req, res) => {
     var statusCode;
-    var images = [];
+    var images = {};
 
     const client = new Client({
         user: 'postgres',
@@ -243,15 +243,20 @@ app.post('/imagesof', async (req, res) => {
 
     try {
         const resQuery = await client.query(`
-            SELECT image_name as name
+            SELECT image_name as name, image as image
             FROM images
             WHERE 
                 author = \'${req.body.logged_user}\' AND
                 reference = \'${req.body.collection_name}\'
         `)
 
+        let index = 0;
         resQuery.rows.forEach(image => {
-            images.push(image.name)
+            let tmp_image = {}
+            tmp_image.name = image.name
+            tmp_image.image = image.image
+            images[index] = tmp_image
+            index++
         })
 
         statusCode = 200;
