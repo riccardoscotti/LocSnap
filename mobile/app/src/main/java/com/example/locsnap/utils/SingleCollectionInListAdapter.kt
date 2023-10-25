@@ -1,17 +1,23 @@
 package com.example.locsnap.utils
 
+import android.app.Activity
 import android.app.Dialog
+import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
+import android.provider.MediaStore
 import android.provider.Settings.Global
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.locsnap.FileManagerUtils
 import com.example.locsnap.FragmentUtils
 import com.example.locsnap.R
 import com.example.locsnap.UploadUtils
@@ -49,10 +55,10 @@ class SingleCollectionInListAdapter(
         collName.text = collection_names.get(position)
         collName.setTextColor(Color.parseColor("#FFFFFF"))
 
-        val shareView = holder.ll.findViewById<ImageView>(R.id.singleShare)
-        shareView.setImageResource(R.drawable.share)
+        val addView = holder.ll.findViewById<ImageView>(R.id.addIcon)
+        addView.setImageResource(R.drawable.plus)
 
-        val deleteView = holder.ll.findViewById<ImageView>(R.id.singleDelete)
+        val deleteView = holder.ll.findViewById<ImageView>(R.id.deleteIcon)
         deleteView.setImageResource(R.drawable.delete)
 
         collName.setOnClickListener {
@@ -75,12 +81,13 @@ class SingleCollectionInListAdapter(
             }
         }
 
-        deleteView.setOnClickListener {
-            UploadUtils.deleteCollection(fragment.getLoggedUser(), collection_names.get(position), fragment)
+        addView.setOnClickListener {
+            fragment.setSelectedCollection(this.collection_names.get(position))
+            fragment.openCamera()
         }
 
-        shareView.setOnClickListener {
-            FragmentUtils.getFriends(fragment.getLoggedUser(), fragment, "tag", collection_names.get(position))
+        deleteView.setOnClickListener {
+            UploadUtils.deleteCollection(collection_names.get(position), fragment)
         }
     }
 

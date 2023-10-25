@@ -1,27 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
                                                    xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools"
                                                    android:layout_width="200dp"
-                                                   android:layout_height="200dp"
+                                                   android:layout_height="350dp"
                                                    android:id="@+id/info_upload_dialog">
 
-    <Button
-            android:text="Confirm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/confirmButton"
-            app:layout_constraintTop_toBottomOf="@+id/publicCheckBox"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" app:layout_constraintVertical_bias="1.0"
-            app:layout_constraintHorizontal_bias="0.51"/>
+
     <CheckBox
             android:text="Show as public"
             android:layout_width="155dp"
             android:layout_height="50dp" android:id="@+id/publicCheckBox"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" app:layout_constraintVertical_bias="0.064"
-            app:layout_constraintHorizontal_bias="0.511" android:textAlignment="inherit"/>
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintVertical_bias="0.416"
+            app:layout_constraintHorizontal_bias="0.488" android:textAlignment="inherit"/>
     <RadioGroup
             android:layout_width="152dp"
             android:layout_height="95dp"
@@ -29,7 +22,7 @@
             app:layout_constraintTop_toBottomOf="@+id/publicCheckBox"
             app:layout_constraintBottom_toTopOf="@+id/confirmButton" android:textAlignment="center"
             android:baselineAligned="false" android:id="@+id/radiotype"
-            app:layout_constraintHorizontal_bias="0.48">
+            app:layout_constraintVertical_bias="0.769">
 
         <RadioButton android:id="@+id/radio_city"
                      android:layout_width="127dp"
@@ -46,5 +39,41 @@
                      android:layout_height="28dp"
                      android:text="Sea"/>
     </RadioGroup>
+    <Button
+            android:text="Confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/confirmButton"
+            app:layout_constraintTop_toBottomOf="@+id/image_tv"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintVertical_bias="1.0"
+            app:layout_constraintHorizontal_bias="0.51"/>
+
+    <EditText
+            android:layout_width="155dp"
+            android:layout_height="40dp"
+            android:inputType="text"
+            android:ems="10"
+            android:id="@+id/image_tv"
+            android:layout_marginBottom="195dp" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="20dp" android:layout_marginEnd="20dp"
+            app:layout_constraintVertical_bias="0.591"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintHorizontal_bias="0.4"
+            android:textSize="13sp" android:hint="Insert image name"/>
+    <EditText
+            android:layout_width="155dp"
+            android:layout_height="40dp"
+            android:inputType="text"
+            android:ems="10"
+            android:id="@+id/collection_tv"
+            android:layout_marginBottom="195dp" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="20dp" android:layout_marginEnd="20dp"
+            app:layout_constraintVertical_bias="0.139"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintHorizontal_bias="0.2"
+            android:hint="Insert collection name..." android:textSize="13sp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

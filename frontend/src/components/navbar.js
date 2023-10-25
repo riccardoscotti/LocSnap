@@ -12,16 +12,17 @@ const Navbar = () => {
     const [friendsDialogStatus, openFriendsDialog] = React.useState(false);
     const [friendTextStatus, openFriendsText] = React.useState(false);
     const [friendTextRemoveStatus, openFriendsTextRemove] = React.useState(false);
-    const [choosePhotoDialogStatus, openChoosePhotoDialog] = React.useState(false);
+    const [chooseCollectionDialogStatus, openChooseCollectionDialog] = React.useState(false);
     const [ManagePhotosDialogStatus, openManageDialog] = React.useState(false);
+    const [choosePhotoDialogStatus, openChoosePhotoDialog] = React.useState(false);
     const navigate = useNavigate()
     const uploadFilterRef = useRef(null)
     var friendRef = createRef(); // Add
     var friendRef2 = createRef(); // Remove
     var friendRef3 = createRef(); // Tag
 
-    function ChoosePhotoDialog(props) {
-        return localStorage.getItem("imgs") && (
+    function ChooseCollectionDialog(props) {
+        return localStorage.getItem("collections") && (
             <Modal
             {...props}
               size="md"
@@ -29,15 +30,22 @@ const Navbar = () => {
               centered >
               <Modal.Header>
                 <Modal.Title id="contained-modal-title-vcenter">
-                Select the photo
+                Select the collection
                 </Modal.Title>
               </Modal.Header>
               <Modal.Body id='social-body'>
                 {
                     Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
                         return (
-                            <div className="dialogDiv" id="photoSelected">
-                                <p className="dialogItem"> {collection[1].name} </p> 
+                            <div key={collection[1]} className="dialogDiv" id="photoSelected" onClick={
+                                (e) => {
+                                    localStorage.setItem('selectedCollection', collection[1])
+                                    imagesOf(collection[1])
+                                    openChooseCollectionDialog(false)
+                                    localStorage.getItem('imagesOfSelectedColl') && openChoosePhotoDialog(true)
+                                }
+                            }>
+                                <p className="dialogItem"> {collection[1]} </p> 
                             </div>
                         )
                     })
@@ -69,6 +77,63 @@ const Navbar = () => {
               </Modal.Footer>
             </Modal>
           );
+    }
+
+    function imagesOf(collectionName) {
+        let img_names = []
+        axios.post('/imagesof', {
+            logged_user: localStorage.getItem('user'),
+            collection_name: collectionName
+        })
+        .then((response) => {
+            switch(response.data.status) {
+                case 200:
+                    Object.entries(response.data.images).map(img => {
+                        img_names.push(img[1].name)
+                    })
+                    localStorage.setItem('imagesOfSelectedColl', JSON.stringify(Object(img_names)))
+                    break;
+                case 204:
+                    alert('The collection is empty');
+                    break;
+                default:
+                    alert('Connection error');
+                    break;
+
+            }
+        })
+        .catch(error => {
+            console.log(error);
+            alert('Could not retrieve pictures')
+        })
+
+        return img_names
+    }
+
+    function ChoosePhotoDialog(props) {
+        return (
+            <Modal
+            {...props}
+            size="md"
+            aria-labelledby="contained-modal-title-vcenter"
+            centered >
+                <Modal.Header>
+                    <Modal.Title id='contained-modal-title-vcenter'>
+                        Select the pictures you want to share
+                    </Modal.Title>
+                    <Modal.Body>
+                        {
+                            choosePhotoDialogStatus && Object.entries(JSON.parse(localStorage.getItem('imagesOfSelectedColl'))).map(name => (
+                                <div key={name} className="dialogDiv" id="photoSelected">
+                                    <p className="dialogItem"> {name} </p> 
+                                </div>
+                            ))
+                        }
+                    </Modal.Body>
+                </Modal.Header>
+
+            </Modal>
+        )
     }
 
     function OpenInputText(props) {
@@ -126,9 +191,9 @@ const Navbar = () => {
     // Tag a single user
     function sharePhoto() {
         openFriendsDialog(false)
-        openChoosePhotoDialog(true)
+        openChooseCollectionDialog(true)
         // then after open...
-        // chooseFriendDialog(true) 
+        // chooseFriendDialog(true)
     }
 
     function FriendTextRemove(props) {
@@ -172,7 +237,6 @@ const Navbar = () => {
     }
     
     function SocialDialog(props) {
-        
         return localStorage.getItem("friends") && (
             <Modal
               {...props}
@@ -189,7 +253,7 @@ const Navbar = () => {
                     {    
                         Object.entries(JSON.parse(localStorage.getItem("friends"))).map( (friend) => {
                             return (
-                                <div className="dialogDiv">
+                                <div key={friend[1].name} className="dialogDiv">
                                     <ListGroup.Item className="dialogItem"> {friend[1].name} </ListGroup.Item> 
                                 </div>
                             )
@@ -300,10 +364,20 @@ const Navbar = () => {
                 onHide={ () => openFriendsTextRemove(false) }
             />
 
+            <ChooseCollectionDialog
+                show={ chooseCollectionDialogStatus }
+                onHide={ () => openChooseCollectionDialog(false) }
+            />
+
             <ChoosePhotoDialog
                 show={ choosePhotoDialogStatus }
-                onHide={ () => openChoosePhotoDialog(false) }
+                onHide={ () => {
+                    openChoosePhotoDialog(false)
+                    localStorage.removeItem("imagesOfSelectedColl")
+                    localStorage.removeItem("selectedCollection")
+                }}
             />
+
 
         </nav>
     )

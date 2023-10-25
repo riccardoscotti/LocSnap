@@ -32,7 +32,7 @@
             app:layout_constraintEnd_toEndOf="@+id/listPhotosRecycler"
             app:layout_constraintStart_toStartOf="@+id/listPhotosRecycler"
             app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.976" app:layout_constraintHorizontal_bias="0.0"/>
+            app:layout_constraintVertical_bias="0.967" app:layout_constraintHorizontal_bias="1.0"/>
     <Button
             android:text="See nearby pictures"
             android:layout_width="207dp"
@@ -41,32 +41,22 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             android:backgroundTint="#288BED"
-            app:layout_constraintVertical_bias="0.293" app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintHorizontal_bias="0.078"/>
-    <Button
-            android:text="Upload collection"
-            android:layout_width="207dp"
-            android:layout_height="60dp" android:id="@+id/uploadButton"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:backgroundTint="#288BED" android:layout_marginBottom="140dp"
-            app:layout_constraintTop_toBottomOf="@+id/nearbyButton"
-            app:layout_constraintVertical_bias="0.164" app:layout_constraintHorizontal_bias="0.078"/>
+            app:layout_constraintVertical_bias="0.976" app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintHorizontal_bias="0.147"/>
     <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp" app:srcCompat="@drawable/camera" android:id="@+id/camIcon"
             android:priority="5"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.98"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.579"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.95"/>
+            app:layout_constraintHorizontal_bias="0.954"/>
     <ImageView
             android:layout_width="60dp"
             android:layout_height="60dp" app:srcCompat="@drawable/add_user" android:id="@+id/addFriendIcon"
             android:priority="5"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.864"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.695"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.951"/>
     <ImageView
@@ -74,9 +64,9 @@
             android:layout_height="60dp" app:srcCompat="@drawable/explore" android:id="@+id/recommendIcon"
             android:priority="5"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.742"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintVertical_bias="0.454"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.954"/>
+            app:layout_constraintHorizontal_bias="0.951"/>
     <androidx.recyclerview.widget.RecyclerView
             android:layout_width="298dp"
             android:layout_height="250dp"

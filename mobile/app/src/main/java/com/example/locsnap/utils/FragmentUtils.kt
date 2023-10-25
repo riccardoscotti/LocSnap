@@ -27,7 +27,7 @@ class FragmentUtils {
         /**
          * Returns user's friends
          */
-        fun getFriends(loggedUser: String, fragment: ChooseFragment, command: String="", collection_name: String="") {
+        fun getFriends(loggedUser: String, fragment: ChooseFragment, command: String="", image_name: String="") {
             val url = "${fragment.resources.getString(R.string.base_url)}/get_friends"
             val queue = Volley.newRequestQueue(fragment.requireContext())
             friends.clear()
@@ -50,7 +50,7 @@ class FragmentUtils {
                                 .setItems(friends.toTypedArray()
                                 ) { _, which ->
                                     if (command.equals("tag")) {
-                                        UploadUtils.tagFriend(loggedUser, friends[which], collection_name, fragment)
+                                        UploadUtils.tagFriend(loggedUser, friends[which], image_name, fragment)
                                     } else {
                                         FileManagerUtils.showExistingCollections(fragment, "tag", friends[which], true)
                                     }

@@ -15,7 +15,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,13 +22,12 @@ import com.example.locsnap.*
 import com.example.locsnap.activities.getLocationService
 import com.example.locsnap.activities.recommendActivity
 import com.example.locsnap.utils.SingleCollectionInListAdapter
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import java.io.File
+import org.json.JSONArray
+import org.json.JSONObject
 
 class ChooseFragment : Fragment() {
     private lateinit var loggedUser : String
-    private lateinit var selected_collection: File
+    private var selected_collection: String = ""
     private var retrievedCollections = mutableListOf<String>()
     private var last_known_location : Location? = null
     private lateinit var recyclerView: RecyclerView
@@ -49,13 +47,14 @@ class ChooseFragment : Fragment() {
                     UploadUtils.showNearestPhotos(num_photos_tv.text.toString().toInt(), last_known_location!!, thisInstance)
                 }
                 dialog.show()
+
+            } else if (intent.extras!!.getString("action").equals("camera")) {
+                var cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                startActivityForResult(cameraIntent, 111)
             }
-
-            else if (intent.extras!!.getString("action").equals("camera"))
-                startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
-
-            else if (intent.extras!!.getString("action").equals("upload")) // If upload service was successful, refresh the fragment
-                thisInstance.refresh()
+//            else if (intent.extras!!.getString("action").equals("upload")) {// If upload service was successful, refresh the fragment
+//                thisInstance.refresh()
+//            }
         }
     }
     fun setCollections(retrievedCollections: MutableList<String>) {
@@ -68,6 +67,10 @@ class ChooseFragment : Fragment() {
 
     fun getLoggedUser() : String {
         return this.loggedUser
+    }
+
+    fun setSelectedCollection(selectedCollection: String) {
+        this.selected_collection = selectedCollection
     }
 
     fun refresh() {
@@ -95,9 +98,8 @@ class ChooseFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val initialUserLetter = view.findViewById<TextView>(R.id.initialUserLetter)
-        val uploadButton = view.findViewById<Button>(R.id.uploadButton)
         val camIcon = view.findViewById<ImageView>(R.id.camIcon)
-        val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
+//        val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
         val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
         val recommendIcon = view.findViewById<ImageView>(R.id.recommendIcon)
@@ -112,11 +114,6 @@ class ChooseFragment : Fragment() {
             val getloc = Intent(this.requireActivity(), getLocationService::class.java)
             getloc.putExtra("action", "nearby")
             this.requireActivity().startService(getloc)
-        }
-
-        // Uploads a collection
-        uploadButton.setOnClickListener {
-            FileManagerUtils.showExistingCollections(this, "upload")
         }
 
         recommendIcon.setOnClickListener {
@@ -138,41 +135,18 @@ class ChooseFragment : Fragment() {
             }
             dialog.show()
         }
-
-        plusIcon.setOnClickListener {
-            val collections = mutableListOf<String>()
-            val filepaths = FileManagerUtils.getCollections().keys
-            collections.add("Create new collection")
-
-            for(key in filepaths)
-                collections.add(File(key).name)
-
-            val builder = AlertDialog.Builder(requireContext())
-            builder.setTitle("Select the collection you are interested in")
-                .setItems(collections.toTypedArray()
-                ) { dialog, which ->
-                    when (which) {
-                        0 -> {
-                            this.openCamera()
-                        }
-                        else -> {
-                            this.selected_collection = File(filepaths.toTypedArray().get(which-1))
-                            startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 333)
-                        }
-                    }
-                }.create().show()
-        }
     }
 
     fun openCamera(taggedFriend: String = "") {
-        val cameraIntent = Intent(this.requireActivity(), getLocationService::class.java)
-        cameraIntent.putExtra("action", "camera")
+
+        val locationIntent = Intent(this.requireActivity(), getLocationService::class.java)
+        locationIntent.putExtra("action", "camera")
 
         if (taggedFriend != "") {
-            cameraIntent.putExtra("tagged_friend", taggedFriend)
+            locationIntent.putExtra("tagged_friend", taggedFriend)
         }
 
-        this.requireActivity().startService(cameraIntent)
+        this.requireActivity().startService(locationIntent)
     }
 
     fun getLastKnownLocation() : Location? {
@@ -198,17 +172,83 @@ class ChooseFragment : Fragment() {
         if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
             val taggedFriend = data.extras!!.get("tagged_friend") as String?
-            if (taggedFriend != null) {
-                UploadUtils.uploadImage(capturedImage, loggedUser, this, taggedFriend.toString())
-            } else {
-                UploadUtils.uploadImage(capturedImage, loggedUser, this)
+            var imageJson = JSONObject()
+            imageJson.put("username", this.loggedUser)
+            imageJson.put("lat", this.last_known_location!!.latitude)
+            imageJson.put("lon", this.last_known_location!!.longitude)
+            imageJson.put("tagged_people", JSONArray().put(taggedFriend))
+            imageJson.put("length", 1) // Got from camera, so it must be a single image
+
+            val dialog = Dialog(requireContext())
+            dialog.setContentView(R.layout.info_upload_dialog)
+            val image_name = dialog.findViewById<EditText>(R.id.image_tv)
+            val collection_name = dialog.findViewById<EditText>(R.id.collection_tv)
+            val proceed = dialog.findViewById<Button>(R.id.confirmButton)
+            val publicCheck = dialog.findViewById<CheckBox>(R.id.publicCheckBox)
+            val city = dialog.findViewById<RadioButton>(R.id.radio_city)
+            val mountain = dialog.findViewById<RadioButton>(R.id.radio_mountain)
+            val sea = dialog.findViewById<RadioButton>(R.id.radio_sea)
+
+            if (this.selected_collection.isNotEmpty()) {
+                collection_name.setEnabled(false)
+                collection_name.setText(this.selected_collection)
             }
+
+            proceed.setOnClickListener {
+                var type = ""
+
+                fun setType(selectedType: String) {
+                    type = selectedType
+                }
+
+                if (city.isChecked)
+                    setType(city.text.toString())
+
+                else if (mountain.isChecked)
+                    setType(mountain.text.toString())
+
+                else if (sea.isChecked)
+                    setType(sea.text.toString())
+
+                imageJson.put("image_name", image_name.text.toString())
+                imageJson.put("public", publicCheck.isChecked)
+                imageJson.put("type", type)
+
+                if (this.selected_collection.isNotEmpty())
+                    imageJson.put("collection_name", this.selected_collection)
+                else
+                    imageJson.put("collection_name", collection_name.text.toString())
+
+                if (this.selected_collection.isNotEmpty()) {
+                    UploadUtils.upload2(
+                        imageJson,
+                        capturedImage,
+                        this.resources.getString(R.string.base_url)+"/addtoexisting",
+                        this,
+                        taggedFriend
+                    )
+                    setSelectedCollection("") // Reset selected_collection for new usage
+                } else {
+                    UploadUtils.upload2(
+                        imageJson,
+                        capturedImage,
+                        this.resources.getString(R.string.base_url)+"/imageupload",
+                        this,
+                        taggedFriend
+                    )
+                }
+                dialog.dismiss()
+            }
+
+            dialog.show()
+
         } else if (requestCode == 222 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
             FileManagerUtils.createNewCollection(capturedImage, this, this.last_known_location)
         } else if(requestCode == 333 && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
-            FileManagerUtils.addImageToCollection(this.selected_collection, capturedImage, this)
+//            FileManagerUtils.addImageToCollection(this.selected_collection, capturedImage, this)
+//            UploadUtils.addImageToCollection(this.selected_collection, capturedImage, this)
         } else if(requestCode == 444 && resultCode == Activity.RESULT_OK) {
             this.last_known_location = data?.extras!!.get("gps_location") as Location
 //            startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 222)

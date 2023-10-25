@@ -259,12 +259,12 @@ class UploadUtils {
             queue.add(sendCollectionRequest)
         }
 
-        fun tagFriend(logged_user: String, friend: String, collection_name: String, fragment: ChooseFragment) {
+        fun tagFriend(logged_user: String, friend: String, image_name: String, fragment: ChooseFragment) {
             val url : String = fragment.resources.getString(R.string.base_url)+"/tag_friend"
             val jsonObject = JSONObject()
             jsonObject.put("logged_user", logged_user)
             jsonObject.put("friend", friend)
-            jsonObject.put("collection_name", collection_name)
+            jsonObject.put("image_name", image_name)
 
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
             val tagFriendRequest = object : JsonObjectRequest(
@@ -321,12 +321,12 @@ class UploadUtils {
             queue.add(retrieveRequest)
         }
 
-        fun deleteCollection(logged_user: String, collection_name: String, fragment: ChooseFragment) {
+        fun deleteCollection(collection_name: String, fragment: ChooseFragment) {
             val url : String = fragment.resources.getString(R.string.base_url)+"/deletecollection"
             val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
 
             val jsonObject = JSONObject()
-            jsonObject.put("logged_user", logged_user)
+            jsonObject.put("logged_user", fragment.getLoggedUser())
             jsonObject.put("collection_name", collection_name)
 
             val deleteRequest = object : JsonObjectRequest(
@@ -421,37 +421,6 @@ class UploadUtils {
                 Toast.makeText(fragment.requireContext(), "Errore nel future request", Toast.LENGTH_LONG).show()
             }
 
-//            val retrieveRequest = object : JsonObjectRequest(
-//                Method.POST, url, jsonObject,
-//                { response ->
-//                    if (response.getString("status").equals("200")) {
-//                        Log.d("await", "Entrata2")
-//                        val retrieved_images = response.getJSONArray("images")
-//                        var images = mutableListOf<String>()
-//
-//                        for (i in 0 until retrieved_images.length()) {
-//                            images.add(retrieved_images.get(i).toString())
-//                            Log.d("await", "[UploadUtils] ${retrieved_images.get(i).toString()}")
-//                        }
-//
-//
-////                        adapter.setImagesList(images.toTypedArray())
-//                        adapter.setImagesList(images.toTypedArray())
-//                        Log.d("await", "Entrata3")
-//
-//                    } else if (response.getString("status").equals("401")) {
-//                        Toast.makeText(fragment.requireActivity(), "Error during images retrieval.", Toast.LENGTH_SHORT).show()
-//                    }
-//                },
-//                {
-//                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
-//                }
-//            ) {
-//                override fun getBodyContentType(): String {
-//                    return "application/json; charset=utf-8"
-//                }
-//            }
-
             return true
         }
 
@@ -483,6 +452,58 @@ class UploadUtils {
                 }
             }
             queue.add(retrieveRequest)
+        }
+
+        fun upload2(imageJson: JSONObject, capturedImage: Bitmap, url: String, fragment: ChooseFragment, taggedFriend: String?) {
+
+            val bitmapBA = ByteArrayOutputStream()
+            capturedImage.compress(Bitmap.CompressFormat.JPEG, 100, bitmapBA)
+            val image64 = Base64.encodeToString(bitmapBA.toByteArray(), Base64.DEFAULT)
+            imageJson.put("image", image64)
+
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            val apiKey = "01114512c1ce49018d40d94d6aab3d68"
+            val placeURL =
+                "https://api.geoapify.com/v1/geocode/reverse?lat=${imageJson.get("lat")}&lon=${imageJson.get("lon")}&apiKey=${apiKey}"
+
+            val placeRequest = object : JsonObjectRequest (
+                Method.GET, placeURL, null,
+                { response ->
+                    val place: String = response.getJSONArray("features")
+                        .getJSONObject(0)
+                        .getJSONObject("properties")
+                        .getString("city")
+
+                    imageJson.put("place", place)
+
+                    val uploadRequest = object : JsonObjectRequest(
+                        Method.POST, url, imageJson,
+                        { response ->
+                            if (response.getString("status").equals("200")) {
+                                Toast.makeText(fragment.requireActivity(), "Image uploaded successfully.", Toast.LENGTH_SHORT).show()
+                            } else if (response.getString("status").equals("401")) {
+                                Toast.makeText(fragment.requireActivity(), "Error during image upload.", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        {
+                            Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        override fun getBodyContentType(): String {
+                            return "application/json; charset=utf-8"
+                        }
+                    }
+                    queue.add(uploadRequest)
+                    fragment.refresh()
+                }, {}
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+
+            queue.add(placeRequest)
         }
     }
 }

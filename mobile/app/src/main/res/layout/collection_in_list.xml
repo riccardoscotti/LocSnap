@@ -11,13 +11,13 @@
     <ImageView
             android:layout_width="30dp"
             android:layout_marginStart="10dp"
-            android:layout_height="40dp" tools:srcCompat="@drawable/share" android:id="@+id/singleShare"
+            android:layout_height="40dp" tools:srcCompat="@drawable/share" android:id="@+id/addIcon"
             />
 
     <ImageView
             android:layout_width="30dp"
             android:layout_marginStart="10dp"
-            android:layout_height="40dp" tools:srcCompat="@drawable/delete" android:id="@+id/singleDelete"
+            android:layout_height="40dp" tools:srcCompat="@drawable/delete" android:id="@+id/deleteIcon"
     />
 
 </LinearLayout>

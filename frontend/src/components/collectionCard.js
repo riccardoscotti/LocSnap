@@ -11,7 +11,10 @@ const CollectionCard = ({title, place, prevs}) => {
             <div className='collection-prevs'>
                 {
                     prevs ?
-                    prevs.map(prev => <img key={prev} className='collection-prev' src={prev} />) :
+                    prevs.map(prev => {
+                        console.log(prev);
+                        return (<img key={prev} className='collection-prev' src={prev} />)
+                    }) :
                     <p className='collection-noprevs'>No images found</p>
                 }
             </div>

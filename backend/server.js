@@ -374,7 +374,7 @@ app.post('/clusterize', async (req, res) => {
 app.post('/imageupload', async (req, res) => {
 
     var statusCode
-    const name = req.body.name
+    const coll_name = req.body.collection_name
     const image64 = req.body.image
     const author = req.body.username
     const lat = req.body.lat
@@ -384,56 +384,88 @@ app.post('/imageupload', async (req, res) => {
     const isPublic = req.body.public
     const type = req.body.type
     const place = req.body.place
+    const image_name = req.body.image_name
 
-    var imagesArray = [];
     var tags = []
     var postgisPoint = "POINT("+lon+" "+lat+")"
-
-    image64.forEach(image => {
-        imagesArray.push(image);
-    });
 
     tagged_people.forEach(tag => {
         tags.push(tag)
     })
 
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    client.connect();
+
     try {
 
         query = `INSERT INTO collections (collection_name, author, length)
-        VALUES (\'${name}\', \'${author}\', \'${length}\');`
+        VALUES (\'${coll_name}\', \'${author}\', \'${length}\');`
 
-        const client = new Client({
-            user: 'postgres',
-            host: '0.0.0.0',
-            database: 'contextawarerc',
-            port: 5432,
-        });
-    
-        client.connect();
         await client.query(query);
+
+        query2 = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
+        VALUES (\'${image_name}\', \'${image64}\', 
+        \'${postgisPoint}\', \'{${tags}}\', \'${coll_name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
+
+        await client.query(query2);
+
         client.end();
+        statusCode = 200;
 
-        const pool = new Pool({
-            host: '0.0.0.0',
-            user: 'postgres',
-            database: 'contextawarerc',
-            max: 100,
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 5000,
-        })
+    } catch (err) {
+        statusCode = 401;
+        console.log(err);
+    }
     
-        var index = 1;
-        imagesArray.forEach(image => {
+    res.json({status: statusCode})
+});
 
-            query = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
-            VALUES (\'${index}_${name}\', \'${image}\', 
-            \'${postgisPoint}\', \'{${tags}}\', \'${name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
+app.post('/addtoexisting', async (req, res) => {
 
-            pool.query(query);
-            index++;
-        })
+    var statusCode
+    const coll_name = req.body.collection_name
+    const image64 = req.body.image
+    const author = req.body.username
+    const lat = req.body.lat
+    const lon = req.body.lon
+    const tagged_people = req.body.tagged_people
+    const length = req.body.length
+    const isPublic = req.body.public
+    const type = req.body.type
+    const place = req.body.place
+    const image_name = req.body.image_name
 
-        pool.end();
+    var tags = []
+    var postgisPoint = "POINT("+lon+" "+lat+")"
+
+    tagged_people.forEach(tag => {
+        tags.push(tag)
+    })
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    client.connect();
+
+    try {
+
+        query2 = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
+        VALUES (\'${image_name}\', \'${image64}\', 
+        \'${postgisPoint}\', \'{${tags}}\', \'${coll_name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
+
+        await client.query(query2);
+
+        client.end();
         statusCode = 200;
 
     } catch (err) {
@@ -560,11 +592,9 @@ app.post('/tag_friend', async (req, res) => {
 			THEN tagged_people
 			ELSE array_append(tagged_people, \'${req.body.friend}\')
 		END
-        FROM collections as c
 		WHERE
-            i.reference=\'${req.body.collection_name}\' AND
-            i.reference=c.collection_name AND
-            c.author=\'${req.body.logged_user}\'
+            i.image_name=\'${req.body.image_name}\' AND
+            i.author=\'${req.body.logged_user}\'
         `
 
         const resImgs = await client.query(query_imgs);

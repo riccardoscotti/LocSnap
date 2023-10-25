@@ -3,11 +3,13 @@ package com.example.locsnap.utils
 import android.app.Dialog
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.example.locsnap.FragmentUtils
 import com.example.locsnap.R
 import com.example.locsnap.UploadUtils
 import com.example.locsnap.fragments.ChooseFragment
@@ -28,8 +30,8 @@ class ImagesListAdapter(private val images_list: JSONObject,
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val placeText = holder.cl.findViewById<TextView>(R.id.nameView)
-        placeText.text = this.images_list.getJSONObject("$position").getString("name")
+        val image_name = holder.cl.findViewById<TextView>(R.id.nameView)
+        image_name.text = this.images_list.getJSONObject("$position").getString("name")
 
         val imageBytes = Base64.decode(this.images_list.getJSONObject("$position").getString("image"), Base64.DEFAULT)
         val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
@@ -37,7 +39,21 @@ class ImagesListAdapter(private val images_list: JSONObject,
         val image = holder.cl.findViewById<ImageView>(R.id.imageofcollection)
         image.setImageBitmap(bitmap)
 
-        placeText.setOnClickListener {
+        val shareBtn = holder.cl.findViewById<ImageView>(R.id.shareIcon2)
+        shareBtn.setImageResource(R.drawable.share)
+
+        val editBtn = holder.cl.findViewById<ImageView>(R.id.editIcon)
+        editBtn.setImageResource(R.drawable.edit)
+
+        shareBtn.setOnClickListener {
+            FragmentUtils.getFriends(fragment.getLoggedUser(),
+                fragment,
+                "tag",
+                this.images_list.getJSONObject("$position").getString("name")
+            )
+        }
+
+        editBtn.setOnClickListener {
             val dialog = Dialog(fragment.requireContext())
             dialog.setContentView(R.layout.info_upload_dialog)
             val proceed = dialog.findViewById<Button>(R.id.confirmButton)
@@ -45,6 +61,11 @@ class ImagesListAdapter(private val images_list: JSONObject,
             val city = dialog.findViewById<RadioButton>(R.id.radio_city)
             val mountain = dialog.findViewById<RadioButton>(R.id.radio_mountain)
             val sea = dialog.findViewById<RadioButton>(R.id.radio_sea)
+
+            val collection_name = dialog.findViewById<EditText>(R.id.collection_tv)
+            collection_name.setEnabled(false)
+
+            val new_image_name = dialog.findViewById<EditText>(R.id.image_tv)
 
             proceed.setOnClickListener {
                 var type = ""
@@ -62,7 +83,11 @@ class ImagesListAdapter(private val images_list: JSONObject,
                 else if (sea.isChecked)
                     setType(sea.text.toString())
 
-                UploadUtils.updateImageInfo(fragment, placeText.text.toString(), publicCheck.isChecked, type)
+                if (new_image_name.text.isBlank() || !(city.isChecked || mountain.isChecked || sea.isChecked) )
+                    Toast.makeText(fragment.requireContext(), "You must fill mandatory fields.", Toast.LENGTH_SHORT).show()
+                else
+                    UploadUtils.updateImageInfo(fragment, new_image_name.text.toString(), publicCheck.isChecked, type)
+
                 dialog.dismiss()
             }
 

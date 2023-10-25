@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.IBinder
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -42,9 +43,11 @@ class getLocationService : Service() {
                 val locationIntent = Intent("locationFilter")
                 locationIntent.putExtra("location", location)
 
+                // User requested for nearby photos
                 if (intent!!.extras!!.getString("action").equals("nearby"))
                     locationIntent.putExtra("action", "nearby")
 
+                // User requested for a new photo
                 else if (intent.extras!!.getString("action").equals("camera"))
                     locationIntent.putExtra("action", "camera")
 

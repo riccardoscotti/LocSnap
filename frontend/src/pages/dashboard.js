@@ -44,6 +44,7 @@ const Dashboard = () => {
   const checkBoxRef = createRef()
   const mapRef = createRef()
   var publicPhotoMarkers = L.layerGroup();
+  let [previews, setPreviews] = useState(null)
 
   // Collections initialization
   useEffect(() => {
@@ -153,6 +154,11 @@ function loadFriends() {
     }
   }
 
+  useEffect(() => {
+    if (typeof previews !== "undefined")
+      console.log(previews);
+  }, previews)
+
   const retrieveCollections = () => {
     axios.post("/retrievecollections", {
       logged_user: localStorage.getItem("user")
@@ -161,7 +167,23 @@ function loadFriends() {
     )
     .then((response) => {
       if(response.status === 200) {
-        localStorage.setItem("collections", JSON.stringify(response.data.retrievedCollections))
+        localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
+
+        let dictBase64 = {}
+        response.data.retrieved_collections.map(coll => {
+          axios.post("/imagesof", {
+            logged_user: localStorage.getItem('user'),
+            collection_name: coll
+          }).then(res => {
+            let arrayBase64 = []
+            Object.entries(res.data.images).map(img => {
+              arrayBase64.push(img[1].image)
+            })
+            dictBase64[coll] = arrayBase64
+            // setPreviews({...previews, [coll]: Object.values(Object.values(res.data.images)).map(x => x.image)})
+          })
+        })
+        setPreviews(dictBase64)
       }
     })
     .catch((error) => {
@@ -178,7 +200,7 @@ function loadFriends() {
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
   
-  return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
+  return localStorage.getItem("collections") && localStorage.getItem("imgs") && previews && (
     <div className='main-content'>
       <div className='collections'>
         <h1 className='title'>My collections</h1>
@@ -200,8 +222,11 @@ function loadFriends() {
         }}/>
         {
           Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-            return (<CollectionCard className='collection' key={collection[0]} 
-            title={collection[1].name} place={'Prova'} prevs={collectionsImages} />)
+            return (<CollectionCard className='collection' key={collection}
+            title={collection[1]} place={'Prova'} prevs={
+              //previews[0][collection[1]].map(s => "data:image/jpg;base64," + s)
+              collectionsImages
+            } />)
           })
         }
         
