@@ -1,5 +1,6 @@
 package com.example.locsnap.fragments
 
+import android.animation.ObjectAnimator
 import android.app.Activity
 import android.app.Dialog
 import android.content.BroadcastReceiver
@@ -30,6 +31,7 @@ class ChooseFragment : Fragment() {
     private var selected_collection: String = ""
     private var retrievedCollections = mutableListOf<String>()
     private var last_known_location : Location? = null
+    private var animated = false;
     private lateinit var recyclerView: RecyclerView
     private val thisInstance = this
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -49,8 +51,7 @@ class ChooseFragment : Fragment() {
                 dialog.show()
 
             } else if (intent.extras!!.getString("action").equals("camera")) {
-                var cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                startActivityForResult(cameraIntent, 111)
+                startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE), 111)
             }
 //            else if (intent.extras!!.getString("action").equals("upload")) {// If upload service was successful, refresh the fragment
 //                thisInstance.refresh()
@@ -60,7 +61,7 @@ class ChooseFragment : Fragment() {
     fun setCollections(retrievedCollections: MutableList<String>) {
         this.retrievedCollections = retrievedCollections
 
-        recyclerView = requireView().findViewById<RecyclerView>(R.id.listPhotosRecycler)
+        recyclerView = requireView().findViewById(R.id.listPhotosRecycler)
         recyclerView.layoutManager = LinearLayoutManager(this.requireContext())
         recyclerView.adapter = SingleCollectionInListAdapter(this.retrievedCollections.toTypedArray(), this)
     }
@@ -74,8 +75,8 @@ class ChooseFragment : Fragment() {
     }
 
     fun refresh() {
-        this.requireActivity().getSupportFragmentManager().beginTransaction().detach(this).commitNow()
-        this.requireActivity().getSupportFragmentManager().beginTransaction().attach(this).commitNow()
+        this.requireActivity().supportFragmentManager.beginTransaction().detach(this).commitNow()
+        this.requireActivity().supportFragmentManager.beginTransaction().attach(this).commitNow()
         UploadUtils.reloadUpdatedCollections(this.loggedUser, this)
     }
 
@@ -99,18 +100,47 @@ class ChooseFragment : Fragment() {
 
         val initialUserLetter = view.findViewById<TextView>(R.id.initialUserLetter)
         val camIcon = view.findViewById<ImageView>(R.id.camIcon)
-//        val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
+        val plusIcon = view.findViewById<ImageView>(R.id.plusIcon)
         val addUserIcon = view.findViewById<ImageView>(R.id.addFriendIcon)
-        val nearbyButton = view.findViewById<Button>(R.id.nearbyButton)
+        val nearbyIcon = view.findViewById<ImageView>(R.id.nearbyIcon)
         val recommendIcon = view.findViewById<ImageView>(R.id.recommendIcon)
 
         initialUserLetter.text = this.loggedUser.get(0).uppercase()
+
+        val views = arrayOf(
+            camIcon,
+            addUserIcon,
+            recommendIcon,
+            nearbyIcon
+        )
+
+        plusIcon.setOnClickListener {
+
+            if (!this.animated) {
+                for (i in 0 until views.size) {
+                    ObjectAnimator.ofFloat(views[i], "translationY", -300f*(i+1)).apply {
+                        duration = 500
+                        start()
+                    }
+                }
+                this.animated = true
+
+            } else {
+                for (i in 0 until views.size) {
+                    ObjectAnimator.ofFloat(views[i], "translationY", 0f).apply {
+                        duration = 500
+                        start()
+                    }
+                }
+                this.animated = false
+            }
+        }
 
         camIcon.setOnClickListener {
             this.openCamera()
         }
 
-        nearbyButton.setOnClickListener {
+        nearbyIcon.setOnClickListener {
             val getloc = Intent(this.requireActivity(), getLocationService::class.java)
             getloc.putExtra("action", "nearby")
             this.requireActivity().startService(getloc)
@@ -170,6 +200,11 @@ class ChooseFragment : Fragment() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == 111 && resultCode == Activity.RESULT_OK) {
+
+            // Using this tmp variable here, so we can default the real variable whether the user clicks 'upload' or close the window.
+            val tmp_selected_collection = this.selected_collection
+            this.setSelectedCollection("")
+
             val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
             val taggedFriend = data.extras!!.get("tagged_friend") as String?
             var imageJson = JSONObject()
@@ -189,9 +224,9 @@ class ChooseFragment : Fragment() {
             val mountain = dialog.findViewById<RadioButton>(R.id.radio_mountain)
             val sea = dialog.findViewById<RadioButton>(R.id.radio_sea)
 
-            if (this.selected_collection.isNotEmpty()) {
-                collection_name.setEnabled(false)
-                collection_name.setText(this.selected_collection)
+            if (tmp_selected_collection.isNotEmpty()) {
+                collection_name.isEnabled = false
+                collection_name.setText(tmp_selected_collection)
             }
 
             proceed.setOnClickListener {
@@ -214,12 +249,12 @@ class ChooseFragment : Fragment() {
                 imageJson.put("public", publicCheck.isChecked)
                 imageJson.put("type", type)
 
-                if (this.selected_collection.isNotEmpty())
-                    imageJson.put("collection_name", this.selected_collection)
+                if (tmp_selected_collection.isNotEmpty())
+                    imageJson.put("collection_name", tmp_selected_collection)
                 else
                     imageJson.put("collection_name", collection_name.text.toString())
 
-                if (this.selected_collection.isNotEmpty()) {
+                if (tmp_selected_collection.isNotEmpty()) {
                     UploadUtils.upload2(
                         imageJson,
                         capturedImage,
@@ -227,7 +262,6 @@ class ChooseFragment : Fragment() {
                         this,
                         taggedFriend
                     )
-                    setSelectedCollection("") // Reset selected_collection for new usage
                 } else {
                     UploadUtils.upload2(
                         imageJson,
