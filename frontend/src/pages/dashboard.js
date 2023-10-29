@@ -196,7 +196,7 @@ function loadFriends() {
                 return (
                   <div>
                     <p>...</p>
-                    <img src={"data:image/jpg;base64," + img[1] } />
+                    <img src={"data:image/jpg;base64," + img[1] } width="250vw" height="300vh" />
                   </div>      
                 )
               })

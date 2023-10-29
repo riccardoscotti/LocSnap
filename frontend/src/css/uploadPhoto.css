@@ -56,7 +56,16 @@
 
 #file-metadata {
     margin-left: 1vw;
-    margin-top: 7vh;
+    margin-top: 3vh;
+}
+
+.metadataInput {
+    padding-top: 3vh;
+    visibility: hidden;
+}
+
+.labelMetadata {
+    visibility: hidden;
 }
 
 #inner-inner-rectangle {
@@ -69,8 +78,8 @@
 #confirm-upload {
     height: 5vh;
     width: 7vw;
-    margin-top: 9vh;
-    margin-left: 1.5vw;
+    margin-top: 7vh;
+    margin-right: 3vw;
     visibility: hidden;
     border-radius: 1.5vh;
     border: .3vh solid #4F4F4F;

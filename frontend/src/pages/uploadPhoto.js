@@ -20,12 +20,17 @@ function UploadPhoto() {
     // TODO Allow user to select more files at once, to upload them as a collection.
     function uploadOnDB() {
         var reader = new FileReader();
+
+        var imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
+        var placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
+        var collectionNameInput = document.getElementById("file-metadata").querySelector("#collectionNameInput");
         
 
         reader.readAsDataURL(selectedFile);
         reader.onload = function () {
             axios.post(`${base_url}/imageupload`, {
-                name: selectedFile.name,
+                image_name: imageNameInput.value,
+                collection_name: collectionNameInput.value,
                 image: [reader.result.split(',')[1]],
                 username: localStorage.getItem("user"),
                 lat: fileMarker.lat,
@@ -34,7 +39,7 @@ function UploadPhoto() {
                 tagged_people: [],
                 public: false, // Default
                 type: "City", // Default
-                place: place 
+                place: placeInput.value 
 
             })
             .then((response) => {
@@ -85,17 +90,26 @@ function UploadPhoto() {
 
         axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${fileMarker.lat}&lon=${fileMarker.lon}&apiKey=${RGC_API_KEY}`)
             .then(response => {
-                document.getElementById('file-metadata').innerHTML = `
-                Name: ${fileObj.name}<br/>
-                Taken on: ${datetime} <br/>
-                Country: ${response.data.features[0].properties.city}, ${response.data.features[0].properties.country}
-                `;
+                var imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
+                var placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
+                var datePhoto = document.getElementById("file-metadata").querySelector("#datePhoto");
+                imageNameInput.value = `${fileObj.name}`
+                placeInput.value = `${response.data.features[0].properties.city}`
+                datePhoto.innerHTML = `${datetime}`
                 
                 setPlace(response.data.features[0].properties.city)
             })
             .catch(error => console.log(error));
 
         document.getElementById("confirm-upload").style.visibility = "visible"
+        
+        Object.entries(document.getElementsByClassName("labelMetadata")).map(element => {
+            element[1].style.visibility = "visible"
+        })
+
+        Object.entries(document.getElementsByClassName("metadataInput")).map(element => {
+            element[1].style.visibility = "visible"
+        })
         
         event.target.value = null;
     }
@@ -130,7 +144,19 @@ function UploadPhoto() {
                         </h1>
                     </button>
                     <div id="inner-inner-rectangle">
-                        <h3 id="file-metadata"/>
+                        <div id='labelsMetadata'>
+                            <h5 className='labelMetadata'>Collection Name</h5>
+                            <h5 className='labelMetadata'>Image Name</h5>
+                            <h5 className='labelMetadata'>Place</h5>
+                            <h5 className='labelMetadata'>Date</h5>
+                        </div>
+
+                        <div id='file-metadata'>
+                            <input className='metadataInput' id="collectionNameInput" type='text' />
+                            <input className='metadataInput' id="imageNameInput" type='text' />
+                            <input className='metadataInput' id="placeInput" type='text' />
+                            <h3 id="datePhoto" />
+                        </div>
                         <button id="confirm-upload" onClick={uploadOnDB}>
                             Confirm
                         </button>
