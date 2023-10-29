@@ -810,37 +810,49 @@ app.post('/retrievecollections', async (req, res) => {
     await client.connect();
 
     try {
+        // Distinct to avoid multi-photo collections to duplicate collection name
         const resQuery = await client.query(`
-        SELECT collection_name as name
-        FROM collections
-        WHERE author=\'${req.body.logged_user}\'`);
+        SELECT DISTINCT c.collection_name as name, i.place as place
+        FROM collections as c, images as i
+        WHERE 
+            c.collection_name = i.reference AND
+            i.author=\'${req.body.logged_user}\'`);
 
         resQuery.rows.forEach(collection => {
-            retrieved_collections.push(collection.name)
+            let tmp_coll = {}
+            tmp_coll['name'] = collection.name
+            tmp_coll['place'] = collection.place
+            retrieved_collections.push(tmp_coll)
         })
 
         // Photos in which the user is tagged
         const resQuery2 = await client.query(`
-        SELECT reference as name
+        SELECT reference as name, place as place
         FROM images
         WHERE
             author <> \'${req.body.logged_user}\' AND
             \'${req.body.friend}\' = ANY(tagged_people)`);
 
         resQuery2.rows.forEach(collection => {
-            retrieved_collections.push(collection.name)
+            let tmp_coll = {}
+            tmp_coll['name'] = collection.name
+            tmp_coll['place'] = collection.place
+            retrieved_collections.push(tmp_coll)
         })
 
         // Public photos
         const resQuery3 = await client.query(`
-        SELECT reference as name
+        SELECT reference as name, place as place
         FROM images
         WHERE
             author <> \'${req.body.logged_user}\' AND
             public = true`);
 
         resQuery3.rows.forEach(collection => {
-            retrieved_collections.push(collection.name)
+            let tmp_coll = {}
+            tmp_coll['name'] = collection.name
+            tmp_coll['place'] = collection.place
+            retrieved_collections.push(tmp_coll)
         })
 
         statusCode = 200;

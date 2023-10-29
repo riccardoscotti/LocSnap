@@ -163,6 +163,10 @@ function loadFriends() {
     )
     .then((response) => {
       if(response.status === 200) {
+        // Object.entries(response.data.retrieved_collections).map(collection => {
+        //   console.log(collection);
+        // })
+
         localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
       }
     })
@@ -173,27 +177,9 @@ function loadFriends() {
     });
   }
 
-  // function loadImagesForDialog() {
-    
-    
-
-  // }
-
   function OpenPhotos(props) {
 
-    let arrayBase64 = []
-    axios.post("/imagesof", {
-      logged_user: localStorage.getItem('user'),
-      collection_name: localStorage.getItem("clickedColl")
-    }).then(res => {
-      Object.entries(res.data.images).map(img => {
-        arrayBase64.push(img[1].image)
-      })
-
-      localStorage.setItem("previews", JSON.stringify(arrayBase64))
-    })
-    
-    return (
+    return localStorage.getItem("previews") && (
       <Modal
         {...props}
           size="md"
@@ -209,7 +195,7 @@ function loadFriends() {
               Object.entries(JSON.parse(localStorage.getItem("previews"))).map( (img) => {
                 return (
                   <div>
-                    <p>Foto...</p>
+                    <p>...</p>
                     <img src={"data:image/jpg;base64," + img[1] } />
                   </div>      
                 )
@@ -218,6 +204,27 @@ function loadFriends() {
           </Modal.Body>
         </Modal>
     )
+  }
+
+  function openPhotosFunc() {
+    let arrayBase64 = []
+    axios.post("/imagesof", {
+      logged_user: localStorage.getItem('user'),
+      collection_name: localStorage.getItem("clickedColl")
+    }).then(res => {
+      Object.entries(res.data.images).map(img => {
+        arrayBase64.push(img[1].image)
+      })
+
+      localStorage.setItem("previews", JSON.stringify(arrayBase64))
+      setOpenPhotosStatus(true)
+    })
+  }
+
+  function hideOpenPhotos() {
+    setOpenPhotosStatus(false)
+    localStorage.removeItem("clickedColl")
+    localStorage.removeItem("previews")
   }
   
   const bolognaCoords = [44.494887, 11.3426163]
@@ -252,11 +259,13 @@ function loadFriends() {
           Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
             return (
               <div onClick={(e) => {
-                localStorage.setItem("clickedColl", e.target.firstChild.data)
-                setOpenPhotosStatus(true)
+                if (e.target.firstChild !== null && e.target.firstChild.data !== "undefined") {
+                  localStorage.setItem("clickedColl", e.target.firstChild.data)
+                  openPhotosFunc()
+                }
                 } }>
                 <CollectionCard className='collection' key={collection}
-                title={collection[1]} place={'Prova'} prevs={
+                title={collection[1].name} place={collection[1].place} prevs={
                   collectionsImages
                 } />
               </div>
@@ -266,9 +275,7 @@ function loadFriends() {
 
         <OpenPhotos
           show={ openPhotosStatus }
-          onHide={ () => {
-            setOpenPhotosStatus(false)
-          }}
+          onHide={hideOpenPhotos}
         />
         
       </div> 
