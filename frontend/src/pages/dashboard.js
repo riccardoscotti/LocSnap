@@ -4,6 +4,8 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useState, createRef, useRef, useCallback } from 'react';
 import axios from "axios";
+import Modal from 'react-bootstrap/Modal';
+
 import * as L from 'leaflet';
 import markerIcon from '../marker-icon.png'
 
@@ -44,7 +46,7 @@ const Dashboard = () => {
   const checkBoxRef = createRef()
   const mapRef = createRef()
   var publicPhotoMarkers = L.layerGroup();
-  let [previews, setPreviews] = useState(null)
+  let [openPhotosStatus, setOpenPhotosStatus] = useState(false)
 
   // Collections initialization
   useEffect(() => {
@@ -147,17 +149,11 @@ function loadFriends() {
     if (mapRef.current !== "undefined") {
       var userPhotosMarkers = L.layerGroup().addTo(mapRef.current);
       Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
-        console.log(`${img[1].name} uploaded.`);
         var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(userPhotosMarkers);
         marker.bindPopup(img[1].name);
       })
     }
   }
-
-  useEffect(() => {
-    if (typeof previews !== "undefined")
-      console.log(previews);
-  }, previews)
 
   const retrieveCollections = () => {
     axios.post("/retrievecollections", {
@@ -168,29 +164,60 @@ function loadFriends() {
     .then((response) => {
       if(response.status === 200) {
         localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
-
-        let dictBase64 = {}
-        response.data.retrieved_collections.map(coll => {
-          axios.post("/imagesof", {
-            logged_user: localStorage.getItem('user'),
-            collection_name: coll
-          }).then(res => {
-            let arrayBase64 = []
-            Object.entries(res.data.images).map(img => {
-              arrayBase64.push(img[1].image)
-            })
-            dictBase64[coll] = arrayBase64
-            // setPreviews({...previews, [coll]: Object.values(Object.values(res.data.images)).map(x => x.image)})
-          })
-        })
-        setPreviews(dictBase64)
       }
     })
     .catch((error) => {
-        if(error.response.status === 401) {
-            alert("Error during collection retrieval!")
-        }
+      if(error.response.status === 401) {
+        alert("Error during collection retrieval!")
+      }
     });
+  }
+
+  // function loadImagesForDialog() {
+    
+    
+
+  // }
+
+  function OpenPhotos(props) {
+
+    let arrayBase64 = []
+    axios.post("/imagesof", {
+      logged_user: localStorage.getItem('user'),
+      collection_name: localStorage.getItem("clickedColl")
+    }).then(res => {
+      Object.entries(res.data.images).map(img => {
+        arrayBase64.push(img[1].image)
+      })
+
+      localStorage.setItem("previews", JSON.stringify(arrayBase64))
+    })
+    
+    return (
+      <Modal
+        {...props}
+          size="md"
+          aria-labelledby="contained-modal-title-vcenter"
+          centered >
+          <Modal.Header>
+            <Modal.Title id="contained-modal-title-vcenter">
+              Photos of {localStorage.getItem("clickedColl")}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body id='social-body'>
+            {
+              Object.entries(JSON.parse(localStorage.getItem("previews"))).map( (img) => {
+                return (
+                  <div>
+                    <p>Foto...</p>
+                    <img src={"data:image/jpg;base64," + img[1] } />
+                  </div>      
+                )
+              })
+            }
+          </Modal.Body>
+        </Modal>
+    )
   }
   
   const bolognaCoords = [44.494887, 11.3426163]
@@ -200,7 +227,8 @@ function loadFriends() {
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
   
-  return localStorage.getItem("collections") && localStorage.getItem("imgs") && previews && (
+  return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
+
     <div className='main-content'>
       <div className='collections'>
         <h1 className='title'>My collections</h1>
@@ -222,18 +250,34 @@ function loadFriends() {
         }}/>
         {
           Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-            return (<CollectionCard className='collection' key={collection}
-            title={collection[1]} place={'Prova'} prevs={
-              //previews[0][collection[1]].map(s => "data:image/jpg;base64," + s)
-              collectionsImages
-            } />)
+            return (
+              <div onClick={(e) => {
+                localStorage.setItem("clickedColl", e.target.firstChild.data)
+                setOpenPhotosStatus(true)
+                } }>
+                <CollectionCard className='collection' key={collection}
+                title={collection[1]} place={'Prova'} prevs={
+                  collectionsImages
+                } />
+              </div>
+            )
           })
         }
+
+        <OpenPhotos
+          show={ openPhotosStatus }
+          onHide={ () => {
+            setOpenPhotosStatus(false)
+          }}
+        />
         
       </div> 
         <DrawMap />
         <CheckBoxPublic />
+        <OpenPhotos />
     </div>
+
+
   );
 }
 export default Dashboard;

@@ -8,13 +8,6 @@ const e = require('express');
 const app = express();
 const port = 8080;
 
-const client_info = {
-    user: 'postgres',
-    host: '0.0.0.0',
-    database: 'contextawarerc',
-    port: 5432,
-}
-
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost:3000");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -31,14 +24,19 @@ app.post('/check', (req, res) => {
 app.post('/recommend', async (req, res) => {
     let statusCode;
     var recommendedPlaces;
-    const client = new Client(client_info);
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
     
     let retrieveAllUsernamesQuery = `
         SELECT username as username
         FROM users
     `
 
-    client.connect();
+    await client.connect();
     try {
 
         const resQuery1 = await client.query(retrieveAllUsernamesQuery);
@@ -138,7 +136,7 @@ app.post('/recommend', async (req, res) => {
         statusCode = 401;
     }
 
-    client.end()
+    await client.end()
     res.json({
         status: statusCode,
         recommendedPlaces: recommendedPlaces,
@@ -162,7 +160,7 @@ app.post('/search', async (req, res) => {
         WHERE author=\'${req.body.logged_user}\' 
         AND collection_name ILIKE \'${req.body.search_text}%\'
     `;
-    client.connect();
+    await client.connect();
 
     try {
         const resQuery = await client.query(query);
@@ -176,7 +174,7 @@ app.post('/search', async (req, res) => {
         statusCode = 401;
     }
     
-    client.end()
+    await client.end()
     res.json({
         status: statusCode,
         collections: collections
@@ -195,7 +193,7 @@ app.post('/retrieveimages', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     query = `
         SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat
@@ -221,7 +219,7 @@ app.post('/retrieveimages', async (req, res) => {
         statusCode = 401;
     }
     
-    client.end()
+    await client.end()
     res.json({
         status: statusCode,
         imgs: imgs
@@ -239,7 +237,7 @@ app.post('/imagesof', async (req, res) => {
         database: 'contextawarerc',
         port: 5432,
     });
-    client.connect();
+    await client.connect();
 
     try {
         const resQuery = await client.query(`
@@ -266,6 +264,8 @@ app.post('/imagesof', async (req, res) => {
         statusCode = 401;
     }
 
+    await client.end()
+
     res.json({
         status: statusCode,
         images: images
@@ -281,7 +281,7 @@ app.post('/updateimage', async (req, res) => {
         database: 'contextawarerc',
         port: 5432,
     });
-    client.connect();
+    await client.connect();
 
     try {
         const resQuery = client.query(`
@@ -322,7 +322,7 @@ app.post('/clusterize', async (req, res) => {
         database: 'contextawarerc',
         port: 5432,
     });
-    client.connect();
+    await client.connect();
 
     // Retrieving image name from images
     let query = `
@@ -359,11 +359,11 @@ app.post('/clusterize', async (req, res) => {
         }
                     
         statusCode = 200;
-        client.end();
+        await client.end();
 
     } catch {
         statusCode = 204;
-        client.end();
+        await client.end();
     }
     res.json({
         status: statusCode,
@@ -400,7 +400,7 @@ app.post('/imageupload', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     try {
 
@@ -415,13 +415,15 @@ app.post('/imageupload', async (req, res) => {
 
         await client.query(query2);
 
-        client.end();
+        
         statusCode = 200;
 
     } catch (err) {
         statusCode = 401;
         console.log(err);
     }
+
+    await client.end();
     
     res.json({status: statusCode})
 });
@@ -455,7 +457,7 @@ app.post('/addtoexisting', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     try {
 
@@ -465,24 +467,22 @@ app.post('/addtoexisting', async (req, res) => {
 
         await client.query(query2);
 
-        client.end();
         statusCode = 200;
 
     } catch (err) {
         statusCode = 401;
         console.log(err);
     }
-    
+    await client.end();    
     res.json({status: statusCode})
 });
 
 app.post('/nearest', async (req, res) => {
+    var statusCode;
     var imagesArray = [];
     var num_photos = req.body.num_photos
     var actualLat = req.body.actual_lat
     var actualLon = req.body.actual_lon
-
-    console.log(actualLat, actualLon)
 
     const client = new Client({
         user: 'postgres',
@@ -491,7 +491,7 @@ app.post('/nearest', async (req, res) => {
         port: 5432,
     });
 
-    client.connect()
+    await client.connect()
 
     query = `
         SELECT i.image as imageresult
@@ -505,17 +505,20 @@ app.post('/nearest', async (req, res) => {
         result.rows.forEach(element => {
             imagesArray.push(element.imageresult)
         });
-        client.end();
-        res.json({
-            status: 200,
-            images: imagesArray
-        })
+
+        statusCode = 200
+        
     } catch (err) {
+        statusCode = 401
         console.log(err);
-        res.json({
-            status: 401
-        })
     }
+
+    res.json({
+        status: statusCode,
+        images: imagesArray
+    })
+
+    await client.end();
 })
 
 app.post('/deletecollection', async (req, res) => {
@@ -529,7 +532,7 @@ app.post('/deletecollection', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     try {
 
@@ -559,12 +562,13 @@ app.post('/deletecollection', async (req, res) => {
         } else {
             statusCode = 304 // Document not modified
         }
-        client.end();
         
     } catch (err) {
         statusCode = 401;
         console.log(err);
     }
+
+    await client.end()
 
     res.json({
         status: statusCode
@@ -582,7 +586,7 @@ app.post('/tag_friend', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     try {
         query_imgs = `
@@ -605,12 +609,13 @@ app.post('/tag_friend', async (req, res) => {
             statusCode = 304; // Document not modified
         }
         
-        client.end();
         
     } catch (err) {
         statusCode = 401;
         console.log(err);
     }
+
+    await client.end()
 
     res.json({
         status: statusCode
@@ -629,7 +634,7 @@ app.post('/get_friends', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     query = `SELECT user_2 as friend FROM friendships WHERE user_1=\'${req.body.logged_user}\';`
 
@@ -644,9 +649,8 @@ app.post('/get_friends', async (req, res) => {
         statusCode = 401;
         console.log(err);
     }
-
-    client.end();
     
+    await client.end()
     res.json({
         status: statusCode,
         friends: friends});
@@ -664,7 +668,7 @@ app.post('/retrieve_public', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     query = `
         SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat
@@ -690,7 +694,7 @@ app.post('/retrieve_public', async (req, res) => {
         console.log(err);
     }
 
-    client.end();
+    await client.end();
     res.json({
         status: statusCode,
         public_photos: public_photos
@@ -709,7 +713,7 @@ app.post('/add_friend', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     query = `
             SELECT user_2
@@ -744,7 +748,7 @@ app.post('/add_friend', async (req, res) => {
         console.log(err);
     }
     
-    client.end();
+    await client.end();
     res.json({status: statusCode});
     
 })
@@ -760,7 +764,7 @@ app.post('/remove_friend', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     const query1 = `
             DELETE
@@ -786,7 +790,7 @@ app.post('/remove_friend', async (req, res) => {
         console.log(err);
     }
     
-    client.end();
+    await client.end();
     res.json({status: statusCode});
     
 })
@@ -803,7 +807,7 @@ app.post('/retrievecollections', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     try {
         const resQuery = await client.query(`
@@ -844,7 +848,7 @@ app.post('/retrievecollections', async (req, res) => {
         statusCode = 401; 
     }
 
-    client.end();
+    await client.end();
 
     res.json({
         status: statusCode,
@@ -863,7 +867,7 @@ app.post('/login', async (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     query = `
         SELECT username
@@ -884,12 +888,12 @@ app.post('/login', async (req, res) => {
     } catch (err) {
         console.log(err);
     }
-    client.end();
+    await client.end();
 
     res.json({status: statusCode})
 })
 
-app.post('/signup', (req, res) => {
+app.post('/signup', async (req, res) => {
     const client = new Client({
         user: 'postgres',
         host: '0.0.0.0',
@@ -897,16 +901,16 @@ app.post('/signup', (req, res) => {
         port: 5432,
     });
 
-    client.connect();
+    await client.connect();
 
     query = `INSERT INTO users (name, surname, username, password)
             VALUES (\'${req.body.name}\', \'${req.body.surname}\', \'${req.body.username}\', \'${req.body.password}\');`
 
-    client.query(query, (err, res) => {
+    await client.query(query, (err, res) => {
         console.log(err, res);
-        client.end();
     })
 
+    await client.end()
     res.json({status: 200})
 
 })
