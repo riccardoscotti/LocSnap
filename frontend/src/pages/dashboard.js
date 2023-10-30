@@ -33,7 +33,7 @@ const Dashboard = () => {
   const publicMarker = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
     iconRetinaUrl: markerIcon,
-    iconSize: [45, 48],
+    iconSize: [40, 50],
     shadowSize: [50, 64],
     iconAnchor: [22, 94],
     shadowAnchor: [4, 62],
@@ -43,7 +43,7 @@ const Dashboard = () => {
   let [searchText, setSearchText] = useState("")
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
-  const checkBoxRef = createRef()
+  const [showPublic, setShowPublic] = useState(false)
   const mapRef = createRef()
   var publicPhotoMarkers = L.layerGroup();
   let [openPhotosStatus, setOpenPhotosStatus] = useState(false)
@@ -78,13 +78,21 @@ const Dashboard = () => {
   function CheckBoxPublic() {
     return (
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="publicCheckBox" onChange={(e) => {
-          if (e.target.checked === true) {
-            loadPublicPhotos()
-          } else {
-            publicPhotoMarkers?.removeFrom(mapRef.current)
-          }
-        }} />
+        <input  class="form-check-input" 
+                type="checkbox" 
+                id="publicCheckBox" 
+                // checked={showPublic}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setShowPublic(true)
+                    loadPublicPhotos()
+                  } else {
+                    setShowPublic(false)
+                    publicPhotoMarkers?.removeFrom(mapRef.current)
+                  }
+
+                }
+        } />
         <label for="publicCheckBox">
           Show public photos
         </label>
@@ -116,7 +124,7 @@ const Dashboard = () => {
 
         Object.entries(response.data.public_photos).map( (img) => {
           var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: publicMarker}).addTo(publicPhotoMarkers);
-          marker.bindPopup(img[1].name);
+          marker.bindPopup(`${img[1].author}: ${img[1].name}`);
         })
       }
     })

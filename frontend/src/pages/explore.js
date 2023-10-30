@@ -24,7 +24,8 @@ const Explore = () => {
         <div className="main-content">
             <div className='favorites'>
                 <h1 className='title'>Explore</h1>
-                <p>You seem to like {} pictures</p>
+                <p>You seem to like {localStorage.getItem('user_favorite_type')} pictures</p>
+
             </div>
         </div>
 

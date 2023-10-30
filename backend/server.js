@@ -20,6 +20,42 @@ app.post('/check', (req, res) => {
     res.json({status: 200})
 })
 
+app.post('/publish', async (req, res) => {
+    let statusCode;
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    await client.connect()
+
+    try {
+        await client.query(`
+        UPDATE images
+        SET public=true
+        WHERE
+            author=\'${req.body.logged_user}\' AND
+            reference=\'${req.body.collection_name}\' AND
+            image_name=\'${req.body.image_name}\'
+        `)
+
+        statusCode = 200
+
+    } catch(error) {
+        console.log(error);
+        statusCode = 401;
+    }
+
+    await client.end()
+
+    res.json({
+        status: statusCode
+    })
+})
+
 // User favorite type of photos
 app.post('/recommend', async (req, res) => {
     let statusCode;
@@ -86,6 +122,8 @@ app.post('/recommend', async (req, res) => {
             }
         })
 
+        console.log(similar_users);
+
         // Retrieve places visited by logged_user to avoid doubles
         let user_places = [];
 
@@ -98,6 +136,8 @@ app.post('/recommend', async (req, res) => {
         resQuery3.rows.forEach(place => {
             user_places.push(place.place)
         })
+
+        console.log(user_places);
 
 
         // Retrieve places visited by other similar users
@@ -114,6 +154,8 @@ app.post('/recommend', async (req, res) => {
             })
         }
 
+        console.log(other_users_places);
+
         // Returns occurrences of places in the previous array
         let counts = other_users_places.reduce((a, c) => {
             if (user_places.indexOf(c) == -1) // Place not visited by logged_user, so recommended.
@@ -127,8 +169,11 @@ app.post('/recommend', async (req, res) => {
             // First 2 places, to be changed when more photos available.
             recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
             statusCode = 200;
+        } else if (sortedArray.length == 1) {
+            recommendedPlaces = [sortedArray[0][0]]
+            statusCode = 200
         } else {
-            statusCode = 409;
+            statusCode = 409
         }
 
     } catch (err) {
@@ -284,7 +329,7 @@ app.post('/updateimage', async (req, res) => {
     await client.connect();
 
     try {
-        const resQuery = client.query(`
+        await client.query(`
             UPDATE images
             SET
                 public = \'${req.body.public}\',
@@ -461,11 +506,20 @@ app.post('/addtoexisting', async (req, res) => {
 
     try {
 
-        query2 = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
-        VALUES (\'${image_name}\', \'${image64}\', 
-        \'${postgisPoint}\', \'{${tags}}\', \'${coll_name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
+        await client.query(
+            `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
+            VALUES (\'${image_name}\', \'${image64}\', 
+            \'${postgisPoint}\', \'{${tags}}\', \'${coll_name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
+        );
 
-        await client.query(query2);
+        // Update collection's length
+        await client.query(`
+            UPDATE collections
+            SET length = length + 1
+            WHERE 
+                collection_name = \'${req.body.coll_name}\' AND 
+                author = \'${req.body.author}\'
+        `)
 
         statusCode = 200;
 
@@ -513,12 +567,49 @@ app.post('/nearest', async (req, res) => {
         console.log(err);
     }
 
+    await client.end();
+
     res.json({
         status: statusCode,
         images: imagesArray
     })
 
+})
+
+app.post('/deletephoto', async (req, res) => {
+    let statusCode;
+
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+
+    await client.connect();
+
+    try {
+
+        await client.query(`
+            DELETE FROM images
+            WHERE
+                author = \'${req.body.logged_user}\' AND
+                image_name = \'${req.body.image_name}\' AND
+                reference = \'${req.body.collection_name}\'
+            `)
+
+        statusCode = 200;
+
+    } catch(error) {
+        console.log(error);
+        statusCode = 401
+    }
+
     await client.end();
+    
+    res.json({
+        status: statusCode
+    })
 })
 
 app.post('/deletecollection', async (req, res) => {
@@ -671,7 +762,7 @@ app.post('/retrieve_public', async (req, res) => {
     await client.connect();
 
     query = `
-        SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat
+        SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat, author as author
         FROM images
         WHERE
             author <> \'${req.body.logged_user}\' AND
@@ -685,6 +776,7 @@ app.post('/retrieve_public', async (req, res) => {
             let tmp_img = {};
             tmp_img.name = row.name
             tmp_img.coords = [row.lat, row.lng]
+            tmp_img.author = row.author
             public_photos[index] = tmp_img
             index++;
         })
@@ -841,19 +933,19 @@ app.post('/retrievecollections', async (req, res) => {
         })
 
         // Public photos
-        const resQuery3 = await client.query(`
-        SELECT reference as name, place as place
-        FROM images
-        WHERE
-            author <> \'${req.body.logged_user}\' AND
-            public = true`);
+        // const resQuery3 = await client.query(`
+        // SELECT reference as name, place as place
+        // FROM images
+        // WHERE
+        //     author <> \'${req.body.logged_user}\' AND
+        //     public = true`);
 
-        resQuery3.rows.forEach(collection => {
-            let tmp_coll = {}
-            tmp_coll['name'] = collection.name
-            tmp_coll['place'] = collection.place
-            retrieved_collections.push(tmp_coll)
-        })
+        // resQuery3.rows.forEach(collection => {
+        //     let tmp_coll = {}
+        //     tmp_coll['name'] = collection.name
+        //     tmp_coll['place'] = collection.place
+        //     retrieved_collections.push(tmp_coll)
+        // })
 
         statusCode = 200;
     } catch (err) {

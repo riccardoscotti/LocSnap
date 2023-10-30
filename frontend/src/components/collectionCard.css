@@ -13,6 +13,11 @@
     display: flex;
 }
 
+.collection-title:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 #delete-img {
     width: 3vw;
     height: 6vh;
