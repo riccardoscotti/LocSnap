@@ -40,7 +40,7 @@ const clusterIcon = L.icon({
 
 const GenerateMap = () => {
   // Prevent old session saves
-  localStorage.removeItem("buttonClicked")
+  localStorage.removeItem("mapIntent")
   localStorage.removeItem("geojson")
   localStorage.removeItem("clusters")
 
@@ -52,6 +52,7 @@ const GenerateMap = () => {
   const uploadFilterRef = useRef(null);
 
   var geoJsonLayer;
+  var coloredGeoJsonlayer;
   var heatmap;
   var markerGroup;
   var clusterGroups;
@@ -114,7 +115,7 @@ const GenerateMap = () => {
     markerGroup?.removeFrom(mapRef.current) // Remove markers, if present.
 
     // Update with new geojson
-    var newgeoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
+    coloredGeoJsonlayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
       onEachFeature: function (feature, layer) {
         if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
           layer.setStyle({
@@ -141,7 +142,7 @@ const GenerateMap = () => {
       }
     })
     
-    newgeoJsonLayer.addTo(mapRef.current);
+    coloredGeoJsonlayer.addTo(mapRef.current);
   }
 
   // User clicked on an area, showing out relative markers
@@ -170,34 +171,36 @@ const GenerateMap = () => {
   }
 
   function PhotoPerArea() {
-    
       const map = useMap();
       useMapEvents({
         click(e) {
-          if (localStorage.getItem("geojson")) {
+          if (localStorage.getItem("geojson") && localStorage.getItem("mapIntent") === "ppa") {
   
               map.eachLayer(function(layer) {
                 if(typeof layer._heat !== "undefined") {
                     layer.removeFrom(map)
                 }
               });
-  
-              geoJsonLayer = L.geoJSON()
+
+              if (!mapRef.current.hasLayer(geoJsonLayer)) {
+                geoJsonLayer = L.geoJSON()
                 .addData(Object(JSON.parse(localStorage.getItem("geojson"))))
-                .addTo(map);
-  
+                .addTo(mapRef.current);
+              }
+
+              coloredGeoJsonlayer?.removeFrom(mapRef.current)
+              
               featureContainer(
                 Object(JSON.parse(localStorage.getItem("geojson"))),
                 [e.latlng.lng, e.latlng.lat],
-                map
+                mapRef.current
               );
-              localStorage.removeItem("buttonClicked")
+              
+              localStorage.removeItem("mapIntent")
           }
         }
       })
   }
-
-
 
   useEffect(() => {
     if (confirmed == true) {
@@ -235,8 +238,6 @@ const GenerateMap = () => {
         const clusters = response.data.clusters;
         clusterGroups = L.layerGroup()
         clusterGroups.addTo(mapRef.current);
-        console.log(clusterGroups);
-
         Object.entries(clusters).map( (cluster) => {
           var marker = new L.marker([cluster[1].coords[0], cluster[1].coords[1]], {icon: clusterIcon}).addTo(clusterGroups);
           marker.bindPopup(`Photos taken here: ${cluster[1].image_names.length}`)
@@ -249,20 +250,22 @@ const GenerateMap = () => {
         console.log(error);
     });
 
-    localStorage.removeItem("buttonClicked")
+    localStorage.removeItem("mapIntent")
   }
 
   function Heatmap() {
 
-    mapRef.current.eachLayer(function(layer) {
-      if(typeof layer.feature != "undefined" ||
-         typeof layer._heat != "undefined") {
-          layer.removeFrom(mapRef.current)
-      }
-    });
+    // mapRef.current.eachLayer(function(layer) {
+    //   if(typeof layer.feature != "undefined" ||
+    //      typeof layer._heat != "undefined") {
+    //       layer.removeFrom(mapRef.current)
+    //   }
+    // });
 
     markerGroup?.removeFrom(mapRef.current) // Remove all markers, if present.
     clusterGroups?.removeFrom(mapRef.current)
+    geoJsonLayer?.removeFrom(mapRef.current)
+    coloredGeoJsonlayer?.removeFrom(mapRef.current)
 
     heatmap = L.heatLayer([], {
       radius: 25,
@@ -284,7 +287,7 @@ const GenerateMap = () => {
 
   const bolognaCoords = [44.494887, 11.3426163]
 
-  function MyVerticallyCenteredModal(props) {
+  function ClusteringModal(props) {
     return (
       <Modal
         {...props}
@@ -332,15 +335,19 @@ const GenerateMap = () => {
                 Load GeoJSON
               </Button>
               <Button className="menuItem" onClick={() => {
+                localStorage.removeItem("mapIntent")
                 Heatmap()
               }}>
                 Heatmap
               </Button>
               <Button className="menuItem" onClick={
                 () => {
+                  localStorage.setItem("mapIntent", "ppa")
+
                   if (localStorage.getItem("geojson") == null) {
                     alert("You must upload a GeoJSON file first.")
                   } else {
+                    
                     alert("Select the country you're concerned in")
                   }
                   }}>
@@ -351,6 +358,7 @@ const GenerateMap = () => {
                   if (localStorage.getItem("geojson") == null) {
                     alert("You must upload a GeoJSON file first.")
                   } else {
+                    localStorage.removeItem("mapIntent")
                     ColorMap()
                   }
                 }}>
@@ -358,6 +366,7 @@ const GenerateMap = () => {
               </Button>
               <Button className="menuItem" onClick={
                 () => {
+                  localStorage.removeItem("mapIntent")
                   handleClickOpen()
                 }}>
                 Cluster
@@ -369,7 +378,7 @@ const GenerateMap = () => {
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           </MapContainer>
 
-          <MyVerticallyCenteredModal
+          <ClusteringModal
             show={open}
             onHide={() => setOpen(false)}
           />          

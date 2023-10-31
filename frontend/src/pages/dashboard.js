@@ -84,18 +84,16 @@ const Dashboard = () => {
                 // checked={showPublic}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    setShowPublic(true)
+                    // setShowPublic(true)
                     loadPublicPhotos()
                   } else {
-                    setShowPublic(false)
+                    // setShowPublic(false)
                     publicPhotoMarkers?.removeFrom(mapRef.current)
                   }
 
                 }
         } />
-        <label for="publicCheckBox">
-          Show public photos
-        </label>
+        <p id="labelPCB"> Show public photos </p>
       </div>
     )
   }
@@ -171,10 +169,6 @@ function loadFriends() {
     )
     .then((response) => {
       if(response.status === 200) {
-        // Object.entries(response.data.retrieved_collections).map(collection => {
-        //   console.log(collection);
-        // })
-
         localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
       }
     })
@@ -246,7 +240,7 @@ function loadFriends() {
 
     <div className='main-content'>
       <div className='collections'>
-        <h1 className='title'>My collections</h1>
+        <h1 id='title'>My collections</h1>
         <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
           if (e.key === 'Enter') {
             console.log("Searching with: ", searchRef.current.value);

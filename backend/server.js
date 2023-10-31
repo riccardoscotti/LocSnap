@@ -60,6 +60,9 @@ app.post('/publish', async (req, res) => {
 app.post('/recommend', async (req, res) => {
     let statusCode;
     var recommendedPlaces;
+    
+    let type_array = new Map();
+
     const client = new Client({
         user: 'postgres',
         host: '0.0.0.0',
@@ -77,8 +80,8 @@ app.post('/recommend', async (req, res) => {
 
         const resQuery1 = await client.query(retrieveAllUsernamesQuery);
         let user_array = [];
-        let type_array = new Map();
-
+        let user_types = [];
+        
         resQuery1.rows.forEach(user => {
             user_array.push(user.username)
         })
@@ -89,7 +92,7 @@ app.post('/recommend', async (req, res) => {
             FROM images
             WHERE author=\'${user}\'`)
 
-            let user_types = [];
+            
 
             resQuery2.rows.forEach(img => {
                 user_types.push(img.type)
@@ -184,6 +187,7 @@ app.post('/recommend', async (req, res) => {
     await client.end()
     res.json({
         status: statusCode,
+        user_favorite_type: type_array[req.body.logged_user],
         recommendedPlaces: recommendedPlaces,
 
     })
@@ -434,7 +438,7 @@ app.post('/imageupload', async (req, res) => {
     var tags = []
     var postgisPoint = "POINT("+lon+" "+lat+")"
 
-    tagged_people.forEach(tag => {
+    tagged_people?.forEach(tag => {
         tags.push(tag)
     })
 

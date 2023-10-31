@@ -336,7 +336,6 @@ const Navbar = () => {
                 <ListGroup>
                     {    
                         Object.entries(JSON.parse(localStorage.getItem("friends"))).map( (friend) => {
-                            console.log(friend);
                             return (
                                 <div key={friend[1]} className="dialogDiv">
                                     <ListGroup.Item className="dialogItem"> {friend[1]} </ListGroup.Item> 
