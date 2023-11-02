@@ -141,8 +141,7 @@ app.post('/recommend', async (req, res) => {
         })
 
         console.log(user_places);
-
-
+        
         // Retrieve places visited by other similar users
         let other_users_places = [];
 

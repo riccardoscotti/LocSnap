@@ -24,39 +24,44 @@ class getLocationService : Service() {
 
         if (ActivityCompat.checkSelfPermission(
                 this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
-                this,
                 Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             Toast.makeText(this, "Problems occurred about permissions!.", Toast.LENGTH_SHORT).show()
         }
-        fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
-            override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
-            override fun isCancellationRequested() = false
-        })
-        .addOnSuccessListener { location: Location? ->
-            if (location == null)
-                Toast.makeText(this, "Cannot get location.", Toast.LENGTH_SHORT).show()
-            else {
-                val locationIntent = Intent("locationFilter")
-                locationIntent.putExtra("location", location)
 
-                // User requested for nearby photos
-                if (intent!!.extras!!.getString("action").equals("nearby"))
-                    locationIntent.putExtra("action", "nearby")
+        else {
+            fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
+                override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
+                override fun isCancellationRequested() = false
+            })
+                .addOnSuccessListener { location: Location? ->
+                    if (location == null)
+                        Toast.makeText(this, "Cannot get location.", Toast.LENGTH_SHORT).show()
+                    else {
+                        val locationIntent = Intent("locationFilter")
+                        locationIntent.putExtra("location", location)
 
-                // User requested for a new photo
-                else if (intent.extras!!.getString("action").equals("camera"))
-                    locationIntent.putExtra("action", "camera")
+                        // User requested for nearby photos
+                        if (intent!!.extras!!.getString("action").equals("nearby"))
+                            locationIntent.putExtra("action", "nearby")
 
-                sendBroadcast(locationIntent)
-                stopSelf()
-            }
+                        // User requested for a new photo
+                        else if (intent.extras!!.getString("action").equals("camera"))
+                            locationIntent.putExtra("action", "camera")
+
+                        sendBroadcast(locationIntent)
+                        stopSelf()
+                    }
+                }
+
+            return super.onStartCommand(intent, flags, startId)
         }
 
-        return super.onStartCommand(intent, flags, startId)
+        return START_NOT_STICKY
     }
 
     override fun onBind(p0: Intent?): IBinder? {

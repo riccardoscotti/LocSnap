@@ -57,7 +57,7 @@ const Navbar = () => {
 
     // Friends list
     function ChooseFriendDialog(props) {
-        return (
+        return localStorage.getItem("friends") && (
             <Modal
             {...props}
               size="md"
@@ -65,7 +65,7 @@ const Navbar = () => {
               centered >
               <Modal.Header>
                 <Modal.Title id="contained-modal-title-vcenter">
-                    Select a friend 
+                    Select a friend
                 </Modal.Title>
               </Modal.Header>
               <Modal.Body id='social-body'>
