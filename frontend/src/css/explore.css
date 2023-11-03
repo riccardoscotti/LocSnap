@@ -11,7 +11,6 @@
     display: flex;
     flex-direction: column;
     align-items: start;
-
 }
 
 #favorite-type-text, .recommended-place {
@@ -19,5 +18,15 @@
     font-weight: bold;
     background-color: #1464F6;
     padding: 0.5vh 0.5vw;
-    border-radius: 12%;
+    border-radius: 5vh;
+}
+
+.recommended-place {
+    margin-left: 1.5vw;
+}
+
+.recommended-place:hover {
+    background-color: white;
+    color: #1464F6;
+    cursor: pointer;
 }

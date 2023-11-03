@@ -1,16 +1,31 @@
 import '../css/explore.css'
-import React, { useCallback, createRef, useEffect } from 'react'
+import React, { useCallback, createRef, useEffect, useState } from 'react'
 import axios from 'axios'
 import * as L from 'leaflet';
 import { MapContainer, Marker, Popup, useMapEvents, TileLayer, GeoJSON, useMap } from "react-leaflet";
 
+import markerIcon from '../marker-icon.png'
+
+const mIcon = new L.Icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon,
+  iconSize: [45, 48],
+  shadowSize: [50, 64],
+  iconAnchor: [22, 94],
+  shadowAnchor: [4, 62],
+  popupAnchor: [-3, -76],
+})
+
 axios.defaults.baseURL = 'http://localhost:8080'
 
 const Explore = () => {
+  useEffect(() => {
+    getFavorites()
+  }, [])
 
   const mapRef = createRef()
   const bolognaCoords = [44.494887, 11.3426163]
-  let placeMap = {}
+  let [placeMap, setPlaceMap] = useState({})
   let [markerLoaded, setMarkerLoaded] = React.useState(false)
   
   const getFavorites = () => {
@@ -39,8 +54,10 @@ const Explore = () => {
     axios.get(`https://geocode.maps.co/search?q={${place}}`, {
     })
     .then(response => {
-      placeMap[place] = [response.data[0].lat, response.data[0].lon]
-      console.log("geocode: " + placeMap)
+      setPlaceMap(placeMap => ({
+        ...placeMap,
+        [place]: [response.data[0].lat, response.data[0].lon]
+      }))
     })
   }
   
@@ -48,7 +65,7 @@ const Explore = () => {
       const mapCB = useCallback(node => {
         if (node) {
           mapRef.current = node
-          // showMarkers()
+          showMarkers()
         }
       }, [])
   
@@ -65,12 +82,15 @@ const Explore = () => {
       )
   }
   
-  function ShowMarkers() {
-    let recommendedMarkers = L.layerGroup()
-  
-    // Object.entries(placeMap).map( (place) => {
-    //   console.log(place);
-    // })
+  function showMarkers() {
+    let recommendedMarkers = L.layerGroup().addTo(mapRef.current);
+    if (mapRef.current !== 'undefined') {
+      Object.entries(placeMap).map(entry => {
+        let marker = new L.marker([entry[1][0], entry[1][1]], {icon: mIcon})
+          .addTo(recommendedMarkers);
+          marker.bindPopup(entry[0]);
+      })
+    }
   }
 
     return localStorage.getItem('user_favorite_type') && markerLoaded && (
@@ -80,14 +100,20 @@ const Explore = () => {
                 <p>You seem to like <span id="favorite-type-text">{localStorage.getItem('user_favorite_type')}</span> pictures</p>      
                 <h2>You may also like:</h2>
                 {
-                  console.log(placeMap)
-                  // Object.entries(placeMap).map( (place) => {
-                  //   return (<p className="recommended-place" key={place}>Place: {place}</p>);
-                  // })
+                  Object.entries(placeMap).map(entry => 
+                    (<p 
+                      key={entry[0]}
+                      className='recommended-place'
+                      onClick={(e) => {
+                        mapRef.current.flyTo(new L.LatLng(entry[1][0], entry[1][1]));
+                      }}
+                      >
+                        {entry[0]}
+                      </p>)
+                  )
                 }
             </div>
             <DrawMap />
-            <ShowMarkers />
         </div>
 
     )
