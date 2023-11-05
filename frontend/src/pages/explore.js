@@ -49,6 +49,10 @@ const Explore = () => {
         }
       })
   }
+
+  useEffect(() => {
+    getFavorites()
+  }, [])
   
   function geoCode(place) {
     axios.get(`https://geocode.maps.co/search?q={${place}}`, {

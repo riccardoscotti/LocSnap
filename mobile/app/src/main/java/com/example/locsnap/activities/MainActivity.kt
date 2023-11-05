@@ -1,13 +1,12 @@
-package com.example.locsnap
+package com.example.locsnap.activities
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentTransaction
+import com.example.locsnap.LoginFragment
+import com.example.locsnap.R
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,12 +35,12 @@ class MainActivity : AppCompatActivity() {
         super.onBackPressed()
 
         // Se si tratta dell'unico fragment sullo stack, esci dall'app.
-        if(supportFragmentManager.backStackEntryCount.equals(0)) {
+        if(supportFragmentManager.backStackEntryCount == 0) {
             finish()
         } else {
             val fragment = supportFragmentManager.findFragmentById(R.id.app_container)
-            val fragmentTransaction = fragment?.fragmentManager?.beginTransaction()
-            fragmentTransaction?.replace(R.id.app_container, fragment::class.java.newInstance())?.commit()
+            val fragmentTransaction = fragment!!.requireFragmentManager().beginTransaction()
+            fragmentTransaction.replace(R.id.app_container, fragment::class.java.newInstance()).commit()
         }
     }
 }

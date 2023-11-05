@@ -12,7 +12,7 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost:3000");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
-  });
+});
 
 app.use(bodyParser.json({limit: '50mb'}));
 
@@ -332,15 +332,26 @@ app.post('/updateimage', async (req, res) => {
     await client.connect();
 
     try {
-        await client.query(`
+
+        console.log(req.body.new_image_name);
+        console.log(req.body.public);
+        console.log(req.body.type);
+        console.log(req.body.collection_name);
+        console.log(req.body.logged_user);
+
+        let queryRes = await client.query(`
             UPDATE images
             SET
+                image_name = \'${req.body.new_image_name}\',
                 public = \'${req.body.public}\',
                 type = \'${req.body.type}\'
             WHERE 
                 author = \'${req.body.logged_user}\' AND
-                image_name = \'${req.body.image_name}\'
+                image_name = \'${req.body.old_image_name}\' AND
+                reference = \'${req.body.collection_name}\'
         `)
+
+        console.log(queryRes);
 
         statusCode = 200;
 
@@ -348,6 +359,8 @@ app.post('/updateimage', async (req, res) => {
         console.log(error);
         statusCode = 401;
     }
+
+    await client.end();
 
     res.json({
         status: statusCode
@@ -407,12 +420,14 @@ app.post('/clusterize', async (req, res) => {
         }
                     
         statusCode = 200;
-        await client.end();
+        
 
     } catch {
         statusCode = 204;
-        await client.end();
     }
+
+    await client.end();
+
     res.json({
         status: statusCode,
         clusters: clusters
@@ -906,6 +921,7 @@ app.post('/retrievecollections', async (req, res) => {
 
     try {
         // Distinct to avoid multi-photo collections to duplicate collection name
+        // Also does not load collections with no photos in.
         const resQuery = await client.query(`
         SELECT DISTINCT c.collection_name as name, i.place as place
         FROM collections as c, images as i

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import com.example.locsnap.utils.FragmentUtils
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class RegisterFragment : Fragment() {
@@ -29,14 +30,14 @@ class RegisterFragment : Fragment() {
         val switchScreen = view.findViewById<SwitchMaterial>(R.id.switchScreen) // Allows to switch between register/login mode.
 
         loginButton.setOnClickListener {
-            UserAuthenticate.registerUser(nameText.text.toString(), surnameText.text.toString(),
+            UserAuthenticate.userRegister(nameText.text.toString(), surnameText.text.toString(),
                 usernameText.text.toString(), passwordText.text.toString(), this)
         }
 
         // Continue on register mode
         switchScreen.setOnCheckedChangeListener { _, isChecked ->
             if(isChecked) { // User wants to register
-                FragmentUtils.TransactFragment(this, LoginFragment())
+                FragmentUtils.transactFragment(this, LoginFragment())
             }
         }
         super.onViewCreated(view, savedInstanceState)

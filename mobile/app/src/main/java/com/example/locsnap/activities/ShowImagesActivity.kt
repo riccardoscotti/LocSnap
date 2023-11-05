@@ -1,21 +1,20 @@
-package com.example.locsnap
+package com.example.locsnap.activities
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Base64
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
+import com.example.locsnap.R
 import com.example.locsnap.utils.ImagesAdapter
 
-
-class showImagesActivity : AppCompatActivity() {
+class ShowImagesActivity : AppCompatActivity() {
     private var bitmapsString: Array<String> = arrayOf()
 
     inner class VerticalSpaceItemDecoration(private val verticalSpaceHeight: Int) : ItemDecoration() {
@@ -57,12 +56,12 @@ class showImagesActivity : AppCompatActivity() {
         super.onBackPressed()
 
         // If it's the last fragment and user goes back, then finish
-        if(supportFragmentManager.backStackEntryCount.equals(0)) {
+        if(supportFragmentManager.backStackEntryCount == 0) {
             finish()
         } else {
             val fragment = supportFragmentManager.findFragmentById(R.id.app_container)
-            val fragmentTransaction = fragment?.fragmentManager?.beginTransaction()
-            fragmentTransaction?.replace(R.id.app_container, fragment::class.java.newInstance())?.commit()
+            val fragmentTransaction = fragment!!.requireFragmentManager().beginTransaction()
+            fragmentTransaction.replace(R.id.app_container, fragment::class.java.newInstance()).commit()
         }
     }
 }

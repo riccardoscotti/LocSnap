@@ -7,6 +7,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.locsnap.fragments.ChooseFragment
+import com.example.locsnap.utils.FragmentUtils
 import org.json.JSONObject
 import java.security.MessageDigest
 
@@ -42,7 +43,7 @@ class UserAuthenticate {
                     bundle.putString("loggedUsername", username)
                     val chooseFragment = ChooseFragment()
                     chooseFragment.arguments = bundle
-                    FragmentUtils.TransactFragment(fragment, chooseFragment)
+                    FragmentUtils.transactFragment(fragment, chooseFragment)
 
                 } else if (response.getString("status").equals("401")) {
                     Toast.makeText(fragment.requireActivity(), "Login error.", Toast.LENGTH_SHORT).show()
@@ -55,7 +56,7 @@ class UserAuthenticate {
             queue.add(loginRequest)
         }
 
-        fun registerUser(name: String, surname: String, username: String, password: String, fragment: Fragment) {
+        fun userRegister(name: String, surname: String, username: String, password: String, fragment: Fragment) {
             val jsonObject = JSONObject()
 
             jsonObject.put("name", name)
@@ -73,7 +74,7 @@ class UserAuthenticate {
                         bundle.putString("loggedUsername", username)
                         val chooseFragment = ChooseFragment()
                         chooseFragment.arguments = bundle
-                        FragmentUtils.TransactFragment(fragment, chooseFragment)
+                        FragmentUtils.transactFragment(fragment, chooseFragment)
 
                     } else if (response.getString("status").equals("401")) {
                         Toast.makeText(fragment.requireActivity(), "Login error.", Toast.LENGTH_SHORT).show()

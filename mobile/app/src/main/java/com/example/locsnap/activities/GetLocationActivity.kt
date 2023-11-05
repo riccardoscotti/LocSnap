@@ -1,4 +1,4 @@
-package com.example.locsnap
+package com.example.locsnap.activities
 
 import android.Manifest
 import android.content.Intent
@@ -9,6 +9,7 @@ import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.example.locsnap.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -16,7 +17,7 @@ import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnTokenCanceledListener
 
-class getLocationActivity : AppCompatActivity() {
+class GetLocationActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -60,12 +61,12 @@ class getLocationActivity : AppCompatActivity() {
         super.onBackPressed()
 
         // If it's the last fragment and user goes back, then finish
-        if(supportFragmentManager.backStackEntryCount.equals(0)) {
+        if(supportFragmentManager.backStackEntryCount == 0) {
             finish()
         } else {
             val fragment = supportFragmentManager.findFragmentById(R.id.app_container)
-            val fragmentTransaction = fragment?.fragmentManager?.beginTransaction()
-            fragmentTransaction?.replace(R.id.app_container, fragment::class.java.newInstance())?.commit()
+            val fragmentTransaction = fragment!!.requireFragmentManager().beginTransaction()
+            fragmentTransaction.replace(R.id.app_container, fragment::class.java.newInstance()).commit()
         }
     }
 }

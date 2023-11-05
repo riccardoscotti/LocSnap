@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.IBinder
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -16,7 +15,7 @@ import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnTokenCanceledListener
 
-class getLocationService : Service() {
+class GetLocationService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
