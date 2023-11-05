@@ -5,8 +5,36 @@ const cors = require('cors');
 const { escapeIdentifier } = require('pg/lib/utils');
 const { rows } = require('pg/lib/defaults');
 const e = require('express');
+const np = require('numjs')
 const app = express();
 const port = 8080;
+
+
+async function sendQuery(query) {
+    let statusCode = 401;
+    let queryRes;
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+    await client.connect();
+
+    try {
+        queryRes = await client.query(query);
+    } catch(error) {
+        console.log(error)
+        statusCode = 401;
+    }
+
+    await client.end();
+
+    return {
+        status: statusCode,
+        queryRes: queryRes
+    };
+}
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost:3000");
@@ -368,6 +396,17 @@ app.post('/updateimage', async (req, res) => {
 })
 
 app.post('/clusterize', async (req, res) => {
+    const client = new Client({
+        user: 'postgres',
+        host: '0.0.0.0',
+        database: 'contextawarerc',
+        port: 5432,
+    });
+    await client.connect();
+
+    if(req.body.elbow) {
+        // ripetizione del clustering
+    }
 
     var statusCode;
     var clusters = {}
@@ -377,13 +416,7 @@ app.post('/clusterize', async (req, res) => {
         clusters[i].coords = []
     }
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-    await client.connect();
+   
 
     // Retrieving image name from images
     let query = `

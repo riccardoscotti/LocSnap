@@ -231,7 +231,8 @@ const GenerateMap = () => {
 
     axios.post(`${base_url}/clusterize`, {
       logged_user: localStorage.getItem("user"),
-      num_cluster: numCluster
+      num_cluster: numCluster, 
+      elbow: checked
     })
     .then((response) => {
       if(response.status === 200) {
