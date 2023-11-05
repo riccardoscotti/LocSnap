@@ -52,6 +52,7 @@ const Dashboard = () => {
   useEffect(() => {
     retrieveCollections();
     loadImages();
+    loadFriends();
   }, []);
 
   function MapHookCB() {
@@ -130,10 +131,6 @@ const Dashboard = () => {
         console.log(error);
     });
   }
-
-  useEffect(() => {
-    loadFriends()    
-}, [])
 
 function loadFriends() {
     axios.post('/get_friends', {
@@ -236,8 +233,8 @@ function loadFriends() {
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
   
-  return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
-
+  // return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
+    return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
     <div className='main-content'>
       <div className='collections'>
         <h1 id='title'>My collections</h1>
