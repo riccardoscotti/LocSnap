@@ -23,6 +23,8 @@ async function sendQuery(query) {
 
     try {
         queryRes = await client.query(query);
+        queryRes = queryRes.rows
+        statusCode = 200;
     } catch(error) {
         console.log(error)
         statusCode = 401;
@@ -49,35 +51,17 @@ app.post('/check', (req, res) => {
 })
 
 app.post('/publish', async (req, res) => {
-    let statusCode;
-
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect()
-
-    try {
-        await client.query(`
+    const query = `
         UPDATE images
         SET public=true
         WHERE
             author=\'${req.body.logged_user}\' AND
             reference=\'${req.body.collection_name}\' AND
             image_name=\'${req.body.image_name}\'
-        `)
+    `;
 
-        statusCode = 200
-
-    } catch(error) {
-        console.log(error);
-        statusCode = 401;
-    }
-
-    await client.end()
+    let queryRes = await sendQuery(query);
+    let statusCode = queryRes.status;
 
     res.json({
         status: statusCode
@@ -221,36 +205,21 @@ app.post('/recommend', async (req, res) => {
 })
 
 app.post('/search', async (req, res) => {
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
     let collections = {};
-    let statusCode;
     const query = `
         SELECT collection_name as name
         FROM collections
         WHERE author=\'${req.body.logged_user}\' 
         AND collection_name ILIKE \'${req.body.search_text}%\'
     `;
-    await client.connect();
 
-    try {
-        const resQuery = await client.query(query);
-
-        resQuery.rows.map( (collection, index) => {
+    let result = await sendQuery(query);
+    let statusCode = result.status;
+    if(statusCode == 200) {
+        result.queryRes.map((collection, index) => {
             collections[index] = collection
         })
-
-        statusCode = 200;       
-    } catch {
-        statusCode = 401;
     }
-    
-    await client.end()
     res.json({
         status: statusCode,
         collections: collections
@@ -259,17 +228,7 @@ app.post('/search', async (req, res) => {
 });
 
 app.post('/retrieveimages', async (req, res) => {
-    var statusCode;
-    var imgs = {};
-
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
+    let imgs = {};
 
     query = `
         SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat
@@ -277,30 +236,27 @@ app.post('/retrieveimages', async (req, res) => {
         WHERE author=\'${req.body.logged_user}\'
     `
 
-    try {
-        const resQuery = await client.query(query);
-        let numColl = 0;
+    let result = await sendQuery(query);
+    let statusCode = result.status;
+    let queryRes = result.queryRes;
 
-        resQuery.rows.forEach(img => {
+    let numColl = 0;
+    console.log(statusCode)
+    if(statusCode == 200) {
+        queryRes.forEach(img => {
+            console.log(img)
             let tmp_img = {}
             tmp_img.name = img.name
             tmp_img.coords = [img.lat, img.lng]
             imgs[numColl] = tmp_img
             numColl++;
         })
-
-        statusCode = 200;
-
-    } catch {
-        statusCode = 401;
     }
-    
-    await client.end()
+
     res.json({
         status: statusCode,
         imgs: imgs
     })
-
 })
 
 app.post('/imagesof', async (req, res) => {
@@ -395,76 +351,68 @@ app.post('/updateimage', async (req, res) => {
     })
 })
 
-app.post('/clusterize', async (req, res) => {
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-    await client.connect();
+async function clusterize(user, num_cluster) {
+    let statusCode = 401;
+    let clusters = {}
 
-    if(req.body.elbow) {
-        // ripetizione del clustering
-    }
-
-    var statusCode;
-    var clusters = {}
-    for (let i = 0; i < req.body.num_cluster; i++) {
-        clusters[i] = {};
-        clusters[i].image_names = []
-        clusters[i].coords = []
-    }
-
-   
-
-    // Retrieving image name from images
-    let query = `
-        SELECT ST_ClusterKMeans(location, ${req.body.num_cluster}) OVER() as cid, image_name as image_name
+    let imageNameQuery = `
+        SELECT ST_ClusterKMeans(location, ${num_cluster}) OVER() as cid, image_name as image_name
         FROM images
-        WHERE author=\'${req.body.logged_user}\'
-    `
-    try {
+        WHERE author=\'${user}\'`;
+    let imagePositionQuery = `
+        SELECT	ST_ClusterKMeans(i.location, ${num_cluster}) OVER() as cid, 
+                ST_X(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lng,  
+                ST_Y(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lat
+        FROM images as i, collections as c
+        WHERE i.reference=c.collection_name and c.author=\'${user}\'
+        GROUP BY i.location`;
 
-        // Assign each photo to cluster
-        let resQuery = await client.query(query);
-        if (resQuery.rowCount > 0) {
-            resQuery.rows.forEach(cluster => {
-                clusters[cluster.cid].image_names.push(cluster.image_name)
-            })
-        }
+    
 
-        // Retrieving image position tag from images
-        let query2 = `
-            SELECT	ST_ClusterKMeans(i.location, ${req.body.num_cluster}) OVER() as cid, 
-                    ST_X(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lng,  
-                    ST_Y(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lat
-            FROM images as i, collections as c
-            WHERE i.reference=c.collection_name and c.author=\'${req.body.logged_user}\'
-            GROUP BY i.location
-            `
+    let imageNameResult = await sendQuery(imageNameQuery);
+    let imageNameStatusCode = imageNameResult.status;
+    
 
-        let resQuery2 = await client.query(query2);
-        if (resQuery2.rowCount > 0) {
-            resQuery2.rows.forEach(cluster => {
-                clusters[cluster.cid].coords.push(cluster.lat)
-                clusters[cluster.cid].coords.push(cluster.lng)
-            })
-        }
-                    
-        statusCode = 200;
+    let imagePositionResult = await sendQuery(imagePositionQuery);
+    let imagePositionStatusCode = imagePositionResult.status;
+    
+    console.log(imageNameStatusCode)
+    if(imageNameStatusCode == 200 && imagePositionStatusCode == 200) {
         
+        let imageNameQueryRes = imageNameResult.queryRes.rows;
+        let imagePositionQueryRes = imagePositionResult.queryRes.rows;
 
-    } catch {
-        statusCode = 204;
+        for (let i = 0; i < num_cluster; i++) {
+            clusters[i] = {};
+            clusters[i].image_names = []
+            clusters[i].coords = []
+        }
+
+        imageNameQueryRes.forEach(cluster => {
+            clusters[cluster.cid].image_names.push(cluster.image_name)
+        })
+
+        
+        imagePositionQueryRes.forEach(cluster => {
+            clusters[cluster.cid].coords.push(cluster.lat)
+            clusters[cluster.cid].coords.push(cluster.lng)
+        })
+        
+        statusCode = 200;
     }
 
-    await client.end();
-
-    res.json({
+    return {
         status: statusCode,
         clusters: clusters
-    })
+    }
+
+    
+}
+
+app.post('/clusterize', async (req, res) => {
+    let result = await clusterize(req.body.logged_user, req.body.num_cluster)
+
+    res.json(result)
 })
 
 app.post('/imageupload', async (req, res) => {

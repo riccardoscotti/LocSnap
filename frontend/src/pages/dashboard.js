@@ -243,7 +243,7 @@ function loadFriends() {
             console.log("Searching with: ", searchRef.current.value);
             axios.post('/search', {
               "logged_user": localStorage.getItem("user"),
-              "search_text": searchRef.current.value
+              "search_text": searchRef.current.value.trim()
             }).then(response => {
               if(response.data.status === 200) {
                 localStorage.setItem("collections", JSON.stringify(response.data.collections)) // Update new collections
