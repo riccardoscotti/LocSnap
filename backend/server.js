@@ -410,7 +410,7 @@ async function clusterize(user, num_cluster) {
 }
 
 async function elbowClusterize(user) {
-    let imageNumQuery = `SELECT COUNT(*) FROM images`;
+    let imageNumQuery = `SELECT COUNT(*) FROM images WHERE author=\'${user}\'`;
     let imageNumQueryRes = await sendQuery(imageNumQuery);
     console.log('Into elbow')
     if(imageNumQueryRes.status == 200) {
