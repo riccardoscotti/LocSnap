@@ -409,7 +409,7 @@ const Navbar = () => {
     }
 
     const logout = () => {
-        localStorage.removeItem("user")
+        localStorage.clear()
         navigate('/login')
     }
 

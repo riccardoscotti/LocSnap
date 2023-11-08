@@ -44,16 +44,58 @@ const Dashboard = () => {
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
   const [showPublic, setShowPublic] = useState(false)
+  let [loaded, setLoaded] = useState(false)
   const mapRef = createRef()
   var publicPhotoMarkers = L.layerGroup();
   let [openPhotosStatus, setOpenPhotosStatus] = useState(false)
 
-  // Collections initialization
+  function loadData() {
+    return axios.post('/retrieveimages', {
+      logged_user: localStorage.getItem("user")
+    })
+    .then((response) => {
+      if(response.data.status === 200) {
+        localStorage.setItem("imgs", JSON.stringify(response.data.imgs))
+        axios.post('/get_friends', {
+          logged_user: localStorage.getItem('user')
+        })
+        .then((response) => {
+            if(response.data.status === 200) {
+              localStorage.setItem("friends", JSON.stringify(response.data.friends))
+              axios.post("/retrievecollections", {
+                logged_user: localStorage.getItem("user")
+              },
+              header_config  
+              )
+              .then((response) => {
+                if(response.status === 200) {
+                  localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
+                  setLoaded(true)
+                }
+              })
+              .catch((error) => {
+                if(error.response.status === 401) {
+                  alert("Error during collection retrieval!")
+                }
+              });
+            }
+        })
+        .catch((error) => {
+            if(error.response.status === 401) {
+                alert("Error during friend addition.")
+            }
+        })
+      }
+      return response
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+  }
+
   useEffect(() => {
-    retrieveCollections();
-    loadImages();
-    loadFriends();
-  }, []);
+    loadData()
+  }, [])
 
   function MapHookCB() {
     const mapCB = useCallback(node => {
@@ -97,20 +139,6 @@ const Dashboard = () => {
         <p id="labelPCB"> Show public photos </p>
       </div>
     )
-  }
-
-  function loadImages() {
-    axios.post('/retrieveimages', {
-      logged_user: localStorage.getItem("user")
-    })
-    .then((response) => {
-      if(response.data.status === 200) {
-        localStorage.setItem("imgs", JSON.stringify(response.data.imgs))
-      }
-    })
-    .catch((error) => {
-        console.log(error);
-    });
   }
 
   function loadPublicPhotos() {
@@ -232,58 +260,75 @@ function loadFriends() {
     'https://www.offerte-vacanza.com/informazioni/wp-content/uploads/2021/09/lago-di-braies-800x445.jpg', 
     'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
   ];
+
+  function renderPage() {
+    
+    if (loaded) {
+      return (
+        <div className='main-content'>
+          <div className='collections'>
+            <h1 id='title'>My collections</h1>
+            <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
+              if (e.key === 'Enter') {
+                console.log("Searching with: ", searchRef.current.value);
+                axios.post('/search', {
+                  "logged_user": localStorage.getItem("user"),
+                  "search_text": searchRef.current.value.trim()
+                }).then(response => {
+                  if(response.data.status === 200) {
+                    localStorage.setItem("collections", JSON.stringify(response.data.collections)) // Update new collections
+                    window.location.reload()
+                  }
+                })
+              }
+              
+              setCollectionList(prev => [e.target.value])
+            }}/>
+            {
+              Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+                return (
+                  <div key={collection} onClick={(e) => {
+                    if (e.target.firstChild !== null && e.target.firstChild.data !== "undefined") {
+                      localStorage.setItem("clickedColl", e.target.firstChild.data)
+                      openPhotosFunc()
+                    }
+                    } }>
+                    <CollectionCard className='collection' key={collection}
+                    title={collection[1].name} place={collection[1].place} prevs={
+                      collectionsImages
+                    } />
+                  </div>
+                )
+              })
+            }
+  
+            <OpenPhotos
+              show={ openPhotosStatus }
+              onHide={hideOpenPhotos}
+            />
+            
+          </div> 
+            <DrawMap />
+            <CheckBoxPublic />
+            <OpenPhotos />
+        </div>
+      )
+    } else{
+      return (
+        <div>
+          <p id="loading">
+            Loading...
+          </p>
+        </div>
+      )
+      
+    }
+    
+  }
   
   // return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
-    return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
-    <div className='main-content'>
-      <div className='collections'>
-        <h1 id='title'>My collections</h1>
-        <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
-          if (e.key === 'Enter') {
-            console.log("Searching with: ", searchRef.current.value);
-            axios.post('/search', {
-              "logged_user": localStorage.getItem("user"),
-              "search_text": searchRef.current.value.trim()
-            }).then(response => {
-              if(response.data.status === 200) {
-                localStorage.setItem("collections", JSON.stringify(response.data.collections)) // Update new collections
-                window.location.reload()
-              }
-            })
-          }
-          
-          setCollectionList(prev => [e.target.value])
-        }}/>
-        {
-          Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
-            return (
-              <div onClick={(e) => {
-                if (e.target.firstChild !== null && e.target.firstChild.data !== "undefined") {
-                  localStorage.setItem("clickedColl", e.target.firstChild.data)
-                  openPhotosFunc()
-                }
-                } }>
-                <CollectionCard className='collection' key={collection}
-                title={collection[1].name} place={collection[1].place} prevs={
-                  collectionsImages
-                } />
-              </div>
-            )
-          })
-        }
-
-        <OpenPhotos
-          show={ openPhotosStatus }
-          onHide={hideOpenPhotos}
-        />
-        
-      </div> 
-        <DrawMap />
-        <CheckBoxPublic />
-        <OpenPhotos />
-    </div>
-
-
+    return (
+      renderPage()
   );
 }
 export default Dashboard;

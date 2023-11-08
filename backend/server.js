@@ -9,7 +9,6 @@ const np = require('numjs')
 const app = express();
 const port = 8080;
 
-
 async function sendQuery(query) {
     let statusCode = 401;
     let queryRes;
@@ -31,7 +30,7 @@ async function sendQuery(query) {
     }
 
     await client.end();
-    console.log(queryRes)
+    // console.log(queryRes)
 
     return {
         status: statusCode,
@@ -356,46 +355,55 @@ async function clusterize(user, num_cluster) {
     let statusCode = 401;
     let clusters = {}
 
-    let imageNameQuery = `
-        SELECT ST_ClusterKMeans(location, ${num_cluster}) OVER() as cid, image_name as image_name
+    let clusterDivisionQuery = `
+        SELECT ST_ClusterKMeans(location, \'${num_cluster}\') OVER() as cid, 
+                ST_X(location) as lng, ST_Y(location) as lat, image_name as image_name
         FROM images
-        WHERE author=\'${user}\'`;
-    let imagePositionQuery = `
-        SELECT	ST_ClusterKMeans(i.location, ${num_cluster}) OVER() as cid, 
-                ST_X(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lng,  
-                ST_Y(ST_Centroid(ST_Collect(ST_SetSRID(i.location, 4326)))) AS lat
-        FROM images as i, collections as c
-        WHERE i.reference=c.collection_name and c.author=\'${user}\'
-        GROUP BY i.location`;
-
-    
-
-    let imageNameResult = await sendQuery(imageNameQuery);
-    let imageNameStatusCode = imageNameResult.status;
-    
-
-    let imagePositionResult = await sendQuery(imagePositionQuery);
-    let imagePositionStatusCode = imagePositionResult.status;
-    
-    if(imageNameStatusCode == 200 && imagePositionStatusCode == 200) {
+        WHERE author=\'${user}\';`;
         
-        let imageNameQueryRes = imageNameResult.queryRes;
-        let imagePositionQueryRes = imagePositionResult.queryRes;
+    let locateCentroidQuery = `
+        SELECT
+            ST_X(st_centroid(st_union(i.location))) as lng,
+            ST_Y(st_centroid(st_union(i.location))) as lat,
+            i.cid
+        FROM (
+            SELECT 
+                ST_ClusterKMeans(location, \'${num_cluster}\') OVER() as cid, 
+                location as location
+            FROM images
+            WHERE author=\'${user}\'
+        ) as i
+        GROUP BY i.cid`;
+
+    let clusterDivisionRes = await sendQuery(clusterDivisionQuery);
+    // let imageNameStatusCode = imageNameResult.status;
+    
+    let locateCentroidRes = await sendQuery(locateCentroidQuery);
+    // let imagePositionStatusCode = imagePositionResult.status;
+    
+    if(clusterDivisionRes.status == 200 && locateCentroidRes.status == 200) {
+        
+        let cdResult = clusterDivisionRes.queryRes;
+        let lcResult = locateCentroidRes.queryRes;
         
         for (let i = 0; i < num_cluster; i++) {
             clusters[i] = {};
-            clusters[i].image_names = []
-            clusters[i].coords = []
+            clusters[i].images = []
+            clusters[i].centroid = []
+            // clusters[i].location = []
+            // clusters[i].image_names = []
+            // clusters[i].coords = []
         }
 
-        imageNameQueryRes.forEach(cluster => {
-            clusters[cluster.cid].image_names.push(cluster.image_name)
+        cdResult.forEach(image => {
+            let tmp_image = {}
+            tmp_image.image_name = image.image_name
+            tmp_image.coords = [image.lat, image.lng]
+            clusters[image.cid].images.push(tmp_image)
         })
-
         
-        imagePositionQueryRes.forEach(cluster => {
-            clusters[cluster.cid].coords.push(cluster.lat)
-            clusters[cluster.cid].coords.push(cluster.lng)
+        lcResult.forEach(cluster => {
+            clusters[cluster.cid].centroid = [cluster.lat, cluster.lng]
         })
         
         statusCode = 200;
@@ -405,36 +413,96 @@ async function clusterize(user, num_cluster) {
         status: statusCode,
         clusters: clusters
     }
-
-    
 }
 
+function secondDerivates(inertiaValues) {
+  const secondDerivatives = [];
+
+  for (let i = 2; i < inertiaValues.length; i++) {
+    const secondDerivative = inertiaValues[i] - 2 * inertiaValues[i - 1] + inertiaValues[i - 2];
+    secondDerivatives.push(secondDerivative);
+  }
+
+  return secondDerivatives;
+}
+
+function findOptimalK(secondDerivatives) {
+    for (let i = 0; i < secondDerivatives.length; i++) {
+      if (secondDerivatives[i] > 0) {
+        return i + 2;
+      }
+    }
+    return -1;
+  }
+
 async function elbowClusterize(user) {
-    let imageNumQuery = `SELECT COUNT(*) FROM images`;
+    let imageNumQuery = `SELECT COUNT(DISTINCT(location)) FROM images WHERE author=\'${user}\'`;
     let imageNumQueryRes = await sendQuery(imageNumQuery);
-    console.log('Into elbow')
     if(imageNumQueryRes.status == 200) {
         let maxNum = parseInt(imageNumQueryRes.queryRes[0].count);
-        console.log(imageNumQueryRes.queryRes)
+        // console.log(imageNumQueryRes.queryRes)
         if(maxNum == 1) {
             return clusterize(user, 1);
-        } 
+        }
+
+    /*
+    def automaticElbowMethod():
+    # Ottiene il numero massimo di cluster
+    max_k = selectNumberImages()
+    # Se ha solo un cluster disponibile, restituisce direttamente 1
+    if max_k == 1:
+        return selectFixatedKMeans(1)
+    # Inizializza una lista vuota per i valori di inerzia
+    inertia_values = []
+    
+    # Esegue K-Means per diversi valori di k e calcola l'inerzia
+    for k in range(1, max_k + 1):
+        clusters = selectFixatedKMeans(k)
+        # Calcola l'inerzia sommando le distanze quadrate delle immagini dai rispettivi centroidi
+        inertia = sum([cluster['size'] * cluster['longitudine']**2 + cluster['latitudine']**2 for cluster in clusters])
+        inertia_values.append(inertia)
+    
+    # Calcola la derivata seconda dell'inerzia
+    second_derivative = np.diff(np.diff(inertia_values))
+    
+    # Trova il punto di flessione (dove la derivata seconda cambia segno)
+    optimal_k = np.where(second_derivative > 0)[0][0] + 2
+    
+    return selectFixatedKMeans(optimal_k)
+
+     */
         
         if(maxNum > 1){
             let inertias = [];
-            for(let i = 1; i < maxNum + 1; i++) {
+            for(let i = 2; i < maxNum + 1; i++) {
+                let tmp_inertia = 0; // sum of squared distances between each point and centroid
                 let clusteringResult = await clusterize(user, i);
                 if(clusteringResult.status == 200) {
-                    let currentClusters = clusteringResult.clusters
-                    console.log(currentClusters)
+                    Object.entries(clusteringResult.clusters).map(cluster => {
+                        Object.entries(cluster['1'].images).map(image => {
+
+                            let image_distance = 
+                                Math.pow((image[1].coords[0] - cluster['1'].centroid[0]), 2) +
+                                Math.pow((image[1].coords[1] - cluster['1'].centroid[1]), 2);
+
+                            tmp_inertia += image_distance
+                        })
+                    })
                 }
+                inertias.push(tmp_inertia)
             }
+
+            // let second_derivative = np.diff(np.diff(inertias))
+            // let optimal_k = np.where(second_derivative > 0)[0][0] + 2
+
+            // return clusterize(user, optimal_k)
+
+            console.log(findOptimalK(secondDerivates(inertias)));
+            return clusterize(user, findOptimalK(secondDerivates(inertias)))
         }
     } else {
         
     }
-
-
 }
 
 app.post('/clusterize', async (req, res) => {
