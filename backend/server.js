@@ -31,6 +31,7 @@ async function sendQuery(query) {
     }
 
     await client.end();
+    console.log(queryRes)
 
     return {
         status: statusCode,
@@ -376,12 +377,11 @@ async function clusterize(user, num_cluster) {
     let imagePositionResult = await sendQuery(imagePositionQuery);
     let imagePositionStatusCode = imagePositionResult.status;
     
-    console.log(imageNameStatusCode)
     if(imageNameStatusCode == 200 && imagePositionStatusCode == 200) {
         
-        let imageNameQueryRes = imageNameResult.queryRes.rows;
-        let imagePositionQueryRes = imagePositionResult.queryRes.rows;
-
+        let imageNameQueryRes = imageNameResult.queryRes;
+        let imagePositionQueryRes = imagePositionResult.queryRes;
+        
         for (let i = 0; i < num_cluster; i++) {
             clusters[i] = {};
             clusters[i].image_names = []
@@ -409,8 +409,41 @@ async function clusterize(user, num_cluster) {
     
 }
 
+async function elbowClusterize(user) {
+    let imageNumQuery = `SELECT COUNT(*) FROM images`;
+    let imageNumQueryRes = await sendQuery(imageNumQuery);
+    console.log('Into elbow')
+    if(imageNumQueryRes.status == 200) {
+        let maxNum = parseInt(imageNumQueryRes.queryRes[0].count);
+        console.log(imageNumQueryRes.queryRes)
+        if(maxNum == 1) {
+            return clusterize(user, 1);
+        } 
+        
+        if(maxNum > 1){
+            let inertias = [];
+            for(let i = 1; i < maxNum + 1; i++) {
+                let clusteringResult = await clusterize(user, i);
+                if(clusteringResult.status == 200) {
+                    let currentClusters = clusteringResult.clusters
+                    console.log(currentClusters)
+                }
+            }
+        }
+    } else {
+        
+    }
+
+
+}
+
 app.post('/clusterize', async (req, res) => {
-    let result = await clusterize(req.body.logged_user, req.body.num_cluster)
+    let result;
+    if(req.body.elbow) {
+        result = await elbowClusterize(req.body.logged_user)
+    } else {
+        result = await clusterize(req.body.logged_user, req.body.num_cluster)
+    }
 
     res.json(result)
 })
