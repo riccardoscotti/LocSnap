@@ -415,7 +415,8 @@ async function clusterize(user, num_cluster) {
     }
 }
 
-function secondDerivates(inertiaValues) {
+function secondDerivatives(inertiaValues) {
+    console.log(inertiaValues);
   const secondDerivatives = [];
 
   for (let i = 2; i < inertiaValues.length; i++) {
@@ -427,51 +428,22 @@ function secondDerivates(inertiaValues) {
 }
 
 function findOptimalK(secondDerivatives) {
-    console.log(secondDerivatives);
     for (let i = 0; i < secondDerivatives.length-1; i++) {
       if (secondDerivatives[i] < secondDerivatives[i+1]) {
         return i+2; // For index starts from 0, but clusters are 2+
       }
     }
     return secondDerivatives.length;
-  }
+}
 
 async function elbowClusterize(user) {
     let imageNumQuery = `SELECT COUNT(DISTINCT(location)) FROM images WHERE author=\'${user}\'`;
     let imageNumQueryRes = await sendQuery(imageNumQuery);
     if(imageNumQueryRes.status == 200) {
         let maxNum = parseInt(imageNumQueryRes.queryRes[0].count);
-        // console.log(imageNumQueryRes.queryRes)
         if(maxNum == 1) {
             return clusterize(user, 1);
         }
-
-    /*
-    def automaticElbowMethod():
-    # Ottiene il numero massimo di cluster
-    max_k = selectNumberImages()
-    # Se ha solo un cluster disponibile, restituisce direttamente 1
-    if max_k == 1:
-        return selectFixatedKMeans(1)
-    # Inizializza una lista vuota per i valori di inerzia
-    inertia_values = []
-    
-    # Esegue K-Means per diversi valori di k e calcola l'inerzia
-    for k in range(1, max_k + 1):
-        clusters = selectFixatedKMeans(k)
-        # Calcola l'inerzia sommando le distanze quadrate delle immagini dai rispettivi centroidi
-        inertia = sum([cluster['size'] * cluster['longitudine']**2 + cluster['latitudine']**2 for cluster in clusters])
-        inertia_values.append(inertia)
-    
-    # Calcola la derivata seconda dell'inerzia
-    second_derivative = np.diff(np.diff(inertia_values))
-    
-    # Trova il punto di flessione (dove la derivata seconda cambia segno)
-    optimal_k = np.where(second_derivative > 0)[0][0] + 2
-    
-    return selectFixatedKMeans(optimal_k)
-
-     */
         
         if(maxNum > 1){
             let inertias = [];
@@ -493,16 +465,8 @@ async function elbowClusterize(user) {
                 inertias.push(tmp_inertia)
             }
 
-            // let second_derivative = np.diff(np.diff(inertias))
-            // let optimal_k = np.where(second_derivative > 0)[0][0] + 2
-
-            // return clusterize(user, optimal_k)
-
-            console.log(findOptimalK(secondDerivates(inertias)));
-            return clusterize(user, findOptimalK(secondDerivates(inertias)))
+            return clusterize(user, findOptimalK(secondDerivatives(inertias)))
         }
-    } else {
-        
     }
 }
 
@@ -515,6 +479,24 @@ app.post('/clusterize', async (req, res) => {
     }
 
     res.json(result)
+})
+
+app.post('/maxclusternum', async (req, res) => {
+    let imageNumQuery = `SELECT COUNT(DISTINCT(location)) FROM images WHERE author=\'${req.body.logged_user}\'`;
+    let imageNumQueryRes = await sendQuery(imageNumQuery);
+
+    let maxClusterNum;
+    let statusCode = 401;
+
+    if(imageNumQueryRes.status == 200) {
+        maxClusterNum = parseInt(imageNumQueryRes.queryRes[0].count);
+        statusCode = 200;
+    }
+
+    res.json({
+        status: statusCode,
+        maxClusterNum: maxClusterNum
+    })
 })
 
 app.post('/imageupload', async (req, res) => {

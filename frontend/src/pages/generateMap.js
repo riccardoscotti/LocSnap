@@ -22,6 +22,20 @@ import Checkbox from '@mui/material/Checkbox';
 
 const base_url = "http://localhost:8080"
 
+const clusterColors = [
+  'green',
+  'red',
+  'blue',
+  'purple',
+  'pink',
+  'white',
+  'black',
+  'brown',
+  'yellow',
+  'orange',
+  'gray',
+]
+
 const markerIcon = L.icon({
   iconSize: [25, 41],
   iconAnchor: [10, 41],
@@ -50,6 +64,7 @@ const GenerateMap = () => {
   const [received, setReceived] = useState(false);
   const uploadFilterRef = useRef(null);
   const [map, setMap] = useState(null);
+  const [maxCluster, setMaxCluster] = useState(0);
 
   var geoJsonLayer;
   var coloredGeoJsonlayer;
@@ -250,14 +265,32 @@ const GenerateMap = () => {
     clusterGroups = L.layerGroup()
     clusterGroups.addTo(map);
 
-    Object.entries(JSON.parse(localStorage.getItem("clusters"))).map( (cluster) => {
-      console.log(cluster);
+    Object.entries(JSON.parse(localStorage.getItem("clusters"))).map( (cluster, index) => {
+      let clusterPhotos = L.layerGroup()
       var marker = new L.marker([cluster[1].centroid[0], cluster[1].centroid[1]], {icon: clusterIcon}).addTo(clusterGroups);
-      marker.bindPopup(`Photos taken here: ${cluster[1].images.length}`)
+      let imageNames = []
+
+      cluster[1].images.map(imageData => {
+        imageNames.push(imageData.image_name);
+        let imageMarker = L.circleMarker([imageData.coords[0], imageData.coords[1]], {icon: markerIcon})
+          .setStyle({color: `${clusterColors[index % clusterColors.length]}`})
+          .addTo(clusterPhotos);
+      })
+
+      marker.bindPopup(
+        imageNames.join(" --- ")
+      )
+
+      clusterPhotos.addTo(map)
+
     })
 
     localStorage.removeItem("mapIntent")
   }
+
+  useEffect(() => {
+    retrieveMaxCluster()
+  })
 
   // useEffect(() => {
   //   if (received == true) {
@@ -297,6 +330,18 @@ const GenerateMap = () => {
     });
   }
 
+  async function retrieveMaxCluster() {
+    await axios.post('/maxclusternum', {
+      logged_user: localStorage.getItem('user')
+    })
+    .then(response => {
+      if (response.data.status === 200) {
+        setMaxCluster(response.data.maxClusterNum);
+    }
+  })
+
+  }
+
   const bolognaCoords = [44.494887, 11.3426163]
 
   function ClusteringModal(props) {
@@ -316,10 +361,10 @@ const GenerateMap = () => {
           <Slider 
           onChange={(e, val) => localStorage.setItem("numCluster", val)}
           onChangeCommitted={(e, val) => localStorage.setItem("numCluster", val)}
-          defaultValue={10}
+          defaultValue={maxCluster / 2}
           valueLabelDisplay="auto"
           min={2}
-          max={20}
+          max={maxCluster}
           disabled={checked} />
         </Modal.Body>
         <Modal.Footer>

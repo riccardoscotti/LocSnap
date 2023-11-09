@@ -13,6 +13,17 @@
     align-items: start;
 }
 
+#noplaces {
+    position: absolute;
+    margin-left: 22vw;
+    margin-top: 35vh;
+    font-family: Inter;
+    font-size: 4vw;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
 #favorite-type-text, .recommended-place {
     color: white;
     font-weight: bold;

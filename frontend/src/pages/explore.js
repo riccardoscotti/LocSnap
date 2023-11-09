@@ -19,35 +19,30 @@ const mIcon = new L.Icon({
 axios.defaults.baseURL = 'http://localhost:8080'
 
 const Explore = () => {
-  useEffect(() => {
-    getFavorites()
-  }, [])
 
   const mapRef = createRef()
   const bolognaCoords = [44.494887, 11.3426163]
   let [placeMap, setPlaceMap] = useState({})
   let [markerLoaded, setMarkerLoaded] = React.useState(false)
+  let [foundPlaces, setFoundPlaces] = React.useState(false)
   
-  const getFavorites = () => {
-      axios.post('/recommend', {
+  const getFavorites = async () => {
+      await axios.post('/recommend', {
           logged_user: localStorage.getItem("user")
       })
       .then(response => {
         if (response.data.status === 200) {
-          //console.log(response.data.recommendedPlaces);
           localStorage.setItem("user_favorite_type", response.data.user_favorite_type);
           localStorage.setItem("similar_users", response.data.similar_users);
           localStorage.setItem("recommended_places", JSON.stringify(response.data.recommendedPlaces))
-  
           Object.entries(response.data.recommendedPlaces).map(place => {
             geoCode(place[1])
           })
-          setMarkerLoaded(true)
-  
-        } else if (response.data.status === 204) {
-            console.log("No photos uploaded yet...");
+          setFoundPlaces(true)
         }
       })
+
+      setMarkerLoaded(true)
   }
 
   useEffect(() => {
@@ -85,6 +80,49 @@ const Explore = () => {
         </MapContainer>
       )
   }
+
+  function drawExplore() {
+
+    if (markerLoaded) {
+      if (foundPlaces) {
+        return (
+          <div className="main-content">
+                <div className='favorites'>
+                    <h1 className='title'>Explore</h1>
+                    <p>You seem to like <span id="favorite-type-text">{localStorage.getItem('user_favorite_type')}</span> pictures</p>      
+                    <h2>You may also like:</h2>
+                    {
+                      Object.entries(placeMap).map(entry => 
+                        (<p 
+                          key={entry[0]}
+                          className='recommended-place'
+                          onClick={(e) => {
+                            mapRef.current.flyTo(new L.LatLng(entry[1][0], entry[1][1]));
+                          }}
+                          >
+                            {entry[0]}
+                          </p>)
+                      )
+                    }
+                </div>
+                <DrawMap />
+            </div>
+        )
+      } else {
+        return (
+          <div>
+            <p id="noplaces">No similar users found...</p>
+          </div>
+        )
+      }
+    } else {
+      return (
+        <div>
+          <p id="loading">Loading...</p>
+        </div>
+      )
+    }
+  }
   
   function showMarkers() {
     let recommendedMarkers = L.layerGroup().addTo(mapRef.current);
@@ -97,30 +135,7 @@ const Explore = () => {
     }
   }
 
-    return localStorage.getItem('user_favorite_type') && markerLoaded && (
-        <div className="main-content">
-            <div className='favorites'>
-                <h1 className='title'>Explore</h1>
-                <p>You seem to like <span id="favorite-type-text">{localStorage.getItem('user_favorite_type')}</span> pictures</p>      
-                <h2>You may also like:</h2>
-                {
-                  Object.entries(placeMap).map(entry => 
-                    (<p 
-                      key={entry[0]}
-                      className='recommended-place'
-                      onClick={(e) => {
-                        mapRef.current.flyTo(new L.LatLng(entry[1][0], entry[1][1]));
-                      }}
-                      >
-                        {entry[0]}
-                      </p>)
-                  )
-                }
-            </div>
-            <DrawMap />
-        </div>
-
-    )
+    return drawExplore()
 }
 
 export default Explore;
