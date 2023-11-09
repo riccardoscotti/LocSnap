@@ -427,12 +427,13 @@ function secondDerivates(inertiaValues) {
 }
 
 function findOptimalK(secondDerivatives) {
-    for (let i = 0; i < secondDerivatives.length; i++) {
-      if (secondDerivatives[i] > 0) {
-        return i + 2;
+    console.log(secondDerivatives);
+    for (let i = 0; i < secondDerivatives.length-1; i++) {
+      if (secondDerivatives[i] < secondDerivatives[i+1]) {
+        return i+2; // For index starts from 0, but clusters are 2+
       }
     }
-    return -1;
+    return secondDerivatives.length;
   }
 
 async function elbowClusterize(user) {
