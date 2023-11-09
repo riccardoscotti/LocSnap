@@ -132,27 +132,18 @@ const GenerateMap = () => {
     // Update with new geojson
     coloredGeoJsonlayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
       onEachFeature: function (feature, layer) {
-        if (typeof CPMap.get(feature.properties.feature_name) == "undefined") {
+        let numPhotos = CPMap.get(feature.properties.feature_name)
+
+        if (typeof numPhotos == "undefined") {
           layer.setStyle({
-            fillColor: '#00FF00',
-            fillOpacity: '0.1'
+            fillColor: '#4B0082',
+            fillOpacity: '0.0'
           })
-        } else if (CPMap.get(feature.properties.feature_name) > 0) {
-          
+        } else {
           layer.setStyle({
-            fillColor: '#00FF00',
-            fillOpacity: '0.3'
-          })
-        } else if (CPMap.get(feature.properties.feature_name) >= 5) {
-          layer.setStyle({
-            fillColor: '#00FF00',
-            fillOpacity: '0.6'
-          })
-        } else if (CPMap.get(feature.properties.feature_name) >= 10) {
-          layer.setStyle({
-            fillColor: '#00FF00',
-            fillOpacity: '0.8'
-          })
+            fillColor: '#4B0082',
+            fillOpacity: numPhotos / Object.entries(JSON.parse(localStorage.getItem("imgs"))).length
+          }).bindPopup(`Photos taken here: ${numPhotos}`)
         }
       }
     })

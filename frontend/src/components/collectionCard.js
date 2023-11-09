@@ -8,7 +8,7 @@ const CollectionCard = ({title, place, prevs}) => {
                     {title} — 
                     <span className="collection-place">{place}</span>
             </h2>
-            <div className='collection-prevs'>
+            {/* <div className='collection-prevs'>
                 {
                     prevs ?
                     prevs.map(prev => {
@@ -16,7 +16,7 @@ const CollectionCard = ({title, place, prevs}) => {
                     }) :
                     <p className='collection-noprevs'>No images found</p>
                 }
-            </div>
+            </div> */}
         </div>
     )
 }
