@@ -18,17 +18,30 @@ function UploadPhoto() {
     var [place, setPlace] = useState(null)
 
     // TODO Allow user to select more files at once, to upload them as a collection.
-    function uploadOnDB() {
+    async function uploadOnDB() {
         var reader = new FileReader();
 
         var imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
         var placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
         var collectionNameInput = document.getElementById("file-metadata").querySelector("#collectionNameInput");
+        let queryType = '';
         
+        await axios.post(`${base_url}/checkcollectionexists`, {
+            logged_user: localStorage.getItem("user"),
+            collection_name: collectionNameInput.value
+        })
+        .then(response => {
+            // Collection already exists
+            if (response.data.status === 200) {
+                queryType = 'addtoexisting'
+            } else {
+                queryType = 'imageupload'
+            }
+        })
 
         reader.readAsDataURL(selectedFile);
         reader.onload = function () {
-            axios.post(`${base_url}/imageupload`, {
+            axios.post(`${base_url}/${queryType}`, {
                 image_name: imageNameInput.value,
                 collection_name: collectionNameInput.value,
                 image: [reader.result.split(',')[1]],

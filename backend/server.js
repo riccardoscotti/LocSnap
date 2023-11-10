@@ -49,6 +49,31 @@ app.post('/check', (req, res) => {
     res.json({status: 200})
 })
 
+app.post('/checkcollectionexists', async (req, res) => {
+    let statusCode;
+    
+    let query = `
+        SELECT count(*) as count
+        FROM collections
+        WHERE
+            collection_name = \'${req.body.collection_name}\' AND
+            author = \'${req.body.logged_user}\'
+    `
+    
+    await sendQuery(query)
+    .then(response => {
+        if (response.status === 200 && response.queryRes[0].count > 0) {
+            statusCode = 200; // Collection exists
+        } else {
+            statusCode = 204; // Collection not exists
+        }
+    })
+
+    res.json({
+        status: statusCode
+    })
+})
+
 app.post('/publish', async (req, res) => {
     const query = `
         UPDATE images
@@ -592,8 +617,8 @@ app.post('/addtoexisting', async (req, res) => {
             UPDATE collections
             SET length = length + 1
             WHERE 
-                collection_name = \'${req.body.coll_name}\' AND 
-                author = \'${req.body.author}\'
+                collection_name = \'${coll_name}\' AND 
+                author = \'${author}\'
         `)
 
         statusCode = 200;
@@ -677,20 +702,26 @@ app.post('/deletephoto', async (req, res) => {
         await client.query(`
             SELECT length
             FROM collections
-            WHERE collection_name = \'${req.body.collection_name}\'
+            WHERE
+                collection_name = \'${req.body.collection_name}\' AND
+                author = \'${req.body.logged_user}\'
         `)
         .then(async response => {
             if (response.rows[0].length == 1) { // Last photo in the collection, so deletion needed.
                 await client.query(`
                     DELETE FROM collections
-                    WHERE collection_name = \'${req.body.collection_name}\' 
+                    WHERE
+                        collection_name = \'${req.body.collection_name}\' AND
+                        author = \'${req.body.logged_user}\' 
                 `)
             } else {
                 // Decreasing by 1 the collection's length
-                client.query(`
+                await client.query(`
                     UPDATE collections 
                     SET length = length-1
-                    WHERE collection_name = \'${req.body.collection_name}\'
+                    WHERE
+                        collection_name = \'${req.body.collection_name}\' AND
+                        author = \'${req.body.logged_user}\'
                 `)
             }
         })
