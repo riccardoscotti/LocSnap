@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { Client, Pool } = require('pg');
 const cors = require('cors');
 const { escapeIdentifier } = require('pg/lib/utils');
-const { rows } = require('pg/lib/defaults');
+const { rows, user } = require('pg/lib/defaults');
 const e = require('express');
 const np = require('numjs')
 const app = express();
@@ -30,7 +30,6 @@ async function sendQuery(query) {
     }
 
     await client.end();
-    // console.log(queryRes)
 
     return {
         status: statusCode,
@@ -71,7 +70,7 @@ app.post('/publish', async (req, res) => {
 // User favorite type of photos
 app.post('/recommend', async (req, res) => {
     let statusCode;
-    var recommendedPlaces;
+    var recommendedPlaces = [];
     
     let type_array = new Map();
 
@@ -92,19 +91,17 @@ app.post('/recommend', async (req, res) => {
 
         const resQuery1 = await client.query(retrieveAllUsernamesQuery);
         let user_array = [];
-        let user_types = [];
         
         resQuery1.rows.forEach(user => {
             user_array.push(user.username)
         })
 
         for (const user of user_array) {
+            let user_types = [];
             const resQuery2 = await client.query(`
             SELECT type as type
             FROM images
             WHERE author=\'${user}\'`)
-
-            
 
             resQuery2.rows.forEach(img => {
                 user_types.push(img.type)
@@ -125,8 +122,6 @@ app.post('/recommend', async (req, res) => {
                 type_array[user] = mostFrequent[0];
         }
 
-        console.log(type_array);
-
         let similar_users = [];
 
         Object.keys(type_array).map(k => {
@@ -136,8 +131,6 @@ app.post('/recommend', async (req, res) => {
                 similar_users.push(k) // is a similar user
             }
         })
-
-        console.log(similar_users);
 
         // Retrieve places visited by logged_user to avoid doubles
         let user_places = [];
@@ -151,24 +144,23 @@ app.post('/recommend', async (req, res) => {
         resQuery3.rows.forEach(place => {
             user_places.push(place.place)
         })
-
-        console.log(user_places);
         
         // Retrieve places visited by other similar users
         let other_users_places = [];
 
-        for (const user in similar_users) {
-            const resQuery4 = await client.query(`
+        for (const user of similar_users) {
+            await client.query(`
                 SELECT place as place
                 FROM images
-                WHERE author = \'${similar_users[0]}\'`)
-            
-            resQuery4.rows.forEach(place => {
-                other_users_places.push(place.place);
-            })
+                WHERE author = \'${user}\'`)
+                .then(response => {
+                    response.rows.forEach(place => {
+                        if (!other_users_places.includes(place)) {
+                            other_users_places.push(place.place);
+                        }
+                    })
+                })
         }
-
-        console.log(other_users_places);
 
         // Returns occurrences of places in the previous array
         let counts = other_users_places.reduce((a, c) => {
@@ -179,19 +171,31 @@ app.post('/recommend', async (req, res) => {
 
         const sortedArray = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
-        if (sortedArray.length >= 2) {
-            // First 2 places, to be changed when more photos available.
-            recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
+        // if (sortedArray.length >= 2) {
+        //     // First 2 places, to be changed when more photos available.
+        //     recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
+        //     statusCode = 200;
+        // } else if (sortedArray.length == 1) {
+        //     recommendedPlaces = [sortedArray[0][0]]
+        //     statusCode = 200
+        // } else {
+        //     statusCode = 409
+        // }
+
+        if (sortedArray.length > 0) {
+            for (index in sortedArray) {
+                recommendedPlaces.push(sortedArray[index][0])
+            }
             statusCode = 200;
-        } else if (sortedArray.length == 1) {
-            recommendedPlaces = [sortedArray[0][0]]
-            statusCode = 200
         } else {
-            statusCode = 409
+        
+            statusCode = 409;
         }
 
     } catch (err) {
         console.log(err);
+        recommendedPlaces = [];
+        type_array = '' // Defaults
         statusCode = 401;
     }
 
@@ -199,8 +203,7 @@ app.post('/recommend', async (req, res) => {
     res.json({
         status: statusCode,
         user_favorite_type: type_array[req.body.logged_user],
-        recommendedPlaces: recommendedPlaces,
-
+        recommendedPlaces: recommendedPlaces
     })
 })
 
@@ -241,10 +244,8 @@ app.post('/retrieveimages', async (req, res) => {
     let queryRes = result.queryRes;
 
     let numColl = 0;
-    console.log(statusCode)
     if(statusCode == 200) {
         queryRes.forEach(img => {
-            console.log(img)
             let tmp_img = {}
             tmp_img.name = img.name
             tmp_img.coords = [img.lat, img.lng]
@@ -317,12 +318,6 @@ app.post('/updateimage', async (req, res) => {
 
     try {
 
-        console.log(req.body.new_image_name);
-        console.log(req.body.public);
-        console.log(req.body.type);
-        console.log(req.body.collection_name);
-        console.log(req.body.logged_user);
-
         let queryRes = await client.query(`
             UPDATE images
             SET
@@ -334,8 +329,6 @@ app.post('/updateimage', async (req, res) => {
                 image_name = \'${req.body.old_image_name}\' AND
                 reference = \'${req.body.collection_name}\'
         `)
-
-        console.log(queryRes);
 
         statusCode = 200;
 
@@ -416,7 +409,6 @@ async function clusterize(user, num_cluster) {
 }
 
 function secondDerivatives(inertiaValues) {
-    console.log(inertiaValues);
   const secondDerivatives = [];
 
   for (let i = 2; i < inertiaValues.length; i++) {
@@ -672,7 +664,7 @@ app.post('/deletephoto', async (req, res) => {
     await client.connect();
 
     try {
-
+        // Delete single from as requested by user
         await client.query(`
             DELETE FROM images
             WHERE
@@ -680,6 +672,31 @@ app.post('/deletephoto', async (req, res) => {
                 image_name = \'${req.body.image_name}\' AND
                 reference = \'${req.body.collection_name}\'
             `)
+
+        // Check collection's length
+        await client.query(`
+            SELECT length
+            FROM collections
+            WHERE collection_name = \'${req.body.collection_name}\'
+        `)
+        .then(async response => {
+            if (response.rows[0].length == 1) { // Last photo in the collection, so deletion needed.
+                await client.query(`
+                    DELETE FROM collections
+                    WHERE collection_name = \'${req.body.collection_name}\' 
+                `)
+            } else {
+                // Decreasing by 1 the collection's length
+                client.query(`
+                    UPDATE collections 
+                    SET length = length-1
+                    WHERE collection_name = \'${req.body.collection_name}\'
+                `)
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        })
 
         statusCode = 200;
 
@@ -912,10 +929,8 @@ app.post('/add_friend', async (req, res) => {
                 await client.query(query1)
                 await client.query(query2)
                 statusCode = 200
-                console.log("Amicizia aggiunta")
             } catch (err) {
                 statusCode = 204;
-                console.log("Utente non trovato")
             }
         }
     } catch (err) {
@@ -1067,10 +1082,8 @@ app.post('/login', async (req, res) => {
     try {
         const resQuery = await client.query(query);
         if (resQuery.rowCount == 1) {
-            console.log("Login successful.");
             statusCode = 200;
         } else {
-            console.log("Login incorrect.");
             statusCode = 401;
         }
     } catch (err) {
