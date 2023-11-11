@@ -13,17 +13,17 @@ function UploadPhoto() {
 
     const inputRef = useRef(null);
     const bolognaCoords = [44.494887, 11.3426163]
-    var [fileMarker, setFileMarker] = useState({lat: 0.0, lon: 0.0})
-    var [selectedFile, setSelectedFile] = useState(null)
-    var [place, setPlace] = useState(null)
+    let [fileMarker, setFileMarker] = useState({lat: 0.0, lon: 0.0})
+    let [selectedFile, setSelectedFile] = useState(null)
+    let [place, setPlace] = useState(null)
 
     // TODO Allow user to select more files at once, to upload them as a collection.
     async function uploadOnDB() {
-        var reader = new FileReader();
+        let reader = new FileReader();
 
-        var imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
-        var placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
-        var collectionNameInput = document.getElementById("file-metadata").querySelector("#collectionNameInput");
+        let imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
+        let placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
+        let collectionNameInput = document.getElementById("file-metadata").querySelector("#collectionNameInput");
         let queryType = '';
         
         await axios.post(`${base_url}/checkcollectionexists`, {
@@ -79,9 +79,9 @@ function UploadPhoto() {
 
         setSelectedFile(fileObj)
 
-        var fileLat;
-        var fileLon;
-        var datetime;
+        let fileLat;
+        let fileLon;
+        let datetime;
         const RGC_API_KEY = '01114512c1ce49018d40d94d6aab3d68'
 
         EXIF.getData(fileObj, function(){
@@ -103,9 +103,9 @@ function UploadPhoto() {
 
         axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${fileMarker.lat}&lon=${fileMarker.lon}&apiKey=${RGC_API_KEY}`)
             .then(response => {
-                var imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
-                var placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
-                var datePhoto = document.getElementById("file-metadata").querySelector("#datePhoto");
+                let imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
+                let placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
+                let datePhoto = document.getElementById("file-metadata").querySelector("#datePhoto");
                 imageNameInput.value = `${fileObj.name}`
                 placeInput.value = `${response.data.features[0].properties.city}`
                 datePhoto.innerHTML = `${datetime}`

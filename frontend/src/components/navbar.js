@@ -111,8 +111,8 @@ const Navbar = () => {
         })
     }
 
-    function deletePhoto() {
-        axios.post('/deletephoto', {
+    async function deletePhoto() {
+        await axios.post('/deletephoto', {
             logged_user: localStorage.getItem('user'),
             image_name: localStorage.getItem('selectedPhoto'),
             collection_name: localStorage.getItem('selectedCollection')
@@ -120,12 +120,15 @@ const Navbar = () => {
         .then((response) => {
             if (response.data.status === 200) {
                 alert(`${localStorage.getItem("selectedPhoto")} of collection ${localStorage.getItem("selectedCollection")} deleted successfully.`)
+
             }
         })
         .catch(error => {
             console.log(error);
-            alert('Could not tag friend.')
+            alert('Error during image deletion.')
         })
+
+        window.location.reload();
     }
 
     function tagFriend() {

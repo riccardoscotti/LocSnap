@@ -4,7 +4,7 @@ metadata:
   name: locsnap-deployment
   labels:
     app: locsnap
-spec:  
+spec:
   replicas: 1
   selector:
     matchLabels:
@@ -79,7 +79,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app.kubernetes.io/name: database-pod
+    app.kubernetes.io/name: database-np
   ports:
     - port: 5432
       targetPort: 5432

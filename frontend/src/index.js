@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import './css/index.css';
 import Dashboard from './pages/dashboard';
@@ -23,6 +23,7 @@ export default function App() {
         </Routes>
         <Routes>
           <Route path='/' element={<Layout />} >
+            <Route path='/' element={<Navigate to='/dashboard' />} />
             <Route path='/dashboard' element={<Dashboard />} />
             <Route path='/upload' element={<UploadPhoto />} />
             <Route path='/generate' element={<GenerateMap />} />

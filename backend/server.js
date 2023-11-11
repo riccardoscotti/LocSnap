@@ -5,7 +5,6 @@ const cors = require('cors');
 const { escapeIdentifier } = require('pg/lib/utils');
 const { rows, user } = require('pg/lib/defaults');
 const e = require('express');
-const np = require('numjs')
 const app = express();
 const port = 8080;
 
@@ -24,7 +23,7 @@ async function sendQuery(query) {
         queryRes = await client.query(query);
         queryRes = queryRes.rows
         statusCode = 200;
-    } catch(error) {
+    } catch (error) {
         console.log(error)
         statusCode = 401;
     }
@@ -37,21 +36,21 @@ async function sendQuery(query) {
     };
 }
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost:3000");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
 
-app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.json({ limit: '50mb' }));
 
 app.post('/check', (req, res) => {
-    res.json({status: 200})
+    res.json({ status: 200 })
 })
 
 app.post('/checkcollectionexists', async (req, res) => {
     let statusCode;
-    
+
     let query = `
         SELECT count(*) as count
         FROM collections
@@ -59,15 +58,15 @@ app.post('/checkcollectionexists', async (req, res) => {
             collection_name = \'${req.body.collection_name}\' AND
             author = \'${req.body.logged_user}\'
     `
-    
+
     await sendQuery(query)
-    .then(response => {
-        if (response.status === 200 && response.queryRes[0].count > 0) {
-            statusCode = 200; // Collection exists
-        } else {
-            statusCode = 204; // Collection not exists
-        }
-    })
+        .then(response => {
+            if (response.status === 200 && response.queryRes[0].count > 0) {
+                statusCode = 200; // Collection exists
+            } else {
+                statusCode = 204; // Collection not exists
+            }
+        })
 
     res.json({
         status: statusCode
@@ -95,163 +94,165 @@ app.post('/publish', async (req, res) => {
 // User favorite type of photos
 app.post('/recommend', async (req, res) => {
     let statusCode;
-    var recommendedPlaces = [];
-    
-    let type_array = new Map();
+    let recommendedPlaces = [];
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-    
     let retrieveAllUsernamesQuery = `
         SELECT username as username
         FROM users
     `
 
-    await client.connect();
-    try {
+    const userResult = await sendQuery(retrieveAllUsernamesQuery);
+    const userStatus = userResult.status;
+    const userQueryRes = userResult.queryRes;
 
-        const resQuery1 = await client.query(retrieveAllUsernamesQuery);
-        let user_array = [];
+    if (userStatus == 200) {
+
+        let userArray = [];
+        let userTypes = new Map();
         
-        resQuery1.rows.forEach(user => {
-            user_array.push(user.username)
-        })
+        userQueryRes.forEach(user => {
+            userArray.push(user.username)
+        });
 
-        for (const user of user_array) {
-            let user_types = [];
-            const resQuery2 = await client.query(`
-            SELECT type as type
-            FROM images
-            WHERE author=\'${user}\'`)
+        // tipo preferito dell'utente loggato 
+        // per ogni altro utente 
+            // vedi il tipo preferito
+            // se è lo stesso, aggiungi a lista utenti simili
+        // ottieni foto degli utenti simili
+        // prendi foto a caso lista
 
-            resQuery2.rows.forEach(img => {
-                user_types.push(img.type)
-            })
 
-            // Calculate user favorite type of photos
-            // a is the array, c the item
-            let counts = user_types.reduce((a, c) => {
-                a[c] = (a[c] || 0) + 1;
-                return a;
-            }, {});
+        for (const user of userArray) {
 
-            let maxCount = Math.max(...Object.values(counts));
-            mostFrequent = Object.keys(counts).filter(k => counts[k] === maxCount);
+            console.log(user);
 
-            // Map with {username: favorite_type}
-            if (typeof mostFrequent[0] !== "undefined")
-                type_array[user] = mostFrequent[0];
-        }
+            const typeResult = await sendQuery(`
+                select max(type) as type
+                from images
+                where author = \'${user}\'
+                group by type
+                order by count(*) desc
+                limit 1
+            `)
 
-        let similar_users = [];
+            const typeStatus = typeResult.status;
+            const typeQueryRes = typeResult.queryRes;
 
-        Object.keys(type_array).map(k => {
-            if (k !== req.body.logged_user && // Not the logged_user constraint
-            type_array[req.body.logged_user] === type_array[k]) { // Similarity between users
-                
-                similar_users.push(k) // is a similar user
+            console.log(typeQueryRes);
+            
+            if(typeStatus == 200) {
+                userTypes[user] = typeQueryRes[0].type
             }
-        })
-
-        // Retrieve places visited by logged_user to avoid doubles
-        let user_places = [];
-
-        const resQuery3 = await client.query(`
-            SELECT place as place
-            FROM images
-            WHERE author = \'${req.body.logged_user}\'
-        `)
-
-        resQuery3.rows.forEach(place => {
-            user_places.push(place.place)
-        })
-        
-        // Retrieve places visited by other similar users
-        let other_users_places = [];
-
-        for (const user of similar_users) {
-            await client.query(`
-                SELECT place as place
-                FROM images
-                WHERE author = \'${user}\'`)
-                .then(response => {
-                    response.rows.forEach(place => {
-                        if (!other_users_places.includes(place)) {
-                            other_users_places.push(place.place);
-                        }
-                    })
-                })
         }
-
-        // Returns occurrences of places in the previous array
-        let counts = other_users_places.reduce((a, c) => {
-            if (user_places.indexOf(c) == -1) // Place not visited by logged_user, so recommended.
-                a[c] = (a[c] || 0) + 1;
-            return a;
-        }, {});
-
-        const sortedArray = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-        // if (sortedArray.length >= 2) {
-        //     // First 2 places, to be changed when more photos available.
-        //     recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
-        //     statusCode = 200;
-        // } else if (sortedArray.length == 1) {
-        //     recommendedPlaces = [sortedArray[0][0]]
-        //     statusCode = 200
-        // } else {
-        //     statusCode = 409
-        // }
-
-        if (sortedArray.length > 0) {
-            for (index in sortedArray) {
-                recommendedPlaces.push(sortedArray[index][0])
-            }
-            statusCode = 200;
-        } else {
-        
-            statusCode = 409;
-        }
-
-    } catch (err) {
-        console.log(err);
-        recommendedPlaces = [];
-        type_array = '' // Defaults
-        statusCode = 401;
     }
 
-    await client.end()
-    res.json({
-        status: statusCode,
-        user_favorite_type: type_array[req.body.logged_user],
-        recommendedPlaces: recommendedPlaces
-    })
-})
+    // let similar_users = [];
 
-app.post('/search', async (req, res) => {
-    let collections = {};
-    const query = `
-        SELECT collection_name as name
-        FROM collections
-        WHERE author=\'${req.body.logged_user}\' 
-        AND collection_name ILIKE \'${req.body.search_text}%\'
-    `;
+//     Object.keys(type_array).map(k => {
+//         if (k !== req.body.logged_user && // Not the logged_user constraint
+//             type_array[req.body.logged_user] === type_array[k]) { // Similarity between users
 
-    let result = await sendQuery(query);
-    let statusCode = result.status;
-    if(statusCode == 200) {
-        result.queryRes.map((collection, index) => {
-            collections[index] = collection
-        })
-    }
-    res.json({
-        status: statusCode,
-        collections: collections
-    })
+//             similar_users.push(k) // is a similar user
+//         }
+//     })
+
+//     // Retrieve places visited by logged_user to avoid doubles
+//     let user_places = [];
+
+//     const resQuery3 = await client.query(`
+//             SELECT place as place
+//             FROM images
+//             WHERE author = \'${req.body.logged_user}\'
+//         `)
+
+//     resQuery3.rows.forEach(place => {
+//         user_places.push(place.place)
+//     })
+
+//     // Retrieve places visited by other similar users
+//     let other_users_places = [];
+
+//     for (const user of similar_users) {
+//         await client.query(`
+//                 SELECT place as place
+//                 FROM images
+//                 WHERE author = \'${user}\' AND
+//                 type = \'${type_array[req.body.logged_user]}\'
+//                 `)
+//             .then(response => {
+//                 response.rows.forEach(place => {
+//                     if (!other_users_places.includes(place)) {
+//                         other_users_places.push(place.place);
+//                     }
+//                 })
+//             })
+//     }
+
+//     // Returns occurrences of places in the previous array
+//     let counts = other_users_places.reduce((a, c) => {
+//         if (user_places.indexOf(c) == -1) // Place not visited by logged_user, so recommended.
+//             a[c] = (a[c] || 0) + 1;
+//         return a;
+//     }, {});
+
+//     const sortedArray = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+//     // if (sortedArray.length >= 2) {
+//     //     // First 2 places, to be changed when more photos available.
+//     //     recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
+//     //     statusCode = 200;
+//     // } else if (sortedArray.length == 1) {
+//     //     recommendedPlaces = [sortedArray[0][0]]
+//     //     statusCode = 200
+//     // } else {
+//     //     statusCode = 409
+//     // }
+
+//     if (sortedArray.length > 0) {
+//         for (index in sortedArray) {
+//             recommendedPlaces.push(sortedArray[index][0])
+//         }
+//         statusCode = 200;
+//     } else {
+
+//         statusCode = 409;
+//     }
+
+// } catch (err) {
+//     console.log(err);
+//     recommendedPlaces = [];
+//     type_array = '' // Defaults
+//     statusCode = 401;
+// }
+
+// await client.end()
+// res.json({
+//     status: statusCode,
+//     user_favorite_type: type_array[req.body.logged_user],
+//     recommendedPlaces: recommendedPlaces
+// })
+// })
+
+// app.post('/search', async (req, res) => {
+//     let collections = {};
+//     const query = `
+//         SELECT collection_name as name
+//         FROM collections
+//         WHERE author=\'${req.body.logged_user}\' 
+//         AND collection_name ILIKE \'${req.body.search_text}%\'
+//     `;
+
+//     let result = await sendQuery(query);
+//     let statusCode = result.status;
+//     if (statusCode == 200) {
+//         result.queryRes.map((collection, index) => {
+//             collections[index] = collection
+//         })
+//     }
+//     res.json({
+//         status: statusCode,
+//         collections: collections
+//     })
 
 });
 
@@ -269,7 +270,7 @@ app.post('/retrieveimages', async (req, res) => {
     let queryRes = result.queryRes;
 
     let numColl = 0;
-    if(statusCode == 200) {
+    if (statusCode == 200) {
         queryRes.forEach(img => {
             let tmp_img = {}
             tmp_img.name = img.name
@@ -286,8 +287,8 @@ app.post('/retrieveimages', async (req, res) => {
 })
 
 app.post('/imagesof', async (req, res) => {
-    var statusCode;
-    var images = {};
+    let statusCode;
+    let images = {};
 
     const client = new Client({
         user: 'postgres',
@@ -331,7 +332,7 @@ app.post('/imagesof', async (req, res) => {
 })
 
 app.post('/updateimage', async (req, res) => {
-    var statusCode;
+    let statusCode;
 
     const client = new Client({
         user: 'postgres',
@@ -378,7 +379,7 @@ async function clusterize(user, num_cluster) {
                 ST_X(location) as lng, ST_Y(location) as lat, image_name as image_name
         FROM images
         WHERE author=\'${user}\';`;
-        
+
     let locateCentroidQuery = `
         SELECT
             ST_X(st_centroid(st_union(i.location))) as lng,
@@ -395,15 +396,15 @@ async function clusterize(user, num_cluster) {
 
     let clusterDivisionRes = await sendQuery(clusterDivisionQuery);
     // let imageNameStatusCode = imageNameResult.status;
-    
+
     let locateCentroidRes = await sendQuery(locateCentroidQuery);
     // let imagePositionStatusCode = imagePositionResult.status;
-    
-    if(clusterDivisionRes.status == 200 && locateCentroidRes.status == 200) {
-        
+
+    if (clusterDivisionRes.status == 200 && locateCentroidRes.status == 200) {
+
         let cdResult = clusterDivisionRes.queryRes;
         let lcResult = locateCentroidRes.queryRes;
-        
+
         for (let i = 0; i < num_cluster; i++) {
             clusters[i] = {};
             clusters[i].images = []
@@ -419,11 +420,11 @@ async function clusterize(user, num_cluster) {
             tmp_image.coords = [image.lat, image.lng]
             clusters[image.cid].images.push(tmp_image)
         })
-        
+
         lcResult.forEach(cluster => {
             clusters[cluster.cid].centroid = [cluster.lat, cluster.lng]
         })
-        
+
         statusCode = 200;
     }
 
@@ -434,21 +435,21 @@ async function clusterize(user, num_cluster) {
 }
 
 function secondDerivatives(inertiaValues) {
-  const secondDerivatives = [];
+    const secondDerivatives = [];
 
-  for (let i = 2; i < inertiaValues.length; i++) {
-    const secondDerivative = inertiaValues[i] - 2 * inertiaValues[i - 1] + inertiaValues[i - 2];
-    secondDerivatives.push(secondDerivative);
-  }
+    for (let i = 2; i < inertiaValues.length; i++) {
+        const secondDerivative = inertiaValues[i] - 2 * inertiaValues[i - 1] + inertiaValues[i - 2];
+        secondDerivatives.push(secondDerivative);
+    }
 
-  return secondDerivatives;
+    return secondDerivatives;
 }
 
 function findOptimalK(secondDerivatives) {
-    for (let i = 0; i < secondDerivatives.length-1; i++) {
-      if (secondDerivatives[i] < secondDerivatives[i+1]) {
-        return i+2; // For index starts from 0, but clusters are 2+
-      }
+    for (let i = 0; i < secondDerivatives.length - 1; i++) {
+        if (secondDerivatives[i] < secondDerivatives[i + 1]) {
+            return i + 2; // For index starts from 0, but clusters are 2+
+        }
     }
     return secondDerivatives.length;
 }
@@ -456,22 +457,22 @@ function findOptimalK(secondDerivatives) {
 async function elbowClusterize(user) {
     let imageNumQuery = `SELECT COUNT(DISTINCT(location)) FROM images WHERE author=\'${user}\'`;
     let imageNumQueryRes = await sendQuery(imageNumQuery);
-    if(imageNumQueryRes.status == 200) {
+    if (imageNumQueryRes.status == 200) {
         let maxNum = parseInt(imageNumQueryRes.queryRes[0].count);
-        if(maxNum == 1) {
+        if (maxNum == 1) {
             return clusterize(user, 1);
         }
-        
-        if(maxNum > 1){
+
+        if (maxNum > 1) {
             let inertias = [];
-            for(let i = 2; i < maxNum + 1; i++) {
+            for (let i = 2; i < maxNum + 1; i++) {
                 let tmp_inertia = 0; // sum of squared distances between each point and centroid
                 let clusteringResult = await clusterize(user, i);
-                if(clusteringResult.status == 200) {
+                if (clusteringResult.status == 200) {
                     Object.entries(clusteringResult.clusters).map(cluster => {
                         Object.entries(cluster['1'].images).map(image => {
 
-                            let image_distance = 
+                            let image_distance =
                                 Math.pow((image[1].coords[0] - cluster['1'].centroid[0]), 2) +
                                 Math.pow((image[1].coords[1] - cluster['1'].centroid[1]), 2);
 
@@ -489,7 +490,7 @@ async function elbowClusterize(user) {
 
 app.post('/clusterize', async (req, res) => {
     let result;
-    if(req.body.elbow) {
+    if (req.body.elbow) {
         result = await elbowClusterize(req.body.logged_user)
     } else {
         result = await clusterize(req.body.logged_user, req.body.num_cluster)
@@ -505,7 +506,7 @@ app.post('/maxclusternum', async (req, res) => {
     let maxClusterNum;
     let statusCode = 401;
 
-    if(imageNumQueryRes.status == 200) {
+    if (imageNumQueryRes.status == 200) {
         maxClusterNum = parseInt(imageNumQueryRes.queryRes[0].count);
         statusCode = 200;
     }
@@ -518,7 +519,7 @@ app.post('/maxclusternum', async (req, res) => {
 
 app.post('/imageupload', async (req, res) => {
 
-    var statusCode
+    let statusCode
     const coll_name = req.body.collection_name
     const image64 = req.body.image
     const author = req.body.username
@@ -531,8 +532,8 @@ app.post('/imageupload', async (req, res) => {
     const place = req.body.place
     const image_name = req.body.image_name
 
-    var tags = []
-    var postgisPoint = "POINT("+lon+" "+lat+")"
+    let tags = []
+    let postgisPoint = "POINT(" + lon + " " + lat + ")"
 
     tagged_people?.forEach(tag => {
         tags.push(tag)
@@ -560,7 +561,7 @@ app.post('/imageupload', async (req, res) => {
 
         await client.query(query2);
 
-        
+
         statusCode = 200;
 
     } catch (err) {
@@ -569,13 +570,13 @@ app.post('/imageupload', async (req, res) => {
     }
 
     await client.end();
-    
-    res.json({status: statusCode})
+
+    res.json({ status: statusCode })
 });
 
 app.post('/addtoexisting', async (req, res) => {
 
-    var statusCode
+    let statusCode
     const coll_name = req.body.collection_name
     const image64 = req.body.image
     const author = req.body.username
@@ -588,8 +589,8 @@ app.post('/addtoexisting', async (req, res) => {
     const place = req.body.place
     const image_name = req.body.image_name
 
-    var tags = []
-    var postgisPoint = "POINT("+lon+" "+lat+")"
+    let tags = []
+    let postgisPoint = "POINT(" + lon + " " + lat + ")"
 
     tagged_people.forEach(tag => {
         tags.push(tag)
@@ -627,16 +628,16 @@ app.post('/addtoexisting', async (req, res) => {
         statusCode = 401;
         console.log(err);
     }
-    await client.end();    
-    res.json({status: statusCode})
+    await client.end();
+    res.json({ status: statusCode })
 });
 
 app.post('/nearest', async (req, res) => {
-    var statusCode;
-    var imagesArray = [];
-    var num_photos = req.body.num_photos
-    var actualLat = req.body.actual_lat
-    var actualLon = req.body.actual_lon
+    let statusCode;
+    let imagesArray = [];
+    let num_photos = req.body.num_photos
+    let actualLat = req.body.actual_lat
+    let actualLon = req.body.actual_lon
 
     const client = new Client({
         user: 'postgres',
@@ -650,6 +651,7 @@ app.post('/nearest', async (req, res) => {
     query = `
         SELECT i.image as imageresult
         FROM images as i
+        WHERE i.public=false
         ORDER BY ST_Distance(\'POINT(${actualLon} ${actualLat})\'::geometry, i.location) 
         LIMIT ${num_photos}
         `
@@ -661,7 +663,7 @@ app.post('/nearest', async (req, res) => {
         });
 
         statusCode = 200
-        
+
     } catch (err) {
         statusCode = 401
         console.log(err);
@@ -706,38 +708,38 @@ app.post('/deletephoto', async (req, res) => {
                 collection_name = \'${req.body.collection_name}\' AND
                 author = \'${req.body.logged_user}\'
         `)
-        .then(async response => {
-            if (response.rows[0].length == 1) { // Last photo in the collection, so deletion needed.
-                await client.query(`
+            .then(async response => {
+                if (response.rows[0].length == 1) { // Last photo in the collection, so deletion needed.
+                    await client.query(`
                     DELETE FROM collections
                     WHERE
                         collection_name = \'${req.body.collection_name}\' AND
                         author = \'${req.body.logged_user}\' 
                 `)
-            } else {
-                // Decreasing by 1 the collection's length
-                await client.query(`
+                } else {
+                    // Decreasing by 1 the collection's length
+                    await client.query(`
                     UPDATE collections 
                     SET length = length-1
                     WHERE
                         collection_name = \'${req.body.collection_name}\' AND
                         author = \'${req.body.logged_user}\'
                 `)
-            }
-        })
-        .catch(error => {
-            console.log(error);
-        })
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            })
 
         statusCode = 200;
 
-    } catch(error) {
+    } catch (error) {
         console.log(error);
         statusCode = 401
     }
 
     await client.end();
-    
+
     res.json({
         status: statusCode
     })
@@ -745,7 +747,7 @@ app.post('/deletephoto', async (req, res) => {
 
 app.post('/deletecollection', async (req, res) => {
 
-    var statusCode;
+    let statusCode;
 
     const client = new Client({
         user: 'postgres',
@@ -778,13 +780,13 @@ app.post('/deletecollection', async (req, res) => {
 
         const resImgs = await client.query(query_imgs);
         const resColl = await client.query(query_coll);
-        
+
         if (resColl.rowCount > 0 && resImgs.rowCount > 0) {
             statusCode = 200;
         } else {
             statusCode = 304 // Document not modified
         }
-        
+
     } catch (err) {
         statusCode = 401;
         console.log(err);
@@ -799,7 +801,7 @@ app.post('/deletecollection', async (req, res) => {
 
 app.post('/tag_friend', async (req, res) => {
 
-    var statusCode;
+    let statusCode;
 
     const client = new Client({
         user: 'postgres',
@@ -830,8 +832,8 @@ app.post('/tag_friend', async (req, res) => {
         } else {
             statusCode = 304; // Document not modified
         }
-        
-        
+
+
     } catch (err) {
         statusCode = 401;
         console.log(err);
@@ -846,8 +848,8 @@ app.post('/tag_friend', async (req, res) => {
 
 app.post('/get_friends', async (req, res) => {
 
-    var statusCode;
-    var friends = [];
+    let statusCode;
+    let friends = [];
 
     const client = new Client({
         user: 'postgres',
@@ -871,17 +873,18 @@ app.post('/get_friends', async (req, res) => {
         statusCode = 401;
         console.log(err);
     }
-    
+
     await client.end()
     res.json({
         status: statusCode,
-        friends: friends});
-    
+        friends: friends
+    });
+
 })
 
 app.post('/retrieve_public', async (req, res) => {
-    var statusCode;
-    var public_photos = {}
+    let statusCode;
+    let public_photos = {}
 
     const client = new Client({
         user: 'postgres',
@@ -903,7 +906,7 @@ app.post('/retrieve_public', async (req, res) => {
     try {
         let index = 0;
         const resQuery = await client.query(query)
-        resQuery.rows.forEach( row => {
+        resQuery.rows.forEach(row => {
             let tmp_img = {};
             tmp_img.name = row.name
             tmp_img.coords = [row.lat, row.lng]
@@ -912,7 +915,7 @@ app.post('/retrieve_public', async (req, res) => {
             index++;
         })
         statusCode = 200
-    } catch(err) {
+    } catch (err) {
         statusCode = 401
         console.log(err);
     }
@@ -927,7 +930,7 @@ app.post('/retrieve_public', async (req, res) => {
 
 app.post('/add_friend', async (req, res) => {
 
-    var statusCode;
+    let statusCode;
 
     const client = new Client({
         user: 'postgres',
@@ -953,7 +956,7 @@ app.post('/add_friend', async (req, res) => {
             try {
                 let query1 = `INSERT INTO friendships (user_1, user_2)
                             VALUES (\'${req.body.loggedUser}\', \'${req.body.newFriend}\');`
-                
+
                 let query2 = `INSERT INTO friendships (user_1, user_2)
                             VALUES (\'${req.body.newFriend}\', \'${req.body.loggedUser}\');`
 
@@ -968,15 +971,15 @@ app.post('/add_friend', async (req, res) => {
         statusCode = 401;
         console.log(err);
     }
-    
+
     await client.end();
-    res.json({status: statusCode});
-    
+    res.json({ status: statusCode });
+
 })
 
 app.post('/remove_friend', async (req, res) => {
 
-    var statusCode;
+    let statusCode;
 
     const client = new Client({
         user: 'postgres',
@@ -1010,16 +1013,16 @@ app.post('/remove_friend', async (req, res) => {
         statusCode = 401;
         console.log(err);
     }
-    
+
     await client.end();
-    res.json({status: statusCode});
-    
+    res.json({ status: statusCode });
+
 })
 
 // Only used to display collection names on dashboard page
 app.post('/retrievecollections', async (req, res) => {
-    var statusCode;
-    var retrieved_collections = [];
+    let statusCode;
+    let retrieved_collections = [];
 
     const client = new Client({
         user: 'postgres',
@@ -1062,24 +1065,9 @@ app.post('/retrievecollections', async (req, res) => {
             retrieved_collections.push(tmp_coll)
         })
 
-        // Public photos
-        // const resQuery3 = await client.query(`
-        // SELECT reference as name, place as place
-        // FROM images
-        // WHERE
-        //     author <> \'${req.body.logged_user}\' AND
-        //     public = true`);
-
-        // resQuery3.rows.forEach(collection => {
-        //     let tmp_coll = {}
-        //     tmp_coll['name'] = collection.name
-        //     tmp_coll['place'] = collection.place
-        //     retrieved_collections.push(tmp_coll)
-        // })
-
         statusCode = 200;
     } catch (err) {
-        statusCode = 401; 
+        statusCode = 401;
     }
 
     await client.end();
@@ -1092,7 +1080,7 @@ app.post('/retrievecollections', async (req, res) => {
 
 app.post('/login', async (req, res) => {
 
-    var statusCode;
+    let statusCode;
 
     const client = new Client({
         user: 'postgres',
@@ -1122,7 +1110,7 @@ app.post('/login', async (req, res) => {
     }
     await client.end();
 
-    res.json({status: statusCode})
+    res.json({ status: statusCode })
 })
 
 app.post('/signup', async (req, res) => {
@@ -1143,7 +1131,7 @@ app.post('/signup', async (req, res) => {
     })
 
     await client.end()
-    res.json({status: 200})
+    res.json({ status: 200 })
 
 })
 

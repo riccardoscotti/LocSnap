@@ -66,12 +66,14 @@ const GenerateMap = () => {
   const [map, setMap] = useState(null);
   const [maxCluster, setMaxCluster] = useState(0);
 
-  var geoJsonLayer;
-  var coloredGeoJsonlayer;
-  var heatmap;
-  var markerGroup;
-  var clusterGroups;
-  var CPMap = new Map(); // Hashmap for photos taken on each country
+  let geoJsonLayer;
+  let coloredGeoJsonlayer;
+  let heatmapLayer;
+  let markerGroup;
+  let clusterGroups;
+  let clusterPhotos;
+  
+  let CPMap = new Map(); // Hashmap for photos taken on each country
 
   function uploadFilter (event) {
 
@@ -101,10 +103,12 @@ const GenerateMap = () => {
   function ColorMap() {
     const json = JSON.parse(localStorage.getItem("geojson"))
 
+    CPMap?.clear()
+
     Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
       for (let index = 0; index < json.features.length; index++) {
         if (d3.geoContains(json.features[index], [img[1].coords[1], img[1].coords[0]])) {
-          var countryName = json.features[index].properties.feature_name;
+          let countryName = json.features[index].properties.feature_name;
           if (CPMap.has(countryName))
             CPMap.set(countryName, CPMap.get(countryName) + 1);
           else 
@@ -113,19 +117,18 @@ const GenerateMap = () => {
       }
     })
 
+    // Remove old color map
+    coloredGeoJsonlayer?.removeFrom(map)
+
     // Remove heatmap
-    map.eachLayer(function(layer) {
-      if(typeof layer._heat !== "undefined") {
-          layer.removeFrom(map)
-      }
-    });
+    heatmapLayer?.removeFrom(map)
 
     // Remove old geojson
-    map.eachLayer(function(layer) {
-      if(typeof layer.feature !== "undefined") {
-          layer.removeFrom(map)
-      }
-    });
+    geoJsonLayer?.removeFrom(map)
+
+    // Remove clusters
+    clusterPhotos?.removeFrom(map)
+    clusterGroups?.removeFrom(map)
 
     markerGroup?.removeFrom(map) // Remove markers, if present.
 
@@ -157,7 +160,7 @@ const GenerateMap = () => {
     Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
       
       if (d3.geoContains(area, [img[1].coords[1], img[1].coords[0]])) {
-        var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: markerIcon}).addTo(markerGroup);
+        let marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: markerIcon}).addTo(markerGroup);
         marker.bindPopup(img[1].name)
       }
     })
@@ -172,6 +175,7 @@ const GenerateMap = () => {
   }
 
   function AddGeoJSON() {
+    geoJsonLayer?.removeFrom(map); // Remove eventual already added geojson
     geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
     geoJsonLayer.addTo(map);
   }
@@ -208,12 +212,6 @@ const GenerateMap = () => {
       })
   }
 
-  // useEffect(() => {
-  //   if (confirmed == true) {
-  //     Cluster();
-  //   }
-  // }, [confirmed])
-
   function ConfirmCluster() {
     setOpen(false);
     Cluster();
@@ -242,14 +240,12 @@ const GenerateMap = () => {
     })
     .then((response) => {
       if(response.data.status === 200) {
-        // console.log(response.data.clusters);
         const clusters = response.data.clusters;
 
         localStorage.setItem("clusters", JSON.stringify(clusters))
       }
     })
     .catch((error) => {
-      console.log("Error...");
         console.log(error);
     });
 
@@ -257,8 +253,8 @@ const GenerateMap = () => {
     clusterGroups.addTo(map);
 
     Object.entries(JSON.parse(localStorage.getItem("clusters"))).map( (cluster, index) => {
-      let clusterPhotos = L.layerGroup()
-      var marker = new L.marker([cluster[1].centroid[0], cluster[1].centroid[1]], {icon: clusterIcon}).addTo(clusterGroups);
+      clusterPhotos = L.layerGroup()
+      let marker = new L.marker([cluster[1].centroid[0], cluster[1].centroid[1]], {icon: clusterIcon}).addTo(clusterGroups);
       let imageNames = []
 
       cluster[1].images.map(imageData => {
@@ -283,27 +279,14 @@ const GenerateMap = () => {
     retrieveMaxCluster()
   })
 
-  // useEffect(() => {
-  //   if (received == true) {
-  //     alert("received")
-  //   }
-  // }, received)
-
   function Heatmap() {
-
-    // map.eachLayer(function(layer) {
-    //   if(typeof layer.feature != "undefined" ||
-    //      typeof layer._heat != "undefined") {
-    //       layer.removeFrom(map)
-    //   }
-    // });
 
     markerGroup?.removeFrom(map) // Remove all markers, if present.
     clusterGroups?.removeFrom(map)
     geoJsonLayer?.removeFrom(map)
     coloredGeoJsonlayer?.removeFrom(map)
 
-    heatmap = L.heatLayer([], {
+    heatmapLayer = L.heatLayer([], {
       radius: 25,
       minOpacity: .5,
       blur: 15,
@@ -314,10 +297,10 @@ const GenerateMap = () => {
       }
     })
 
-    heatmap.addTo(map);
+    heatmapLayer.addTo(map);
 
     Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
-      heatmap.addLatLng([img[1].coords[0], img[1].coords[1], 100])
+      heatmapLayer.addLatLng([img[1].coords[0], img[1].coords[1], 100])
     });
   }
 
@@ -352,7 +335,7 @@ const GenerateMap = () => {
           <Slider 
           onChange={(e, val) => localStorage.setItem("numCluster", val)}
           onChangeCommitted={(e, val) => localStorage.setItem("numCluster", val)}
-          defaultValue={maxCluster / 2}
+          defaultValue={Math.floor(maxCluster / 2)}
           valueLabelDisplay="auto"
           min={2}
           max={maxCluster}
@@ -421,7 +404,7 @@ const GenerateMap = () => {
               </Button>
           </div>
           
-          <MapContainer id="mapContainer2" ref={setMap} center={bolognaCoords} zoom={13} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
+          <MapContainer id="mapContainer2" ref={setMap} center={bolognaCoords} zoom={5} scrollWheelZoom={true} zoomControl={false} attributionControl={false}>
               <PhotoPerArea />
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           </MapContainer>

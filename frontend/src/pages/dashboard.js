@@ -44,9 +44,10 @@ const Dashboard = () => {
   let [collectionList, setCollectionList] = useState(["collezione1"])
   const searchRef = createRef()
   const [showPublic, setShowPublic] = useState(false)
+  const [toast, setToast] = useState(false)
   let [loaded, setLoaded] = useState(false)
   const mapRef = createRef()
-  var publicPhotoMarkers = L.layerGroup();
+  let publicPhotoMarkers = L.layerGroup();
   let [openPhotosStatus, setOpenPhotosStatus] = useState(false)
 
   function loadData() {
@@ -120,8 +121,8 @@ const Dashboard = () => {
 
   function CheckBoxPublic() {
     return (
-      <div class="form-check">
-        <input  class="form-check-input" 
+      <div className="form-check">
+        <input  className="form-check-input" 
                 type="checkbox" 
                 id="publicCheckBox" 
                 // checked={showPublic}
@@ -150,7 +151,7 @@ const Dashboard = () => {
         publicPhotoMarkers.addTo(mapRef.current);
 
         Object.entries(response.data.public_photos).map( (img) => {
-          var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: publicMarker}).addTo(publicPhotoMarkers);
+          let marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: publicMarker}).addTo(publicPhotoMarkers);
           marker.bindPopup(`${img[1].author}: ${img[1].name}`);
         })
       }
@@ -178,9 +179,9 @@ function loadFriends() {
 
   function showMarkers() {
     if (mapRef.current !== "undefined") {
-      var userPhotosMarkers = L.layerGroup().addTo(mapRef.current);
+      let userPhotosMarkers = L.layerGroup().addTo(mapRef.current);
       Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
-        var marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(userPhotosMarkers);
+        let marker = new L.marker([img[1].coords[0], img[1].coords[1]], {icon: mIcon}).addTo(userPhotosMarkers);
         marker.bindPopup(img[1].name);
       })
     }
@@ -255,11 +256,6 @@ function loadFriends() {
   }
   
   const bolognaCoords = [44.494887, 11.3426163]
-  const collectionsImages = [
-    'https://tourismmedia.italia.it/is/image/mitur/20210305163928-shutterstock-172796825?wid=1080&hei=660&fit=constrain,1&fmt=webp',
-    'https://www.offerte-vacanza.com/informazioni/wp-content/uploads/2021/09/lago-di-braies-800x445.jpg', 
-    'https://www.paesidelgusto.it/media/2021/12/madonna-di-campiglio.jpg&sharpen&save-as=webp&crop-to-fit&w=1200&h=800&q=76'
-  ];
 
   function renderPage() {
     
@@ -270,7 +266,8 @@ function loadFriends() {
             <h1 id='title'>My collections</h1>
             <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
               if (e.key === 'Enter') {
-                console.log("Searching with: ", searchRef.current.value);
+                setCollectionList(prev => [e.target.value])
+                
                 axios.post('/search', {
                   "logged_user": localStorage.getItem("user"),
                   "search_text": searchRef.current.value.trim()
@@ -281,8 +278,6 @@ function loadFriends() {
                   }
                 })
               }
-              
-              setCollectionList(prev => [e.target.value])
             }}/>
             {
               Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
@@ -293,10 +288,12 @@ function loadFriends() {
                       openPhotosFunc()
                     }
                     } }>
-                    <CollectionCard className='collection' key={collection}
-                    title={collection[1].name} place={collection[1].place} prevs={
-                      collectionsImages
-                    } />
+                    <CollectionCard 
+                      className='collection' 
+                      key={collection}
+                      title={collection[1].name} 
+                      place={collection[1].place}
+                    />
                   </div>
                 )
               })
@@ -307,7 +304,7 @@ function loadFriends() {
               onHide={hideOpenPhotos}
             />
             
-          </div> 
+          </div>
             <DrawMap />
             <CheckBoxPublic />
             <OpenPhotos />
