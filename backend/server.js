@@ -93,167 +93,68 @@ app.post('/publish', async (req, res) => {
 
 // User favorite type of photos
 app.post('/recommend', async (req, res) => {
-    let statusCode;
+    let loggedUser = req.body.logged_user;
+
+    let statusCode = 401;
+    let favoriteType;
     let recommendedPlaces = [];
 
-    let retrieveAllUsernamesQuery = `
-        SELECT username as username
-        FROM users
-    `
+    // retrieving the favorite types for every user
+    let favoriteTypesQuery = `
+            select author, mode() within group (order by type) as type
+            from images
+            group by author`;
+    
+    let favoriteTypesResult = await sendQuery(favoriteTypesQuery);
+    let favoriteTypesStatus = favoriteTypesResult.status;
+    let favoriteTypesQueryRes = favoriteTypesResult.queryRes;
 
-    const userResult = await sendQuery(retrieveAllUsernamesQuery);
-    const userStatus = userResult.status;
-    const userQueryRes = userResult.queryRes;
-
-    if (userStatus == 200) {
-
-        let userArray = [];
-        let userTypes = new Map();
+    
+    if(favoriteTypesStatus == 200) {
+        let favoriteTypes = {};
+        favoriteTypesQueryRes.map(r => {
+            favoriteTypes[r.author] = r.type;
+        });
         
-        userQueryRes.forEach(user => {
-            userArray.push(user.username)
+        // logged user's favorite type
+        favoriteType = favoriteTypes[loggedUser];
+
+        // retrieving similar users
+        // in other words, users whose favorite type is the same as logged user's
+        let similarUsers = Object.keys(favoriteTypes).filter(k => {
+            return (k !== loggedUser) && (favoriteTypes[k] === favoriteType);
         });
 
-        // tipo preferito dell'utente loggato 
-        // per ogni altro utente 
-            // vedi il tipo preferito
-            // se è lo stesso, aggiungi a lista utenti simili
-        // ottieni foto degli utenti simili
-        // prendi foto a caso lista
+        // retrieving random places from similar users
+        let recommendedPlacesQuery = `
+            select place
+            from images
+            where ${similarUsers.map(user => `author = '${user}'`).join(' or ')}
+                and type = '${favoriteType}';
+        `;
 
+        let recommendedPlacesResult = await sendQuery(recommendedPlacesQuery);
+        let recommendedPlacesStatus = recommendedPlacesResult.status;
+        let recommendedPlacesQueryRes = recommendedPlacesResult.queryRes;
 
-        for (const user of userArray) {
+        if(recommendedPlacesStatus == 200) {
+            let allRecommendedPlaces = recommendedPlacesQueryRes.map(r => r.place);
 
-            console.log(user);
-
-            const typeResult = await sendQuery(`
-                select max(type) as type
-                from images
-                where author = \'${user}\'
-                group by type
-                order by count(*) desc
-                limit 1
-            `)
-
-            const typeStatus = typeResult.status;
-            const typeQueryRes = typeResult.queryRes;
-
-            console.log(typeQueryRes);
-            
-            if(typeStatus == 200) {
-                userTypes[user] = typeQueryRes[0].type
-            }
+            // we take at most 8 random places from all the possible recommended places
+            recommendedPlaces = allRecommendedPlaces
+                                    .sort(() => Math.random() - 0.5)
+                                    .slice(0, 8);
+                    
+            statusCode = 200;
         }
     }
 
-    // let similar_users = [];
-
-//     Object.keys(type_array).map(k => {
-//         if (k !== req.body.logged_user && // Not the logged_user constraint
-//             type_array[req.body.logged_user] === type_array[k]) { // Similarity between users
-
-//             similar_users.push(k) // is a similar user
-//         }
-//     })
-
-//     // Retrieve places visited by logged_user to avoid doubles
-//     let user_places = [];
-
-//     const resQuery3 = await client.query(`
-//             SELECT place as place
-//             FROM images
-//             WHERE author = \'${req.body.logged_user}\'
-//         `)
-
-//     resQuery3.rows.forEach(place => {
-//         user_places.push(place.place)
-//     })
-
-//     // Retrieve places visited by other similar users
-//     let other_users_places = [];
-
-//     for (const user of similar_users) {
-//         await client.query(`
-//                 SELECT place as place
-//                 FROM images
-//                 WHERE author = \'${user}\' AND
-//                 type = \'${type_array[req.body.logged_user]}\'
-//                 `)
-//             .then(response => {
-//                 response.rows.forEach(place => {
-//                     if (!other_users_places.includes(place)) {
-//                         other_users_places.push(place.place);
-//                     }
-//                 })
-//             })
-//     }
-
-//     // Returns occurrences of places in the previous array
-//     let counts = other_users_places.reduce((a, c) => {
-//         if (user_places.indexOf(c) == -1) // Place not visited by logged_user, so recommended.
-//             a[c] = (a[c] || 0) + 1;
-//         return a;
-//     }, {});
-
-//     const sortedArray = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-//     // if (sortedArray.length >= 2) {
-//     //     // First 2 places, to be changed when more photos available.
-//     //     recommendedPlaces = [sortedArray[0][0], sortedArray[1][0]];
-//     //     statusCode = 200;
-//     // } else if (sortedArray.length == 1) {
-//     //     recommendedPlaces = [sortedArray[0][0]]
-//     //     statusCode = 200
-//     // } else {
-//     //     statusCode = 409
-//     // }
-
-//     if (sortedArray.length > 0) {
-//         for (index in sortedArray) {
-//             recommendedPlaces.push(sortedArray[index][0])
-//         }
-//         statusCode = 200;
-//     } else {
-
-//         statusCode = 409;
-//     }
-
-// } catch (err) {
-//     console.log(err);
-//     recommendedPlaces = [];
-//     type_array = '' // Defaults
-//     statusCode = 401;
-// }
-
-// await client.end()
-// res.json({
-//     status: statusCode,
-//     user_favorite_type: type_array[req.body.logged_user],
-//     recommendedPlaces: recommendedPlaces
-// })
-// })
-
-// app.post('/search', async (req, res) => {
-//     let collections = {};
-//     const query = `
-//         SELECT collection_name as name
-//         FROM collections
-//         WHERE author=\'${req.body.logged_user}\' 
-//         AND collection_name ILIKE \'${req.body.search_text}%\'
-//     `;
-
-//     let result = await sendQuery(query);
-//     let statusCode = result.status;
-//     if (statusCode == 200) {
-//         result.queryRes.map((collection, index) => {
-//             collections[index] = collection
-//         })
-//     }
-//     res.json({
-//         status: statusCode,
-//         collections: collections
-//     })
-
+  
+    res.json({
+        status: statusCode,
+        user_favorite_type: favoriteType,
+        recommendedPlaces: recommendedPlaces
+    })
 });
 
 app.post('/retrieveimages', async (req, res) => {
