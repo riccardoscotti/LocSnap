@@ -418,9 +418,10 @@ app.post('/maxclusternum', async (req, res) => {
     })
 })
 
+// Uploads photo, creating a new single-photo collection
 app.post('/imageupload', async (req, res) => {
 
-    let statusCode
+    let statusCode;
     const coll_name = req.body.collection_name
     const image64 = req.body.image
     const author = req.body.username
@@ -440,37 +441,31 @@ app.post('/imageupload', async (req, res) => {
         tags.push(tag)
     })
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
+    let createCollRes = await sendQuery(`
+        INSERT INTO collections (collection_name, author, length)
+        VALUES (\'${coll_name}\', \'${author}\', \'${length}\');
+    `)
 
-    await client.connect();
+    let createImageRes = await sendQuery(`
+        INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
+        VALUES (
+            \'${image_name}\',
+            \'${image64}\',
+            \'${postgisPoint}\',
+            \'{${tags}}\', 
+            \'${coll_name}\',
+            \'${isPublic}\', 
+            \'${type}\', 
+            \'${place}\', 
+            \'${author}\'
+        );`
+    )
 
-    try {
-
-        query = `INSERT INTO collections (collection_name, author, length)
-        VALUES (\'${coll_name}\', \'${author}\', \'${length}\');`
-
-        await client.query(query);
-
-        query2 = `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
-        VALUES (\'${image_name}\', \'${image64}\', 
-        \'${postgisPoint}\', \'{${tags}}\', \'${coll_name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
-
-        await client.query(query2);
-
-
+    if (createCollRes.status == 200 && createImageRes.status == 200) {
         statusCode = 200;
-
-    } catch (err) {
+    } else {
         statusCode = 401;
-        console.log(err);
     }
-
-    await client.end();
 
     res.json({ status: statusCode })
 });
@@ -497,39 +492,36 @@ app.post('/addtoexisting', async (req, res) => {
         tags.push(tag)
     })
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
+    let createImageQuery = await sendQuery(
+        `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
+        VALUES (
+            \'${image_name}\',
+            \'${image64}\',
+            \'${postgisPoint}\',
+            \'{${tags}}\',
+            \'${coll_name}\',
+            \'${isPublic}\',
+            \'${type}\',
+            \'${place}\',
+            \'${author}\'
+        );`
+    );
 
-    await client.connect();
+    // Update collection's length
+    let updateCollectionQuery = await sendQuery(`
+        UPDATE collections
+        SET length = length + 1
+        WHERE 
+            collection_name = \'${coll_name}\' AND 
+            author = \'${author}\'
+    `)
 
-    try {
-
-        await client.query(
-            `INSERT INTO images (image_name, image, location, tagged_people, reference, public, type, place, author)
-            VALUES (\'${image_name}\', \'${image64}\', 
-            \'${postgisPoint}\', \'{${tags}}\', \'${coll_name}\', \'${isPublic}\', \'${type}\', \'${place}\', \'${author}\');`
-        );
-
-        // Update collection's length
-        await client.query(`
-            UPDATE collections
-            SET length = length + 1
-            WHERE 
-                collection_name = \'${coll_name}\' AND 
-                author = \'${author}\'
-        `)
-
+    if (createImageQuery.status == 200 && updateCollectionQuery.status == 200) {
         statusCode = 200;
-
-    } catch (err) {
+    } else {
         statusCode = 401;
-        console.log(err);
     }
-    await client.end();
+
     res.json({ status: statusCode })
 });
 
