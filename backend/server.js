@@ -276,7 +276,7 @@ async function clusterize(user, num_cluster) {
     let clusters = {}
 
     let clusterDivisionQuery = `
-        SELECT ST_ClusterKMeans(location, \'${num_cluster}\') OVER() as cid, 
+        SELECT ST_ClusterKMeans(location, ${num_cluster}) OVER() as cid, 
                 ST_X(location) as lng, ST_Y(location) as lat, image_name as image_name
         FROM images
         WHERE author=\'${user}\';`;
@@ -288,7 +288,7 @@ async function clusterize(user, num_cluster) {
             i.cid
         FROM (
             SELECT 
-                ST_ClusterKMeans(location, \'${num_cluster}\') OVER() as cid, 
+                ST_ClusterKMeans(location, ${num_cluster}) OVER() as cid, 
                 location as location
             FROM images
             WHERE author=\'${user}\'
@@ -296,10 +296,8 @@ async function clusterize(user, num_cluster) {
         GROUP BY i.cid`;
 
     let clusterDivisionRes = await sendQuery(clusterDivisionQuery);
-    // let imageNameStatusCode = imageNameResult.status;
 
     let locateCentroidRes = await sendQuery(locateCentroidQuery);
-    // let imagePositionStatusCode = imagePositionResult.status;
 
     if (clusterDivisionRes.status == 200 && locateCentroidRes.status == 200) {
 
@@ -310,9 +308,6 @@ async function clusterize(user, num_cluster) {
             clusters[i] = {};
             clusters[i].images = []
             clusters[i].centroid = []
-            // clusters[i].location = []
-            // clusters[i].image_names = []
-            // clusters[i].coords = []
         }
 
         cdResult.forEach(image => {
@@ -335,7 +330,7 @@ async function clusterize(user, num_cluster) {
     }
 }
 
-function secondDerivatives(inertiaValues) {
+function secondDerivativesFunc(inertiaValues) {
     const secondDerivatives = [];
 
     for (let i = 2; i < inertiaValues.length; i++) {
@@ -347,27 +342,42 @@ function secondDerivatives(inertiaValues) {
 }
 
 function findOptimalK(secondDerivatives) {
+
+    // If length equals 2 it means we have 3 maximum 3 clusters.
+    // Having 3 clusters means 3 different locations.
+    // It's normal that iterating through the list will return 2,
+    // since returning 3 means having inertia = 0 and one photo per cluster. 
+    if (secondDerivatives.length <= 2) {
+        return 2;
+    }
+
     for (let i = 0; i < secondDerivatives.length - 1; i++) {
         if (secondDerivatives[i] < secondDerivatives[i + 1]) {
-            return i + 2; // For index starts from 0, but clusters are 2+
+            return i+2; // For index starts from 0, but clusters are 2+
         }
     }
-    return secondDerivatives.length;
+
+    // Default, no improvement with cluster augmentation.
+    return 2;
 }
 
 async function elbowClusterize(user) {
     let imageNumQuery = `SELECT COUNT(DISTINCT(location)) FROM images WHERE author=\'${user}\'`;
     let imageNumQueryRes = await sendQuery(imageNumQuery);
+
     if (imageNumQueryRes.status == 200) {
         let maxNum = parseInt(imageNumQueryRes.queryRes[0].count);
         if (maxNum == 1) {
             return clusterize(user, 1);
+        } else if (maxNum == 2) {
+            return clusterize(user, 2);
         }
 
-        if (maxNum > 1) {
+        if (maxNum > 2) {
             let inertias = [];
-            for (let i = 2; i < maxNum + 1; i++) {
+            for (let i = 2; i < (maxNum + 1); i++) {
                 let tmp_inertia = 0; // sum of squared distances between each point and centroid
+
                 let clusteringResult = await clusterize(user, i);
                 if (clusteringResult.status == 200) {
                     Object.entries(clusteringResult.clusters).map(cluster => {
@@ -384,7 +394,9 @@ async function elbowClusterize(user) {
                 inertias.push(tmp_inertia)
             }
 
-            return clusterize(user, findOptimalK(secondDerivatives(inertias)))
+            console.log(inertias);
+            console.log(`Optimal K: ${findOptimalK(secondDerivativesFunc(inertias))}`);
+            return clusterize(user, findOptimalK(secondDerivativesFunc(inertias)))
         }
     }
 }

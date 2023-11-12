@@ -99,11 +99,20 @@ const GenerateMap = () => {
   function invertChecked(event) {
     setChecked(event.target.checked)
   }
+
+  function deleteAllLayers() {
+    coloredGeoJsonlayer?.removeFrom(map);
+    heatmapLayer?.removeFrom(map);
+    markerGroup?.removeFrom(map);
+    clusterGroups?.removeFrom(map);
+    clusterPhotos?.removeFrom(map);
+  }
   
   function ColorMap() {
     const json = JSON.parse(localStorage.getItem("geojson"))
 
     CPMap?.clear()
+    deleteAllLayers()
 
     Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
       for (let index = 0; index < json.features.length; index++) {
@@ -117,20 +126,20 @@ const GenerateMap = () => {
       }
     })
 
-    // Remove old color map
-    coloredGeoJsonlayer?.removeFrom(map)
+    // // Remove old color map
+    // coloredGeoJsonlayer?.removeFrom(map)
 
-    // Remove heatmap
-    heatmapLayer?.removeFrom(map)
+    // // Remove heatmap
+    // heatmapLayer?.removeFrom(map)
 
-    // Remove old geojson
-    geoJsonLayer?.removeFrom(map)
+    // // Remove old geojson
+    // geoJsonLayer?.removeFrom(map)
 
-    // Remove clusters
-    clusterPhotos?.removeFrom(map)
-    clusterGroups?.removeFrom(map)
+    // // Remove clusters
+    // clusterPhotos?.removeFrom(map)
+    // clusterGroups?.removeFrom(map)
 
-    markerGroup?.removeFrom(map) // Remove markers, if present.
+    // markerGroup?.removeFrom(map) // Remove markers, if present.
 
     // Update with new geojson
     coloredGeoJsonlayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
@@ -176,12 +185,16 @@ const GenerateMap = () => {
 
   function AddGeoJSON() {
     geoJsonLayer?.removeFrom(map); // Remove eventual already added geojson
+    deleteAllLayers()
+
     geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
     geoJsonLayer.addTo(map);
   }
 
   function PhotoPerArea() {
       const map = useMap();
+      deleteAllLayers()
+
       useMapEvents({
         click(e) {
           if (localStorage.getItem("geojson") && localStorage.getItem("mapIntent") === "ppa") {
@@ -221,17 +234,20 @@ const GenerateMap = () => {
 
     localStorage.removeItem("clusters") // Updates new value
     
-    map.eachLayer(function(layer) {
-      if( typeof layer.feature !== "undefined" ||
-      typeof layer._layers !== "undefined" ||
-      typeof layer._center !== "undefined" ||
-      typeof layer._heat !== "undefined") {
-        layer.removeFrom(map)
-      }
-    });
-    
-    markerGroup?.removeFrom(map) // Remove all markers, if present. 
-    clusterGroups?.removeFrom(map) // Remove all clusters, if present.
+    // map.eachLayer(function(layer) {
+    //   if( typeof layer.feature !== "undefined" ||
+    //   typeof layer._layers !== "undefined" ||
+    //   typeof layer._center !== "undefined" ||
+    //   typeof layer._heat !== "undefined") {
+    //     layer.removeFrom(map)
+    //   }
+    // });
+
+    // coloredGeoJsonlayer?.removeFrom(map)
+    // markerGroup?.removeFrom(map) // Remove all markers, if present. 
+    // clusterGroups?.removeFrom(map) // Remove all clusters, if present.
+
+    deleteAllLayers()
 
     await axios.post(`${base_url}/clusterize`, {
       logged_user: localStorage.getItem("user"),
@@ -259,7 +275,7 @@ const GenerateMap = () => {
 
       cluster[1].images.map(imageData => {
         imageNames.push(imageData.image_name);
-        let imageMarker = L.circleMarker([imageData.coords[0], imageData.coords[1]], {icon: markerIcon})
+        L.circleMarker([imageData.coords[0], imageData.coords[1]], {icon: markerIcon})
           .setStyle({color: `${clusterColors[index % clusterColors.length]}`})
           .addTo(clusterPhotos);
       })

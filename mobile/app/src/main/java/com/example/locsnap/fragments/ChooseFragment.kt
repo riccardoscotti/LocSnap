@@ -48,6 +48,7 @@ class ChooseFragment : Fragment() {
                 proceed.setOnClickListener {
                     UploadUtils.showNearestPhotos(numPhotosTV.text.toString().toInt(), thisInstance.lastKnownLocation!!, thisInstance)
                 }
+
                 dialog.show()
 
             } else if (intent.extras!!.getString("action").equals("camera")) {
@@ -185,11 +186,7 @@ class ChooseFragment : Fragment() {
 
     /*
     * 111 -> Requested capture from camIcon
-    * 222 -> Requested capture for the creation of a new collection
-    * 333 -> Requested capture to be added to an already existing collection
-    * 444 -> Retrieves GPS location and creates new collection
-    * 555 -> Retrieves GPS location and upload single photo
-    * */
+    */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -265,26 +262,5 @@ class ChooseFragment : Fragment() {
             }
             dialog.show()
         }
-
-//        else if (requestCode == 222 && resultCode == Activity.RESULT_OK) {
-//            val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
-//            FileManagerUtils.createNewCollection(capturedImage, this, this.lastKnownLocation)
-//        }
-//        else if(requestCode == 333 && resultCode == Activity.RESULT_OK) {
-//            val capturedImage: Bitmap = data?.extras!!["data"] as Bitmap
-////            FileManagerUtils.addImageToCollection(this.selectedCollection, capturedImage, this)
-////            UploadUtils.addImageToCollection(this.selectedCollection, capturedImage, this)
-//        }
-//        else if(requestCode == 444 && resultCode == Activity.RESULT_OK) {
-//            this.lastKnownLocation = data?.extras!!.get("gps_location") as Location
-//        }
-//        else if(requestCode == 555 && resultCode == Activity.RESULT_OK) {
-//            this.lastKnownLocation = data?.extras!!.get("gps_location") as Location
-//            val taggedFriend = data.extras!!.get("tagged_friend") as String?
-//            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//            if (taggedFriend != null)
-//                intent.putExtra("tagged_friend", taggedFriend)
-//            startActivityForResult(intent, 111)
-//        }
     }
 }

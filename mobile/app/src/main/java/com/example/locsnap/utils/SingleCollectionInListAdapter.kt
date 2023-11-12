@@ -64,11 +64,15 @@ class SingleCollectionInListAdapter(
                     dialog.window!!.setBackgroundDrawableResource(android.R.color.transparent)
                     val recyclerView = dialog.findViewById<RecyclerView>(R.id.images_recycler)
                     recyclerView.layoutManager = LinearLayoutManager(fragment.requireContext())
-                    recyclerView.adapter = ImagesListAdapter(thisInstance.imagesList, fragment)
+                    recyclerView.adapter = ImagesListAdapter(thisInstance.imagesList, fragment, dialog)
                     recyclerView.addItemDecoration(DividerItemDecoration(fragment.requireContext(), LinearLayoutManager.VERTICAL))
                     recyclerView.addItemDecoration(VerticalSpaceItemDecoration(35))
-
                     dialog.show()
+
+                    dialog.setOnDismissListener {
+                        // Clear selected collection on dialog closure
+                        fragment.setSelectedCollection("")
+                    }
                 }
             }
         }

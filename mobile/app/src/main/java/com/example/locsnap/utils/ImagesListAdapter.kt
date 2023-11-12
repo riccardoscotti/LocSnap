@@ -13,7 +13,8 @@ import com.example.locsnap.fragments.ChooseFragment
 import org.json.JSONObject
 
 class ImagesListAdapter(private val imagesList: JSONObject,
-                        private val fragment: ChooseFragment
+                        private val fragment: ChooseFragment,
+                        private val dialog: Dialog
 ) :
     RecyclerView.Adapter<ImagesListAdapter.MyViewHolder>() {
 
@@ -41,6 +42,14 @@ class ImagesListAdapter(private val imagesList: JSONObject,
 
         val editBtn = holder.cl.findViewById<ImageView>(R.id.editIcon)
         editBtn.setImageResource(R.drawable.edit)
+
+        val deleteBtn = holder.cl.findViewById<ImageView>(R.id.deleteIcon)
+        deleteBtn.setImageResource(R.drawable.delete)
+
+        deleteBtn.setOnClickListener {
+            UploadUtils.deleteImage(fragment, imageName.text.toString(), fragment.getSelectedCollection())
+            dialog.dismiss()
+        }
 
         shareBtn.setOnClickListener {
             FragmentUtils.getFriends(fragment.getLoggedUser(),

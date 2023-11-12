@@ -37,7 +37,6 @@ class UploadUtils {
                 { response ->
                     if (response.getString("status").equals("200")) {
                         val receivedImages = response.getJSONArray("images")
-//                        val jsonParsed = JSONArray(receivedImages)
                         val jsonLength = receivedImages.length()
 
                         var bitmapsReceived = mutableListOf<String>()
@@ -78,6 +77,36 @@ class UploadUtils {
                 }
             }
             queue.add(sendCollectionRequest)
+        }
+
+        fun deleteImage(fragment: ChooseFragment, imageName: String, collectionName: String) {
+            val url : String = fragment.resources.getString(R.string.base_url)+"/deletephoto"
+            val jsonObject = JSONObject()
+            val queue = Volley.newRequestQueue(fragment.requireActivity().applicationContext)
+
+            jsonObject.put("logged_user", fragment.getLoggedUser())
+            jsonObject.put("image_name", imageName)
+            jsonObject.put("collection_name", collectionName)
+
+            val deletePhotoRequest = object : JsonObjectRequest(
+                Method.POST, url, jsonObject,
+                { response ->
+                    if (response.getString("status").equals("200")) {
+                        Toast.makeText(fragment.requireActivity(), "$imageName of collection $collectionName deleted successfully!", Toast.LENGTH_SHORT).show()
+                        fragment.refresh()
+                    } else {
+                        Toast.makeText(fragment.requireActivity(),"Error during photo deletion...",Toast.LENGTH_SHORT).show()
+                    }
+                },
+                {
+                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
+                override fun getBodyContentType(): String {
+                    return "application/json; charset=utf-8"
+                }
+            }
+            queue.add(deletePhotoRequest)
         }
 
         fun tagFriend(friend: String, imageName: String, fragment: ChooseFragment) {
@@ -304,6 +333,7 @@ class UploadUtils {
                         { response ->
                             if (response.getString("status").equals("200")) {
                                 Toast.makeText(fragment.requireActivity(), "Image uploaded successfully.", Toast.LENGTH_SHORT).show()
+                                fragment.refresh()
                             } else if (response.getString("status").equals("401")) {
                                 Toast.makeText(fragment.requireActivity(), "Error during image upload.", Toast.LENGTH_SHORT).show()
                             }
@@ -317,14 +347,12 @@ class UploadUtils {
                         }
                     }
                     queue.add(uploadRequest)
-                    fragment.refresh()
                 }, {}
             ) {
                 override fun getBodyContentType(): String {
                     return "application/json; charset=utf-8"
                 }
             }
-
             queue.add(placeRequest)
         }
     }
