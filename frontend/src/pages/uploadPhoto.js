@@ -83,7 +83,6 @@ function UploadPhoto() {
 
         let fileLat;
         let fileLon;
-        let datetime;
         const RGC_API_KEY = '01114512c1ce49018d40d94d6aab3d68'
 
         EXIF.getData(fileObj, function(){
@@ -100,17 +99,14 @@ function UploadPhoto() {
                      (fileLon[2].numerator/fileLon[2].denominator) / 3600
             })
 
-            datetime = EXIF.getTag(this, "DateTimeOriginal")
         })
 
         axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${fileMarker.lat}&lon=${fileMarker.lon}&apiKey=${RGC_API_KEY}`)
             .then(response => {
                 let imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
                 let placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
-                let datePhoto = document.getElementById("file-metadata").querySelector("#datePhoto");
                 imageNameInput.value = `${fileObj.name}`
                 placeInput.value = `${response.data.features[0].properties.city}`
-                datePhoto.innerHTML = `${datetime}`
                 
                 setPlace(response.data.features[0].properties.city)
             })
@@ -173,7 +169,6 @@ function UploadPhoto() {
                             <input className='metadataInput' id="imageNameInput" type='text' />
                             <input className='metadataInput' id="typeInput" type='text' />
                             <input className='metadataInput' id="placeInput" type='text' />
-                            <h3 id="datePhoto" />
                         </div>
 
                         <div id='buttons'>
