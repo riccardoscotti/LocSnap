@@ -15,6 +15,7 @@ function UploadPhoto() {
     const bolognaCoords = [44.494887, 11.3426163]
     let [fileMarker, setFileMarker] = useState({lat: 0.0, lon: 0.0})
     let [selectedFile, setSelectedFile] = useState(null)
+    let [isPublic, setPublic] = useState(false)
     let [place, setPlace] = useState(null)
 
     // TODO Allow user to select more files at once, to upload them as a collection.
@@ -24,6 +25,7 @@ function UploadPhoto() {
         let imageNameInput = document.getElementById("file-metadata").querySelector("#imageNameInput");
         let placeInput = document.getElementById("file-metadata").querySelector("#placeInput");
         let collectionNameInput = document.getElementById("file-metadata").querySelector("#collectionNameInput");
+        let typeInput = document.getElementById("file-metadata").querySelector("#typeInput");
         let queryType = '';
         
         await axios.post(`${base_url}/checkcollectionexists`, {
@@ -50,8 +52,8 @@ function UploadPhoto() {
                 lon: fileMarker.lon,
                 length: 1,
                 tagged_people: [],
-                public: false, // Default
-                type: "City", // Default
+                public: isPublic.checked, // Default
+                type: typeInput.value, // Default
                 place: placeInput.value 
 
             })
@@ -113,8 +115,6 @@ function UploadPhoto() {
                 setPlace(response.data.features[0].properties.city)
             })
             .catch(error => console.log(error));
-
-        document.getElementById("confirm-upload").style.visibility = "visible"
         
         Object.entries(document.getElementsByClassName("labelMetadata")).map(element => {
             element[1].style.visibility = "visible"
@@ -123,6 +123,10 @@ function UploadPhoto() {
         Object.entries(document.getElementsByClassName("metadataInput")).map(element => {
             element[1].style.visibility = "visible"
         })
+
+        document.getElementById("confirm-upload").style.visibility = "visible"
+        document.getElementById("publicSpan").style.visibility = "visible"
+        document.getElementById("publicPhotoCheckBox").style.visibility = "visible"
         
         event.target.value = null;
     }
@@ -160,19 +164,32 @@ function UploadPhoto() {
                         <div id='labelsMetadata'>
                             <h5 className='labelMetadata'>Collection Name</h5>
                             <h5 className='labelMetadata'>Image Name</h5>
+                            <h5 className='labelMetadata'>Type</h5>
                             <h5 className='labelMetadata'>Place</h5>
-                            <h5 className='labelMetadata'>Date</h5>
                         </div>
 
                         <div id='file-metadata'>
                             <input className='metadataInput' id="collectionNameInput" type='text' />
                             <input className='metadataInput' id="imageNameInput" type='text' />
+                            <input className='metadataInput' id="typeInput" type='text' />
                             <input className='metadataInput' id="placeInput" type='text' />
                             <h3 id="datePhoto" />
                         </div>
-                        <button id="confirm-upload" onClick={uploadOnDB}>
-                            Confirm
-                        </button>
+
+                        <div id='buttons'>
+                            <div className="form-check">
+                                <input className="form-check-input"
+                                    ref={setPublic}
+                                    type="checkbox"
+                                    id="publicPhotoCheckBox"
+                                />
+                                <span id='publicSpan'>Public</span>
+                            </div>
+                            <button id="confirm-upload" onClick={uploadOnDB}>
+                                Confirm
+                            </button>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
