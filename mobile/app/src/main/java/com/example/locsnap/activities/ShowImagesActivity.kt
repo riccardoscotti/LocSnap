@@ -16,6 +16,7 @@ import com.example.locsnap.utils.ImagesAdapter
 
 class ShowImagesActivity : AppCompatActivity() {
     private var bitmapsString: Array<String> = arrayOf()
+    private var imageNames: Array<String> = arrayOf()
 
     inner class VerticalSpaceItemDecoration(private val verticalSpaceHeight: Int) : ItemDecoration() {
         override fun getItemOffsets(
@@ -31,6 +32,7 @@ class ShowImagesActivity : AppCompatActivity() {
 
         if (intent.extras != null) {
             bitmapsString = intent.extras!!.getStringArray("imagesString") as Array<String>
+            imageNames = intent.extras!!.getStringArray("imagesNames") as Array<String>
         }
 
         var bitmaps = mutableListOf<Bitmap>()
@@ -41,13 +43,13 @@ class ShowImagesActivity : AppCompatActivity() {
             bitmaps.add(bitmap)
         }
 
-        title = "Le tue ${bitmaps.size} foto più vicine"
+        title = "Your ${bitmaps.size} nearest photos!"
         setContentView(R.layout.show_images)
         supportActionBar?.hide()
 
         val recyclerView = findViewById<RecyclerView>(R.id.image_recycler)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = ImagesAdapter(bitmaps)
+        recyclerView.adapter = ImagesAdapter(bitmaps, imageNames)
         recyclerView.addItemDecoration(DividerItemDecoration(this, LinearLayoutManager.VERTICAL))
         recyclerView.addItemDecoration(VerticalSpaceItemDecoration(35))
     }

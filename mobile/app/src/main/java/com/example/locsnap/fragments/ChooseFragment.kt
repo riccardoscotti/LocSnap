@@ -30,7 +30,6 @@ import org.json.JSONObject
 class ChooseFragment : Fragment() {
     private lateinit var loggedUser : String
     private var selectedCollection: String = ""
-//    private var retrievedCollections = mutableListOf<String>()
     private var lastKnownLocation : Location? = null
     private var animated = false
     private lateinit var recyclerView: RecyclerView
@@ -57,7 +56,6 @@ class ChooseFragment : Fragment() {
         }
     }
     fun setCollections(retrievedCollections: MutableList<String>) {
-//        this.retrievedCollections = retrievedCollections
 
         recyclerView = requireView().findViewById(R.id.listPhotosRecycler)
         recyclerView.layoutManager = LinearLayoutManager(this.requireContext())

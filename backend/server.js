@@ -531,41 +531,29 @@ app.post('/nearest', async (req, res) => {
     let num_photos = req.body.num_photos
     let actualLat = req.body.actual_lat
     let actualLon = req.body.actual_lon
+    let loggedUser = req.body.logged_user
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
+    // Returns user's photos and other users' public ones
+    const nearestPhotosQuery = await sendQuery(`
+        SELECT image as image, image_name as image_name
+        FROM images
+        WHERE
+            (author = \'${loggedUser}\') OR 
+            (author <> \'${loggedUser}\' AND public=true)
+        ORDER BY ST_Distance(\'POINT(${actualLon} ${actualLat})\'::geometry, location) 
+        LIMIT ${num_photos}
+    `);
+
+    nearestPhotosQuery.queryRes.forEach(element => {
+        let tmp_img = {}
+        tmp_img.image = element.image
+        tmp_img.image_name = element.image_name
+
+        imagesArray.push(tmp_img)
     });
 
-    await client.connect()
-
-    query = `
-        SELECT i.image as imageresult
-        FROM images as i
-        WHERE i.public=false
-        ORDER BY ST_Distance(\'POINT(${actualLon} ${actualLat})\'::geometry, i.location) 
-        LIMIT ${num_photos}
-        `
-
-    try {
-        const result = await client.query(query);
-        result.rows.forEach(element => {
-            imagesArray.push(element.imageresult)
-        });
-
-        statusCode = 200
-
-    } catch (err) {
-        statusCode = 401
-        console.log(err);
-    }
-
-    await client.end();
-
     res.json({
-        status: statusCode,
+        status: nearestPhotosQuery.status,
         images: imagesArray
     })
 

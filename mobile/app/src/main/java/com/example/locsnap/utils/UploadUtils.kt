@@ -19,173 +19,6 @@ import java.lang.Exception
 
 class UploadUtils {
     companion object {
-//        fun uploadImage(capturedImage: Bitmap, logged_user: String, fragment: ChooseFragment, taggedFriend: String? = "") {
-//
-//            // ByteArray in cui verrà convertita la bitmap, per poter essere rappresentata in un db
-//            val bitmapBA = ByteArrayOutputStream()
-//
-//            // Compressione bitmap
-//            capturedImage.compress(Bitmap.CompressFormat.JPEG, 100, bitmapBA)
-//
-//            // Leggi i dati dall'InputStream e convertili in una stringa codificata in base64
-//            val bitmapEncoded = Base64.encodeToString(bitmapBA.toByteArray(), Base64.DEFAULT)
-//
-//            val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
-//            val currentDateTime = LocalDateTime.now()
-//            val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
-//            val formattedDateTime = currentDateTime.format(formatter)
-//            val name: String = "IMG_" + formattedDateTime
-//            val location = fragment.getLastKnownLocation()
-//            val bitmaps = JSONArray()
-//            bitmaps.put(bitmapEncoded)
-//
-//            val jsonObject = JSONObject()
-//
-//            jsonObject.put("name", name)
-//
-//            jsonObject.put("image", bitmaps)
-//            jsonObject.put("username", logged_user)
-//            jsonObject.put("lat", location?.latitude)
-//            jsonObject.put("lon", location?.longitude)
-//            jsonObject.put("length", 1)
-//
-//            if (taggedFriend != "") {
-//                jsonObject.put("tagged_people", JSONArray().put(taggedFriend))
-//            } else
-//                jsonObject.put("tagged_people", JSONArray())
-//
-//            upload(url, jsonObject, fragment)
-//        }
-
-        /*
-        * Allows the upload of a collection of photos.
-        * N.B. A single photo, uploaded from the photo picker, will be treated as a collection with one photo.
-        * */
-//        fun uploadCollection(file: File, fragment: ChooseFragment) {
-//
-//            val url = "${fragment.resources.getString(R.string.base_url)}/imageupload"
-//            val location = FileManagerUtils.getCollections().get(file.absolutePath)
-//            var bitmaps = JSONArray()
-//            val json = JSONObject()
-//
-//            for ((index, bitmap) in file.readText().split(",").withIndex()) {
-//                bitmaps.put(index, bitmap)
-//            }
-//
-//            json.put("name", file.name)
-//            json.put("image", bitmaps)
-//            json.put("username", fragment.getLoggedUser())
-//            json.put("lat", location?.latitude)
-//            json.put("lon", location?.longitude)
-//            json.put("tagged_people", JSONArray())
-//            json.put("length", bitmaps.length())
-//
-//            upload(url, json, fragment)
-//        }
-
-//        fun upload(url: String, jsonObject: JSONObject, fragment: ChooseFragment) {
-//
-//            val queue = Volley.newRequestQueue(fragment.requireActivity())
-//            val apiKey = "01114512c1ce49018d40d94d6aab3d68"
-//
-//            val placeURL =
-//                "https://api.geoapify.com/v1/geocode/reverse?lat=${jsonObject.get("lat")}&lon=${jsonObject.get("lon")}&apiKey=${apiKey}"
-//
-//            val placeRequest = object : JsonObjectRequest(
-//                Method.GET, placeURL, null,
-//                { response ->
-//                    val place: String = response.getJSONArray("features")
-//                        .getJSONObject(0)
-//                        .getJSONObject("properties")
-//                        .getString("city")
-//
-//                    if (place != "") {
-//                        val dialog = Dialog(fragment.requireActivity())
-//                        dialog.setContentView(R.layout.info_upload_dialog)
-//
-//                        val proceed = dialog.findViewById<Button>(R.id.confirmButton)
-//                        val publicCheck = dialog.findViewById<CheckBox>(R.id.publicCheckBox)
-//                        val city = dialog.findViewById<RadioButton>(R.id.radio_city)
-//                        val mountain = dialog.findViewById<RadioButton>(R.id.radio_mountain)
-//                        val sea = dialog.findViewById<RadioButton>(R.id.radio_sea)
-//
-//                        proceed.setOnClickListener {
-//
-//                            var type = ""
-//
-//                            fun setType(selectedType: String) {
-//                                type = selectedType
-//                            }
-//
-//                            if (city.isChecked)
-//                                setType(city.text.toString())
-//
-//                            else if (mountain.isChecked)
-//                                setType(mountain.text.toString())
-//
-//                            else if (sea.isChecked)
-//                                setType(sea.text.toString())
-//
-//                            if (type == "") {
-//                                Toast.makeText(fragment.requireActivity(), "You must choose a type.", Toast.LENGTH_SHORT).show()
-//                            } else {
-//                                jsonObject.put("public", publicCheck.isChecked)
-//                                jsonObject.put("type", type)
-//                                jsonObject.put("place", place)
-//
-//                                val sendRequest = object : JsonObjectRequest(
-//
-//                                    Method.POST, url, jsonObject,
-//                                    { response ->
-//                                        if (response.getString("status").equals("200")) {
-//                                            Toast.makeText(
-//                                                fragment.requireActivity(),
-//                                                "Image successfully sent.",
-//                                                Toast.LENGTH_SHORT
-//                                            ).show()
-//                                            fragment.refresh()
-//
-//                                        } else {
-//                                            Toast.makeText(
-//                                                fragment.requireActivity(),
-//                                                "[IMAGE] Problem occurred during image sending process.",
-//                                                Toast.LENGTH_SHORT
-//                                            ).show()
-//                                        }
-//                                    },
-//                                    {
-//                                        Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT)
-//                                            .show()
-//                                    }
-//                                ) {
-//                                    override fun getBodyContentType(): String {
-//                                        return "application/json; charset=utf-8"
-//                                    }
-//                                }
-//                                queue.add(sendRequest)
-//                                dialog.dismiss()
-//                            }
-//                        }
-//                        dialog.show()
-//                    } else
-//                        Toast.makeText(
-//                            fragment.requireActivity(),
-//                            "[IMAGE] Problem occurred during reverse geocoding process.",
-//                            Toast.LENGTH_SHORT
-//                        ).show()
-//                },
-//                {
-//                    Toast.makeText(fragment.requireActivity(), "Communication error.", Toast.LENGTH_SHORT).show()
-//                }
-//            ) {
-//                override fun getBodyContentType(): String {
-//                    return "application/json; charset=utf-8"
-//                }
-//            }
-//
-//            queue.add(placeRequest)
-//        }
-
         fun showNearestPhotos(numPhotos: Int, actualPos: Location, fragment: ChooseFragment) {
 
             val url : String = fragment.resources.getString(R.string.base_url)+"/nearest"
@@ -195,6 +28,7 @@ class UploadUtils {
             jsonObject.put("actual_lat", actualPos.latitude)
             jsonObject.put("actual_lon", actualPos.longitude)
             jsonObject.put("num_photos", numPhotos)
+            jsonObject.put("logged_user", fragment.getLoggedUser())
 
             val sendCollectionRequest = object : JsonObjectRequest(
                 Method.POST,
@@ -202,13 +36,16 @@ class UploadUtils {
                 jsonObject,
                 { response ->
                     if (response.getString("status").equals("200")) {
-                        val receivedImagesString = response.getString("images")
-                        val jsonParsed = JSONArray(receivedImagesString)
-                        val jsonLength = jsonParsed.length()
+                        val receivedImages = response.getJSONArray("images")
+//                        val jsonParsed = JSONArray(receivedImages)
+                        val jsonLength = receivedImages.length()
+
                         var bitmapsReceived = mutableListOf<String>()
+                        var imageNames = mutableListOf<String>()
 
                         for (i in 0 until jsonLength) {
-                            bitmapsReceived.add(jsonParsed.getString(i))
+                            bitmapsReceived.add(receivedImages.getJSONObject(i).getString("image"))
+                            imageNames.add(receivedImages.getJSONObject(i).getString("image_name"))
                         }
 
                         if (numPhotos > jsonLength) {
@@ -218,8 +55,10 @@ class UploadUtils {
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         val intent = Intent(fragment.requireContext(), ShowImagesActivity::class.java)
                         intent.putExtra("imagesString", bitmapsReceived.toTypedArray())
+                        intent.putExtra("imagesNames", imageNames.toTypedArray())
                         fragment.startActivity(intent)
 
                     } else {
