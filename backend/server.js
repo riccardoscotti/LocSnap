@@ -275,11 +275,14 @@ async function clusterize(user, num_cluster) {
     let statusCode = 401;
     let clusters = {}
 
+    console.log(num_cluster);
+
     let clusterDivisionQuery = `
         SELECT ST_ClusterKMeans(location, ${num_cluster}) OVER() as cid, 
                 ST_X(location) as lng, ST_Y(location) as lat, image_name as image_name
         FROM images
-        WHERE author=\'${user}\';`;
+        WHERE author=\'${user}\'
+    `;
 
     let locateCentroidQuery = `
         SELECT

@@ -112,7 +112,17 @@ const GenerateMap = () => {
     const json = JSON.parse(localStorage.getItem("geojson"))
 
     CPMap?.clear()
-    deleteAllLayers()
+    
+    // map.eachLayer(function(layer) {
+    //   if( typeof layer.feature !== "undefined") {
+    //     layer.removeFrom(map)
+    //   }
+    // });
+
+    heatmapLayer?.removeFrom(map)
+    coloredGeoJsonlayer?.removeFrom(map)
+    markerGroup?.removeFrom(map)
+    clusterGroups?.removeFrom(map)
 
     Object.entries(JSON.parse(localStorage.getItem("imgs"))).map( (img) => {
       for (let index = 0; index < json.features.length; index++) {
@@ -125,21 +135,6 @@ const GenerateMap = () => {
         }
       }
     })
-
-    // // Remove old color map
-    // coloredGeoJsonlayer?.removeFrom(map)
-
-    // // Remove heatmap
-    // heatmapLayer?.removeFrom(map)
-
-    // // Remove old geojson
-    // geoJsonLayer?.removeFrom(map)
-
-    // // Remove clusters
-    // clusterPhotos?.removeFrom(map)
-    // clusterGroups?.removeFrom(map)
-
-    // markerGroup?.removeFrom(map) // Remove markers, if present.
 
     // Update with new geojson
     coloredGeoJsonlayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))), {
@@ -184,8 +179,15 @@ const GenerateMap = () => {
   }
 
   function AddGeoJSON() {
+
+    map.eachLayer(function(layer) {
+      if(typeof layer._layers !== "undefined") {
+        layer.removeFrom(map)
+      }
+    });
+
     geoJsonLayer?.removeFrom(map); // Remove eventual already added geojson
-    deleteAllLayers()
+    heatmapLayer?.removeFrom(map)
 
     geoJsonLayer = L.geoJSON(Object(JSON.parse(localStorage.getItem("geojson"))))
     geoJsonLayer.addTo(map);
@@ -193,17 +195,12 @@ const GenerateMap = () => {
 
   function PhotoPerArea() {
       const map = useMap();
-      deleteAllLayers()
 
       useMapEvents({
         click(e) {
           if (localStorage.getItem("geojson") && localStorage.getItem("mapIntent") === "ppa") {
   
-              map.eachLayer(function(layer) {
-                if(typeof layer._heat !== "undefined") {
-                    layer.removeFrom(map)
-                }
-              });
+              heatmapLayer?.removeFrom(map)
 
               if (!map.hasLayer(geoJsonLayer)) {
                 geoJsonLayer = L.geoJSON()
@@ -234,18 +231,18 @@ const GenerateMap = () => {
 
     localStorage.removeItem("clusters") // Updates new value
     
-    // map.eachLayer(function(layer) {
-    //   if( typeof layer.feature !== "undefined" ||
-    //   typeof layer._layers !== "undefined" ||
-    //   typeof layer._center !== "undefined" ||
-    //   typeof layer._heat !== "undefined") {
-    //     layer.removeFrom(map)
-    //   }
-    // });
+    map.eachLayer(function(layer) {
+      if( typeof layer.feature !== "undefined" ||
+      typeof layer._layers !== "undefined" ||
+      typeof layer._center !== "undefined" ||
+      typeof layer._heat !== "undefined") {
+        layer.removeFrom(map)
+      }
+    });
 
-    // coloredGeoJsonlayer?.removeFrom(map)
-    // markerGroup?.removeFrom(map) // Remove all markers, if present. 
-    // clusterGroups?.removeFrom(map) // Remove all clusters, if present.
+    coloredGeoJsonlayer?.removeFrom(map)
+    markerGroup?.removeFrom(map) // Remove all markers, if present. 
+    clusterGroups?.removeFrom(map) // Remove all clusters, if present.
 
     deleteAllLayers()
 
@@ -301,6 +298,12 @@ const GenerateMap = () => {
     clusterGroups?.removeFrom(map)
     geoJsonLayer?.removeFrom(map)
     coloredGeoJsonlayer?.removeFrom(map)
+
+    map.eachLayer(function(layer) {
+      if(typeof layer._layers !== "undefined") {
+        layer.removeFrom(map)
+      }
+    });
 
     heatmapLayer = L.heatLayer([], {
       radius: 25,
@@ -394,8 +397,8 @@ const GenerateMap = () => {
                   if (localStorage.getItem("geojson") == null) {
                     alert("You must upload a GeoJSON file first.")
                   } else {
-                    
                     alert("Select the country you're concerned in")
+                    coloredGeoJsonlayer?.removeFrom(map) // Previous color map causes an overlay with mouse clicks
                   }
                   }}>
                   Photo per area
