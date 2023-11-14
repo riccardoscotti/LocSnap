@@ -46,6 +46,7 @@ const Dashboard = () => {
   const [showPublic, setShowPublic] = useState(false)
   const [toast, setToast] = useState(false)
   let [loaded, setLoaded] = useState(false)
+  const [collections, setCollectionsState] = useState(null)
   const mapRef = createRef()
   let publicPhotoMarkers = L.layerGroup();
   let [openPhotosStatus, setOpenPhotosStatus] = useState(false)
@@ -70,7 +71,8 @@ const Dashboard = () => {
               )
               .then((response) => {
                 if(response.status === 200) {
-                  localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
+                  localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections)) // Useful for other components
+                  setCollectionsState(JSON.stringify(response.data.retrieved_collections))
                   setLoaded(true)
                 }
               })
@@ -125,13 +127,10 @@ const Dashboard = () => {
         <input  className="form-check-input" 
                 type="checkbox" 
                 id="publicCheckBox" 
-                // checked={showPublic}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    // setShowPublic(true)
                     loadPublicPhotos()
                   } else {
-                    // setShowPublic(false)
                     publicPhotoMarkers?.removeFrom(mapRef.current)
                   }
 
@@ -187,24 +186,6 @@ function loadFriends() {
     }
   }
 
-  const retrieveCollections = () => {
-    axios.post("/retrievecollections", {
-      logged_user: localStorage.getItem("user")
-    },
-    header_config  
-    )
-    .then((response) => {
-      if(response.status === 200) {
-        localStorage.setItem("collections", JSON.stringify(response.data.retrieved_collections))
-      }
-    })
-    .catch((error) => {
-      if(error.response.status === 401) {
-        alert("Error during collection retrieval!")
-      }
-    });
-  }
-
   function OpenPhotos(props) {
 
     return localStorage.getItem("previews") && (
@@ -234,11 +215,11 @@ function loadFriends() {
     )
   }
 
-  function openPhotosFunc() {
+  function openPhotosFunc(imageName) {
     let arrayBase64 = []
     axios.post("/imagesof", {
       logged_user: localStorage.getItem('user'),
-      collection_name: localStorage.getItem("clickedColl")
+      collection_name: imageName
     }).then(res => {
       Object.entries(res.data.images).map(img => {
         arrayBase64.push(img[1].image)
@@ -259,42 +240,40 @@ function loadFriends() {
 
   function renderPage() {
     
-    if (loaded) {
+    if (setCollectionsState && loaded) {
       return (
         <div className='main-content'>
           <div className='collections'>
-            <h1 id='title'>My collections</h1>
+            <h1 id='title'>{localStorage.getItem('user')}'s collections</h1>
             <input type='text' ref={searchRef} className='search-collection' onKeyDown={e => {
               if (e.key === 'Enter') {
                 setCollectionList(prev => [e.target.value])
-                
                 axios.post('/search', {
                   "logged_user": localStorage.getItem("user"),
                   "search_text": searchRef.current.value.trim()
                 }).then(response => {
                   if(response.data.status === 200) {
-                    localStorage.setItem("collections", JSON.stringify(response.data.collections)) // Update new collections
-                    window.location.reload()
+                    setCollectionsState(JSON.stringify(response.data.collections))
                   }
                 })
               }
             }}/>
             {
-              Object.entries(JSON.parse(localStorage.getItem("collections"))).map( (collection) => {
+              Object.entries(JSON.parse(collections)).map( (collection) => {
                 return (
-                  <div key={collection} onClick={(e) => {
-                    if (e.target.firstChild !== null && e.target.firstChild.data !== "undefined") {
-                      localStorage.setItem("clickedColl", e.target.firstChild.data)
-                      openPhotosFunc()
-                    }
-                    } }>
+                  <div  key={`div_${collection[1].name}`} 
+                        onClick={(e) => {
+                          localStorage.setItem('clickedColl', collection[1].name);
+                          openPhotosFunc(collection[1].name);
+                  }}>
                     <CollectionCard 
-                      className='collection' 
-                      key={collection}
+                      className='collection'
+                      key={`card_${collection[1].name}`}
                       title={collection[1].name} 
                       place={collection[1].place}
                     />
                   </div>
+                    
                 )
               })
             }
@@ -323,7 +302,6 @@ function loadFriends() {
     
   }
   
-  // return localStorage.getItem("collections") && localStorage.getItem("imgs") && (
     return (
       renderPage()
   );

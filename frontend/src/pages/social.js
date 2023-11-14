@@ -1,7 +1,6 @@
 import '../css/social.css'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import axios from 'axios';
-import shareIcon from '../share.png'
 
 axios.defaults.baseURL = 'http://localhost:8080'
 

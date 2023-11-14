@@ -2,7 +2,7 @@ import '../css/explore.css'
 import React, { useCallback, createRef, useEffect, useState } from 'react'
 import axios from 'axios'
 import * as L from 'leaflet';
-import { MapContainer, Marker, Popup, useMapEvents, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer } from "react-leaflet";
 
 import markerIcon from '../marker-icon.png'
 

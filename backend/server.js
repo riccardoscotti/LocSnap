@@ -132,7 +132,7 @@ app.post('/recommend', async (req, res) => {
             where ${similarUsers.map(user => `author = '${user}'`).join(' or ')}
                 and type = '${favoriteType}';
         `;
-
+        
         let recommendedPlacesResult = await sendQuery(recommendedPlacesQuery);
         let recommendedPlacesStatus = recommendedPlacesResult.status;
         let recommendedPlacesQueryRes = recommendedPlacesResult.queryRes;
@@ -232,6 +232,40 @@ app.post('/imagesof', async (req, res) => {
     })
 })
 
+app.post('/search', async (req, res) => {
+
+    let collections = [];
+    let statusCode;
+
+    let searchQuery = await sendQuery(`
+        SELECT c.collection_name as name, i.place place
+        FROM collections as c, images as i
+        WHERE
+            c.author='${req.body.logged_user}' AND
+            i.reference = c.collection_name AND 
+            c.collection_name LIKE '${req.body.search_text}%'
+        GROUP BY i.place, c.collection_name`
+    )
+
+    if(searchQuery.queryRes.length > 0) {
+        searchQuery.queryRes.map( (collection, index) => {
+            let tmp_coll = {}
+            tmp_coll["name"] = collection.name
+            tmp_coll["place"] = collection.place
+            collections.push(tmp_coll)
+        })
+        statusCode = 200;
+    } else {
+        statusCode = 204;
+    }
+
+    res.json({
+        status: statusCode,
+        collections: collections
+    })
+
+});
+
 app.post('/updateimage', async (req, res) => {
     let statusCode;
 
@@ -274,8 +308,6 @@ app.post('/updateimage', async (req, res) => {
 async function clusterize(user, num_cluster) {
     let statusCode = 401;
     let clusters = {}
-
-    console.log(num_cluster);
 
     let clusterDivisionQuery = `
         SELECT ST_ClusterKMeans(location, ${num_cluster}) OVER() as cid, 
@@ -397,8 +429,7 @@ async function elbowClusterize(user) {
                 inertias.push(tmp_inertia)
             }
 
-            console.log(inertias);
-            console.log(`Optimal K: ${findOptimalK(secondDerivativesFunc(inertias))}`);
+
             return clusterize(user, findOptimalK(secondDerivativesFunc(inertias)))
         }
     }
@@ -577,18 +608,8 @@ app.post('/nearest', async (req, res) => {
 app.post('/deletephoto', async (req, res) => {
     let statusCode;
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
-
-    try {
         // Delete single from as requested by user
-        await client.query(`
+        let deletePhotoQuery = await sendQuery(`
             DELETE FROM images
             WHERE
                 author = \'${req.body.logged_user}\' AND
@@ -597,44 +618,38 @@ app.post('/deletephoto', async (req, res) => {
             `)
 
         // Check collection's length
-        await client.query(`
+        let checkLengthQuery = await sendQuery(`
             SELECT length
             FROM collections
             WHERE
                 collection_name = \'${req.body.collection_name}\' AND
                 author = \'${req.body.logged_user}\'
         `)
-            .then(async response => {
-                if (response.rows[0].length == 1) { // Last photo in the collection, so deletion needed.
-                    await client.query(`
-                    DELETE FROM collections
-                    WHERE
-                        collection_name = \'${req.body.collection_name}\' AND
-                        author = \'${req.body.logged_user}\' 
-                `)
-                } else {
-                    // Decreasing by 1 the collection's length
-                    await client.query(`
-                    UPDATE collections 
-                    SET length = length-1
-                    WHERE
-                        collection_name = \'${req.body.collection_name}\' AND
-                        author = \'${req.body.logged_user}\'
-                `)
-                }
-            })
-            .catch(error => {
-                console.log(error);
-            })
 
-        statusCode = 200;
+        // Last photo in the collection, so deletion needed.
+        if (checkLengthQuery.queryRes[0].length == 1) { 
+            await sendQuery(`
+                DELETE FROM collections
+                WHERE
+                    collection_name = \'${req.body.collection_name}\' AND
+                    author = \'${req.body.logged_user}\' `
+            )
+        } else {
+            // Decreasing by 1 the collection's length
+            await sendQuery(`
+                UPDATE collections 
+                SET length = length-1
+                WHERE
+                    collection_name = \'${req.body.collection_name}\' AND
+                    author = \'${req.body.logged_user}\'`
+            )
+        }
 
-    } catch (error) {
-        console.log(error);
-        statusCode = 401
-    }
-
-    await client.end();
+        if (deletePhotoQuery.status == 200 && checkLengthQuery.status == 200) {
+            statusCode = 200
+        } else {
+            statusCode = 401
+        }
 
     res.json({
         status: statusCode
@@ -645,50 +660,30 @@ app.post('/deletecollection', async (req, res) => {
 
     let statusCode;
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
-
-    try {
-
-        query_imgs = `
+    let deleteImagesQuery  = await sendQuery(`
         DELETE
         FROM images as i
         USING collections as c
         WHERE
             i.reference=c.collection_name AND
             i.reference=\'${req.body.collection_name}\' AND
-            c.author=\'${req.body.logged_user}\';
-        `
+            c.author=\'${req.body.logged_user}\';`
+    )
 
-        query_coll = `
+    let deleteCollectionQuery = await sendQuery(`
         DELETE
         FROM collections as c
         WHERE 
             c.collection_name=\'${req.body.collection_name}\' AND
             c.author=\'${req.body.logged_user}\';
         `
+    )
 
-        const resImgs = await client.query(query_imgs);
-        const resColl = await client.query(query_coll);
-
-        if (resColl.rowCount > 0 && resImgs.rowCount > 0) {
-            statusCode = 200;
-        } else {
-            statusCode = 304 // Document not modified
-        }
-
-    } catch (err) {
-        statusCode = 401;
-        console.log(err);
+    if (deleteImagesQuery.queryRes.length > 0 && deleteCollectionQuery.queryRes.length > 0) {
+        statusCode = 200;
+    } else {
+        statusCode = 304 // Document not modified
     }
-
-    await client.end()
 
     res.json({
         status: statusCode
@@ -699,126 +694,67 @@ app.post('/tag_friend', async (req, res) => {
 
     let statusCode;
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
-
-    try {
-        query_imgs = `
+    let tagFriendQuery = await sendQuery(`
         UPDATE images as i
         SET tagged_people = CASE
-		WHEN \'${req.body.friend}\'=ANY(tagged_people)
-			THEN tagged_people
-			ELSE array_append(tagged_people, \'${req.body.friend}\')
-		END
-		WHERE
+        WHEN \'${req.body.friend}\'=ANY(tagged_people)
+            THEN tagged_people
+            ELSE array_append(tagged_people, \'${req.body.friend}\')
+        END
+        WHERE
             i.image_name=\'${req.body.image_name}\' AND
-            i.author=\'${req.body.logged_user}\'
-        `
-
-        const resImgs = await client.query(query_imgs);
-
-        if (resImgs.rowCount > 0) {
-            statusCode = 200;
-        } else {
-            statusCode = 304; // Document not modified
-        }
-
-
-    } catch (err) {
-        statusCode = 401;
-        console.log(err);
-    }
-
-    await client.end()
+            i.author=\'${req.body.logged_user}\'`
+    )
 
     res.json({
-        status: statusCode
+        status: tagFriendQuery.status
     })
 })
 
 app.post('/get_friends', async (req, res) => {
 
-    let statusCode;
     let friends = [];
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
+    let getFriendsQuery = await sendQuery(
+        `SELECT user_2 as friend
+        FROM friendships
+        WHERE user_1=\'${req.body.logged_user}\';`
+    )
+
+    getFriendsQuery.queryRes.map(friendRow => {
+        friends.push(friendRow.friend)
     });
-
-    await client.connect();
-
-    query = `SELECT user_2 as friend FROM friendships WHERE user_1=\'${req.body.logged_user}\';`
-
-    try {
-        const res = await client.query(query);
-
-        res.rows.forEach(friendRow => {
-            friends.push(friendRow.friend)
-        });
-        statusCode = 200;
-    } catch (err) {
-        statusCode = 401;
-        console.log(err);
-    }
-
-    await client.end()
+    
     res.json({
-        status: statusCode,
+        status: getFriendsQuery.status,
         friends: friends
     });
-
 })
 
 app.post('/retrieve_public', async (req, res) => {
     let statusCode;
     let public_photos = {}
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
-
-    query = `
+    let retrievePublicPhotos = await sendQuery(`
         SELECT image_name as name, ST_X(location) as lng, ST_Y(location) as lat, author as author
         FROM images
         WHERE
             author <> \'${req.body.logged_user}\' AND
-            public = true
-    `
+            public = true`
+    )
 
-    try {
-        let index = 0;
-        const resQuery = await client.query(query)
-        resQuery.rows.forEach(row => {
-            let tmp_img = {};
-            tmp_img.name = row.name
-            tmp_img.coords = [row.lat, row.lng]
-            tmp_img.author = row.author
-            public_photos[index] = tmp_img
-            index++;
-        })
-        statusCode = 200
-    } catch (err) {
-        statusCode = 401
-        console.log(err);
-    }
+    let index = 0;
+    retrievePublicPhotos.queryRes.map(row => {
+        let tmp_img = {};
+        tmp_img.name = row.name
+        tmp_img.coords = [row.lat, row.lng]
+        tmp_img.author = row.author
+        public_photos[index] = tmp_img
+        index++;
+    })
 
-    await client.end();
     res.json({
-        status: statusCode,
+        status: retrievePublicPhotos.status,
         public_photos: public_photos
     });
 
@@ -828,91 +764,65 @@ app.post('/add_friend', async (req, res) => {
 
     let statusCode;
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
+    let addFriendQuery = await sendQuery(`
+        SELECT user_2
+        FROM friendships
+        WHERE
+            user_1=\'${req.body.loggedUser}\' AND
+            user_2=\'${req.body.newFriend}\';`
+    )
 
-    await client.connect();
+    if (addFriendQuery.queryRes.length > 0) {
+        statusCode = 409; // Already friends
+    } else {
+        
+        let firstFriendRequest = await sendQuery(`
+            INSERT INTO friendships (user_1, user_2)
+            VALUES (\'${req.body.loggedUser}\', \'${req.body.newFriend}\');`
+        )
 
-    query = `
-            SELECT user_2
-            FROM friendships
-            WHERE
-                user_1=\'${req.body.loggedUser}\' AND
-                user_2=\'${req.body.newFriend}\';`
+        let secondFriendRequest = await sendQuery(`
+            INSERT INTO friendships (user_1, user_2)
+            VALUES (\'${req.body.newFriend}\', \'${req.body.loggedUser}\');`
+        )
 
-    try {
-        const res = await client.query(query);
-        if (res.rowCount > 0) {
-            statusCode = 409; // Already friends
+        if (firstFriendRequest.status == 200 && secondFriendRequest.status == 200) {
+            statusCode = 200
         } else {
-            try {
-                let query1 = `INSERT INTO friendships (user_1, user_2)
-                            VALUES (\'${req.body.loggedUser}\', \'${req.body.newFriend}\');`
-
-                let query2 = `INSERT INTO friendships (user_1, user_2)
-                            VALUES (\'${req.body.newFriend}\', \'${req.body.loggedUser}\');`
-
-                await client.query(query1)
-                await client.query(query2)
-                statusCode = 200
-            } catch (err) {
-                statusCode = 204;
-            }
+            statusCode = 401
         }
-    } catch (err) {
-        statusCode = 401;
-        console.log(err);
     }
 
-    await client.end();
     res.json({ status: statusCode });
-
 })
 
 app.post('/remove_friend', async (req, res) => {
 
     let statusCode;
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
+    let removeFirstFriend = await sendQuery(`
+        DELETE
+        FROM friendships
+        WHERE
+            user_1=\'${req.body.logged_user}\' AND
+            user_2=\'${req.body.friend}\';`
+    )
 
-    await client.connect();
+    let removeSecondFriend = await sendQuery(`
+        DELETE
+        FROM friendships
+        WHERE
+            user_1=\'${req.body.friend}\' AND
+            user_2=\'${req.body.logged_user}\';`
+    )
 
-    const query1 = `
-            DELETE
-            FROM friendships
-            WHERE
-                user_1=\'${req.body.logged_user}\' AND
-                user_2=\'${req.body.friend}\';`
-
-    const query2 = `
-            DELETE
-            FROM friendships
-            WHERE
-                user_1=\'${req.body.friend}\' AND
-                user_2=\'${req.body.logged_user}\';`
-
-    try {
-        const resQuery1 = await client.query(query1);
-        const resQuery2 = await client.query(query2);
-
-        statusCode = 200;
-    } catch (err) {
-        statusCode = 401;
-        console.log(err);
+    if (removeFirstFriend.status == 200 && removeSecondFriend.status == 200) {
+        statusCode = 200
+    } else {
+        statusCode = 401
     }
 
-    await client.end();
     res.json({ status: statusCode });
-
 })
 
 // Only used to display collection names on dashboard page
@@ -920,53 +830,45 @@ app.post('/retrievecollections', async (req, res) => {
     let statusCode;
     let retrieved_collections = [];
 
-    const client = new Client({
-        user: 'postgres',
-        host: '127.0.0.1',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
-
-    try {
-        // Distinct to avoid multi-photo collections to duplicate collection name
-        // Also does not load collections with no photos in.
-        const resQuery = await client.query(`
+    
+    // Distinct to avoid multi-photo collections to duplicate collection name
+    // Also does not load collections with no photos in.
+    const retrieveUserCollectionsQuery = await sendQuery(`
         SELECT DISTINCT c.collection_name as name, i.place as place
         FROM collections as c, images as i
         WHERE 
             c.collection_name = i.reference AND
-            i.author=\'${req.body.logged_user}\'`);
+            i.author=\'${req.body.logged_user}\'`
+    )
 
-        resQuery.rows.forEach(collection => {
-            let tmp_coll = {}
-            tmp_coll['name'] = collection.name
-            tmp_coll['place'] = collection.place
-            retrieved_collections.push(tmp_coll)
-        })
+    retrieveUserCollectionsQuery.queryRes.map(collection => {
+        let tmp_coll = {}
+        tmp_coll['name'] = collection.name
+        tmp_coll['place'] = collection.place
+        retrieved_collections.push(tmp_coll)
+    })
 
-        // Photos in which the user is tagged
-        const resQuery2 = await client.query(`
+    // Photos in which the user is tagged
+    let taggedCollectionsQuery = await sendQuery(`
         SELECT reference as name, place as place
         FROM images
         WHERE
             author <> \'${req.body.logged_user}\' AND
-            \'${req.body.friend}\' = ANY(tagged_people)`);
+            \'${req.body.friend}\' = ANY(tagged_people)`
+    )
 
-        resQuery2.rows.forEach(collection => {
-            let tmp_coll = {}
-            tmp_coll['name'] = collection.name
-            tmp_coll['place'] = collection.place
-            retrieved_collections.push(tmp_coll)
-        })
+    taggedCollectionsQuery.queryRes.map(collection => {
+        let tmp_coll = {}
+        tmp_coll['name'] = collection.name
+        tmp_coll['place'] = collection.place
+        retrieved_collections.push(tmp_coll)
+    })
 
-        statusCode = 200;
-    } catch (err) {
-        statusCode = 401;
+    if (retrieveUserCollectionsQuery.status == 200 && taggedCollectionsQuery.status == 200) {
+        statusCode = 200
+    } else {
+        statusCode = 401
     }
-
-    await client.end();
 
     res.json({
         status: statusCode,
@@ -978,56 +880,35 @@ app.post('/login', async (req, res) => {
 
     let statusCode;
 
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
-
-    await client.connect();
-
-    query = `
+    let checkLoginQuery = await sendQuery(`
         SELECT username
         FROM users
         WHERE
             username=\'${req.body.username}\' AND
             password=\'${req.body.password}\'`
-
-    try {
-        const resQuery = await client.query(query);
-        if (resQuery.rowCount == 1) {
-            statusCode = 200;
-        } else {
-            statusCode = 401;
-        }
-    } catch (err) {
-        console.log(err);
+    )
+    
+    if (checkLoginQuery.queryRes.length == 1) {
+        statusCode = 200;
+    } else {
+        statusCode = 401;
     }
-    await client.end();
 
-    res.json({ status: statusCode })
+    res.json({
+        status: statusCode
+    })
 })
 
 app.post('/signup', async (req, res) => {
-    const client = new Client({
-        user: 'postgres',
-        host: '0.0.0.0',
-        database: 'contextawarerc',
-        port: 5432,
-    });
 
-    await client.connect();
+    let signupQuery = await sendQuery(`
+        INSERT INTO users (name, surname, username, password)
+        VALUES (\'${req.body.name}\', \'${req.body.surname}\', \'${req.body.username}\', \'${req.body.password}\');`
+    )
 
-    query = `INSERT INTO users (name, surname, username, password)
-            VALUES (\'${req.body.name}\', \'${req.body.surname}\', \'${req.body.username}\', \'${req.body.password}\');`
-
-    await client.query(query, (err, res) => {
-        console.log(err, res);
+    res.json({
+        status: signupQuery.status
     })
-
-    await client.end()
-    res.json({ status: 200 })
 
 })
 
